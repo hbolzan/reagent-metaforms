@@ -1,0 +1,7 @@
+public/js
+public/css
+public/img
+node_modules
+target
+.shadow-cljs
+.nrepl-port

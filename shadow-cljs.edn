@@ -1,0 +1,14 @@
+{:source-paths ["src"]
+
+ :dependencies [[reagent "0.8.1"]
+                [re-frame "0.10.6"]
+                [clj-commons/secretary "1.2.4"]]
+
+ :builds {:app {:target :browser
+                :output-dir "public/js"
+                :asset-path "js"
+                :modules {:main {:entries [metaforms.core]}}
+                :devtools {:before-load metaforms.core/stop
+                           :after-load metaforms.core/start
+                           :http-root "public"
+                           :http-port 8020}}}}
