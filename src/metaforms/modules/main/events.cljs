@@ -4,10 +4,11 @@
 (rf/reg-event-db
  :initialize
  (fn [__]
-   {:main {:sidebar-visible? true
-           :sidebar-items    nil
-           :breadcrumb-items [{:label "Início"}]
-           }}))
+   {:current-view :home
+    :main         {:sidebar-visible? true
+                   :sidebar-items    nil
+                   :breadcrumb-items [{:label "Início"}]
+                   }}))
 
 (rf/reg-event-db
  :toggle-sidebar
@@ -18,3 +19,8 @@
  :set-breadcrumbs
  (fn [db [_ breadcrumb-items]]
    (assoc-in db [:main :breadcrumb-items] breadcrumb-items)))
+
+(rf/reg-event-db
+ :set-view
+ (fn [db [_ view]]
+   (assoc db :current-view view)))

@@ -10,3 +10,8 @@
  :breadcrumb-items
  (fn [db _]
    (-> db :main :breadcrumb-items)))
+
+(rf/reg-sub
+ :current-view
+ (fn [db _]
+   (:current-view db)))

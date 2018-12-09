@@ -15,8 +15,9 @@
 
 (defn main-header [content]
   [:header.app-header.navbar
-   [:a.navbar-brand {:href "#"}
-    (header-logo "img/logo_horizontal_320x132.png")
+   [:span.navbar-brand
+    [:a {:href "/#"}
+     (header-logo "img/logo_horizontal_320x132.png")]
     (header-sider-toggler-button)]])
 
 (defn main-sidebar [content]
@@ -29,7 +30,7 @@
         active? (:active? item)]
     [:li.breadcrumb-item {:key   (str "breadcrumb-" index)
                           :class (when active? "active")}
-     (if link [:a {:href link} (:label item)] (:label item))]))
+     (if (and link (not active?)) [:a {:href link} (:label item)] (:label item))]))
 
 (defn breadcrumbs [items]
   [:ol.breadcrumb
@@ -47,8 +48,7 @@
      [:div.ui-view
       [:div
        [:div.animated.fadeIn
-        [:div.row
-         main-content]]]]]]])
+        main-content]]]]]])
 
 (defn main-footer [content]
   [:footer.app-footer content
