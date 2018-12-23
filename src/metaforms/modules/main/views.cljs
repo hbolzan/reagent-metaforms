@@ -24,7 +24,7 @@
 (defn main [sidebar-items body-content]
   (let [sidebar-visible? @(rf/subscribe [:sidebar-visible?])
         breadcrumb-items @(rf/subscribe [:breadcrumb-items])
-        view @(rf/subscribe [:current-view])]
+        view             @(rf/subscribe [:current-view])]
     [:section.app.header-fixed.sidebar-fixed.aside-menu-fixed.pace-done
      (when sidebar-visible? {:class "sidebar-lg-show"})
      [main/main-header nil]

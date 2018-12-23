@@ -1,6 +1,7 @@
 (ns metaforms.components.main
   (:require [reagent.core :as r]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [metaforms.components.sidebar :as sidebar]))
 
 (defn header-logo [path]
   [:img.navbar-brand-full {:src   path
@@ -21,9 +22,7 @@
     (header-sider-toggler-button)]])
 
 (defn main-sidebar [content]
-  [:div.sidebar
-   [:nav.sidebar-nav.ps.ps--active-y
-    content]])
+  [sidebar/main])
 
 (defn breadcrumb-item [index item]
   (let [link    (:link item)

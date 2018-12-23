@@ -2,7 +2,8 @@
 
  :dependencies [[reagent "0.8.1"]
                 [re-frame "0.10.6"]
-                [clj-commons/secretary "1.2.4"]]
+                [clj-commons/secretary "1.2.4"]
+                [cider/cider-nrepl "0.19.0-SNAPSHOT"]]
 
  :builds {:app {:target :browser
                 :output-dir "public/js"
