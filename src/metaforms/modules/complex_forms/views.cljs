@@ -6,9 +6,8 @@
 (defn fields-defs-with-id [form-id fields-defs]
   (map #(assoc % :id (str (name form-id) "-" (:name %))) fields-defs))
 
-(defn index [form-definition data]
-  (let [fields-defs (fields-defs-with-id (:id form-definition)
-                                         (:fields-defs form-definition))]
+(defn index [{:keys [id fields-defs] :as form-definition} data]
+  (let [fields-defs (fields-defs-with-id id fields-defs)]
     (complex.form/form
      (merge form-definition
             {:data        data
@@ -16,6 +15,6 @@
              :rows-defs   (cf-l/distribute-fields fields-defs cf-l/bootstrap-md-width)}))))
 
 (defn generic-view []
-  (let [form-definition @(rf/subscribe [:current-form])]
-    (index form-definition [])
+  (let [{form-definition :definition data :data} @(rf/subscribe [:current-form])]
+    (index form-definition data)
     ))

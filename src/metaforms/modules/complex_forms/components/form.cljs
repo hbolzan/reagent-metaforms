@@ -3,6 +3,7 @@
             [re-frame.core :as rf]
             [metaforms.modules.complex-forms.components.input :as input]
             [metaforms.components.cards :as cards]
+            [metaforms.modules.complex-forms.components.toolset :as toolset]
             [metaforms.modules.complex-forms.logic :as l-cf]))
 
 (defn form-field
@@ -21,5 +22,6 @@
 (defn form [{:keys [id title rows-defs fields-defs] :as form-definition}]
   [cards/card
    title
+   (toolset/toolset {})
    [:div
     (map-indexed (fn [index row-def] (form-row id index row-def fields-defs)) rows-defs)]])

@@ -29,4 +29,6 @@
  :set-complex-form
  (fn [db [_ form-definition]]
    (merge db {:current-view :complex-form
-              :current-form form-definition})))
+              :current-form {:definition form-definition
+                             :state      :empty
+                             :data       []}})))
