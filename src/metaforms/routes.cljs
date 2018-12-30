@@ -2,7 +2,10 @@
   (:require [goog.events :as events]
             [goog.history.EventType :as EventType]
             [re-frame.core :as rf]
-            [secretary.core :as secretary])
+            [secretary.core :as secretary]
+
+            ;; provisório - somente para testes
+            [metaforms.modules.samples.db :as samples.db])
   (:require-macros [secretary.core :refer [defroute]])
   (:import goog.history.Html5History))
 
@@ -33,15 +36,30 @@
                                    :active? true))
                        crumbs))))
 
+;; routing methods in metaforms.modules.main.views
+(defn handle-route [path view-id]
+  (rf/dispatch [:set-breadcrumbs (path->breadcrumbs path)])
+  (rf/dispatch [:set-view view-id]))
+
+;; primeiro teste - pega form-definition de samples
+(defn handle-complex-form-route [form-id]
+  (let [form-definition samples.db/form-definition]
+    (rf/dispatch [:set-breadcrumbs (path->breadcrumbs (str "/forms/" (:title form-definition)))])
+    (rf/dispatch [:set-complex-form form-definition])))
+
 (defn app-routes []
   (secretary/set-config! :prefix "#")
 
   (defroute "/cadastros" []
-    (rf/dispatch [:set-breadcrumbs (path->breadcrumbs "/cadastros")])
-    (rf/dispatch [:set-view :cadastros]))
+    (handle-route "/cadastros" :cadastros))
+
+  (defroute "/sample" []
+    (handle-route "/sample" :sample))
+
+  (defroute "/forms/sample" []
+    (handle-complex-form-route :sample))
 
   (defroute "*" {:as params}
-    (rf/dispatch [:set-breadcrumbs (path->breadcrumbs (:* params))])
-    (rf/dispatch [:set-view :not-found]))
+    (handle-route (:* params) :not-found))
 
   (hook-browser-navigation!))

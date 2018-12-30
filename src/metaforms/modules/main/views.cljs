@@ -2,12 +2,20 @@
   (:require [reagent.core :as r]
             [re-frame.core :as rf]
             [metaforms.components.main :as main]
-            [metaforms.modules.cadastros.views :as cadastros]))
+            [metaforms.modules.cadastros.views :as cadastros]
+            [metaforms.modules.complex-forms.views :as cf-views]
+            [metaforms.modules.samples.views :as samples]))
 
 (defmulti route (fn [view content] view))
 
 (defmethod route :cadastros [_ _]
   (cadastros/index))
+
+(defmethod route :sample [_ _]
+  (samples/sample-view))
+
+(defmethod route :complex-form [_ _]
+  (cf-views/generic-view))
 
 (defn not-found []
   [:div.container

@@ -59,8 +59,8 @@
 (defn width->col-md-class [width]
   (str "col-md-" width))
 
-(defn row-fields [row-def fields]
-  (let [field-by-name (fn [name] (first (filter #(= (:field/name %) name) fields)))]
+(defn row-fields [row-def fields-defs]
+  (let [field-by-name (fn [name] (first (filter #(= (:name %) name) fields-defs)))]
     (map field-by-name (:fields row-def))))
 
 (defn field-change [form field-name value]

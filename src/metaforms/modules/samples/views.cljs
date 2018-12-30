@@ -1,3 +1,6 @@
 (ns metaforms.modules.samples.views
-  (:require [[metaforms.modules.samples.db :as db]
-             [metaforms.modules.complex-forms.components.form :as complex.form]]))
+  (:require [metaforms.modules.complex-forms.views :as cf-views]
+            [metaforms.modules.samples.db :as db]))
+
+(defn sample-view []
+  (cf-views/index db/form-definition []))

@@ -24,3 +24,9 @@
  :set-view
  (fn [db [_ view]]
    (assoc db :current-view view)))
+
+(rf/reg-event-db
+ :set-complex-form
+ (fn [db [_ form-definition]]
+   (merge db {:current-view :complex-form
+              :current-form form-definition})))
