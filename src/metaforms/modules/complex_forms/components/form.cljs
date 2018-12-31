@@ -19,9 +19,12 @@
         (l-cf/row-fields row-def fields-defs)
         (:bootstrap-widths row-def))])
 
+(def form-events {:append  #(rf/dispatch [:set-current-form-state :edit])
+                  :discard #(rf/dispatch [:set-current-form-state :empty])})
+
 (defn form [{:keys [id title rows-defs fields-defs] :as form-definition}]
   [cards/card
    title
-   (toolset/toolset {})
+   (toolset/toolset form-events)
    [:div
     (map-indexed (fn [index row-def] (form-row id index row-def fields-defs)) rows-defs)]])

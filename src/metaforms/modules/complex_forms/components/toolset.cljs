@@ -44,7 +44,7 @@
 (defn on-click-event
   [events button-type button-types]
   (if-let [event ((-> button-types button-type :form-event) events)]
-    {:onClick #(event)}))
+    {:onClick event}))
 
 (defn button-props [form-state events enabled-states button-type button-types]
   (merge
@@ -74,7 +74,7 @@
 
 (defn toolset
   [events]
-  (let [{form-state :state} @(rf/subscribe [:current-form])]
+  (let [form-state @(rf/subscribe [:current-form-state])]
     [:div {:className "btn-toolbar" :role "toolbar"}
      (btn-group form-state events action-buttons)
      (btn-group form-state events nav-buttons)]))

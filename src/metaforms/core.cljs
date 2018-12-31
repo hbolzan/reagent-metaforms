@@ -3,9 +3,12 @@
             [re-frame.core :as rf]
             [metaforms.routes :as routes]
             [metaforms.modules.main.events]
+            [metaforms.modules.complex-forms.events]
             [metaforms.modules.main.subs]
+            [metaforms.modules.complex-forms.subs]
             [metaforms.components.main :as main]
-            [metaforms.modules.main.views :as main-views]))
+            [metaforms.modules.main.views :as main-views]
+            ))
 
 (def breadcrumb-items [{:label "Início"}
                        {:label "Cadastro" :link "#"}
