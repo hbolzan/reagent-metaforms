@@ -45,7 +45,7 @@
 (defn handle-complex-form-route [form-id]
   (let [form-definition samples.db/form-definition]
     (rf/dispatch [:set-breadcrumbs (path->breadcrumbs (str "/forms/" (:title form-definition)))])
-    (rf/dispatch [:set-complex-form form-definition])))
+    (rf/dispatch [:set-form-definition :sample])))
 
 (defn app-routes []
   (secretary/set-config! :prefix "#")

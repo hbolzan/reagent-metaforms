@@ -63,5 +63,8 @@
   (let [field-by-name (fn [name] (first (filter #(= (:name %) name) fields-defs)))]
     (map field-by-name (:fields row-def))))
 
-(defn field-change [form field-name value]
-  (assoc-in form [:form/state :data field-name] value))
+(defn get-form [db form-id]
+  (get-in db [:complex-forms form-id]))
+
+(defn current-form [db]
+  (get-form db (:current-form db)))

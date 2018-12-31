@@ -15,8 +15,3 @@
  :current-view
  (fn [db _]
    (:current-view db)))
-
-(rf/reg-sub
- :current-form
- (fn [db _]
-   (:current-form db)))
