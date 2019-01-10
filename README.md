@@ -8,10 +8,10 @@ Many former desktop developers (me included) have a hard time trying to learn ho
 
 ## Reagent with shadow-cljs
 
-This is a minimal setup for using Reagent with shadow-cljs. It supports
+Instead of using the standard Reagent with Figwheel, I decided to use Shadow CLJS that offers many advantages. This is a minimal setup for using Reagent with shadow-cljs. It supports
 production builds and live-reloading.
 
-## Getting started
+### Getting started
 
 Run `yarn` to download dependencies.
 
