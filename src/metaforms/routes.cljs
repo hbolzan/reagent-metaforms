@@ -47,6 +47,10 @@
     (rf/dispatch [:set-breadcrumbs (path->breadcrumbs (str "/forms/" (:title form-definition)))])
     (rf/dispatch [:set-form-definition :sample])))
 
+(defn handle-remote-complex-form-route [complex-form-id]
+  (rf/dispatch [:set-breadcrumbs (path->breadcrumbs (str "/forms/" complex-form-id))])
+  (rf/dispatch [:set-form-definition complex-form-id]))
+
 (defn app-routes []
   (secretary/set-config! :prefix "#")
 
@@ -58,6 +62,9 @@
 
   (defroute "/forms/sample" []
     (handle-complex-form-route :sample))
+
+  (defroute "/forms/complex" []
+    (handle-remote-complex-form-route "CAD_CLIENTES"))
 
   (defroute "*" {:as params}
     (handle-route (:* params) :not-found))
