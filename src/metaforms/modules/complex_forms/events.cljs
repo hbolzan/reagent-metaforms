@@ -5,33 +5,35 @@
             [metaforms.modules.samples.db :as samples.db]
             [metaforms.modules.complex-forms.logic :as cf.logic]))
 
-  (def base-uri "http://127.0.0.1:8000/query/persistent/complex-tables/?id={id}&middleware=complex_forms&depth=1")
+  (def base-uri "http://localhost:8000/query/persistent/complex-tables/?id={id}&middleware=complex_forms&depth=1")
 
 (rf/reg-event-fx
  :set-form-definition
- (fn [{db :db} [_ form-id]]
-   (if-let [form (cf.logic/get-form db form-id)]
-     {:dispatch [:set-current-form form-id]}
-     {:dispatch [:load-form-definition form-id]})))
+ (fn [{db :db} [_ form-pk]]
+   (let [form-id (-> form-pk str/lower-case (str/replace #"_" "-") keyword)]
+     (if-let [form (cf.logic/get-form db form-id)]
+       {:dispatch [:set-current-form form-id]}
+       {:dispatch [:load-form-definition form-pk form-id]}))))
 
 (rf/reg-event-fx
  :load-form-definition
- (fn [{db :db} [_ form-id]]
+ (fn [{db :db} [_ form-pk form-id]]
    {:http-xhrio {:method          :get
-                 :uri             (str/replace base-uri #"\{id\}" form-id)
+                 :uri             (str/replace base-uri #"\{id\}" form-pk)
                  :format          (ajax/json-request-format)
                  :response-format (ajax/json-response-format {:keywords? true})
                  :timeout         8000
-                 :on-success      [::load-form-definition-success]
+                 :on-success      [::load-form-definition-success form-id]
                  :on-failure      [::load-form-definition-failure]}}))
 
 (rf/reg-event-fx
- :load-form-definition-success
- (fn [{db :db} [_ result]]
-   (let [form-id (-> result :data :id)]
-     {:db       (assoc-in db [:complex-forms form-id] {:definition (:data result)
-                                                                     :state      :empty
-                                                                     :data       []})
+ ::load-form-definition-success
+ (fn [{db :db} [_ form-id result]]
+   (let [data (-> result :data first)]
+     (js/console.log form-id)
+     {:db       (assoc-in db [:complex-forms form-id] {:definition data
+                                                       :state      :empty
+                                                       :data       []})
       :dispatch [:set-current-form form-id]})))
 
 (rf/reg-event-fx
