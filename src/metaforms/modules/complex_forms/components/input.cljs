@@ -2,16 +2,18 @@
   (:require [reagent.core :as r]
             [re-frame.core :as rf]))
 
-(defn dropdown [{:keys [field-id label value options on-change]}]
-  [:select {:class    "form-control"
-            :id       field-id
-            :value    value
-            :onChange on-change}
-   [:option {:value ""} (str "-- " label " --")]
-   (map
-    (fn [option] [:option {:value (first option)
-                          :key   (first option)} (last option)])
-    options)])
+(defn dropdown [{:keys [field-id label value options on-change] :as defs}]
+  (let [lookup-key    (-> defs :lookup-key keyword)
+        lookup-result (-> defs :lookup-result keyword)]
+    [:select {:class    "form-control"
+              :id       field-id
+              :value    value
+              :onChange on-change}
+     [:option {:value ""} (str "-- " label " --")]
+     (map
+      (fn [option] [:option {:value (lookup-key option)
+                            :key   (lookup-key option)} (lookup-result option)])
+      options)]))
 
 (defmulti field-def->input
   (fn [field-def] (keyword (-> field-def :field-kind name) (-> field-def :data-type name))))
