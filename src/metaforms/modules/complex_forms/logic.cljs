@@ -1,7 +1,9 @@
-(ns metaforms.modules.complex-forms.logic)
+(ns metaforms.modules.complex-forms.logic
+  (:require [re-frame.db :as rdb]
+            [metaforms.common.logic :as cl]))
 
 (def empty-row {:width 0 :widths []})
-(def field-width-multiplier 10)
+(def field-width-multiplier 7)
 (def bootstrap-grid-cols 12)
 (def bootstrap-md-width 720)
 
@@ -27,10 +29,17 @@
 (defn distribute-widths [widths container-width]
   (reduce (partial row-reducer container-width) [empty-row] widths))
 
+(defn review-grid-widths [widths grid-size]
+  (let [total-width (cl/sum widths)]
+    (cond
+      (< (cl/sum widths) grid-size) (review-grid-widths (cl/inc-nth widths (cl/min-index widths)) grid-size)
+      (> (cl/sum widths) grid-size) (review-grid-widths (cl/dec-nth widths (cl/max-index widths)) grid-size)
+      :else                         widths)))
+
 (defn row-widths->grid-widths [grid-size row]
   (let [row-width (:width row)
         rate      (/ row-width grid-size)]
-    (map (fn [width] (-> (/ width rate) double Math/round)) (:widths row))))
+    (review-grid-widths (mapv (fn [width] (-> (/ width rate) double Math/round)) (:widths row)) grid-size)))
 
 (defn assoc-bootstrap-widths [row bootstrap-widths]
   (assoc row :bootstrap-widths bootstrap-widths))
