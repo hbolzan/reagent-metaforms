@@ -14,7 +14,7 @@
              :fields-defs fields-defs
              :rows-defs   (cf-l/distribute-fields fields-defs cf-l/bootstrap-md-width)}))))
 
+
 (defn generic-view []
   (let [{form-definition :definition data :data} @(rf/subscribe [:current-form])]
-    (index form-definition data)
-    ))
+    (index form-definition data)))

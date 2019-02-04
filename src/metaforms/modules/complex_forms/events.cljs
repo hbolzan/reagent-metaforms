@@ -30,7 +30,6 @@
  ::load-form-definition-success
  (fn [{db :db} [_ form-id result]]
    (let [data (-> result :data first)]
-     (js/console.log form-id)
      {:db       (assoc-in db [:complex-forms form-id] {:definition data
                                                        :state      :empty
                                                        :data       []})
@@ -39,8 +38,7 @@
 (rf/reg-event-fx
  ::load-form-definition-failure
  (fn [{db :db} [_ result]]
-   (js/console.log "ERROR" result))
- )
+   (js/console.log "ERROR" result)))
 
 (rf/reg-event-fx
  :load-form-definition-old
@@ -55,6 +53,11 @@
  (fn [db [_ form-id]]
    (merge db {:current-view :complex-form
               :current-form form-id})))
+
+(rf/reg-event-fx
+ :do-form-action
+ (fn [{db :db} [_ form-action]]
+   ))
 
 (rf/reg-event-db
  :set-current-form-state
