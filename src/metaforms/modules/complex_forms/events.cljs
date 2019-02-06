@@ -59,6 +59,13 @@
  (fn [{db :db} [_ form-action]]
    ))
 
+;; form action effects
+;; :do-form-append
+;; :do-form-edit
+;; :do-form-confirm
+;; :do-form-discard
+;; :do-form-delete
+
 (rf/reg-event-db
  :set-current-form-state
  (fn [db [_ new-state]]
