@@ -14,3 +14,10 @@
 
 (defn inc-nth [v i]
   (assoc v i (inc (get v i))))
+
+(defn merge-in [m path n]
+  (assoc-in m path (merge (get-in m path) n)))
+
+(defn log [x]
+  (js/console.log x)
+  x)

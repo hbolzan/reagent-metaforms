@@ -57,13 +57,13 @@
           final-rows))
 
 (defn row-def-defs->fields [row-def]
-  (let [names (map :name (:defs row-def))]
+  (let [names (mapv :name (:defs row-def))]
     (-> row-def (dissoc :defs) (assoc :fields names))))
 
 (defn distribute-fields [fields-defs container-width]
-  (let [distributed-rows      (distribute-widths (map :width fields-defs) (/ container-width field-width-multiplier))
-        bootstrap-widths-rows (map (partial row-widths->grid-widths bootstrap-grid-cols) distributed-rows)
-        final-rows            (map assoc-bootstrap-widths distributed-rows bootstrap-widths-rows)]
+  (let [distributed-rows      (distribute-widths (mapv :width fields-defs) (/ container-width field-width-multiplier))
+        bootstrap-widths-rows (mapv (partial row-widths->grid-widths bootstrap-grid-cols) distributed-rows)
+        final-rows            (mapv assoc-bootstrap-widths distributed-rows bootstrap-widths-rows)]
     (mapv row-def-defs->fields (:output (final-rows->final-defs final-rows fields-defs)))))
 
 (def empty-by-type {:char    ""
@@ -75,13 +75,16 @@
 
 (defn row-fields [row-def fields-defs]
   (let [field-by-name (fn [name] (first (filter #(= (:name %) name) fields-defs)))]
-    (map field-by-name (:fields row-def))))
+    (mapv field-by-name (:fields row-def))))
 
 (defn get-form [db form-id]
   (get-in db [:complex-forms form-id]))
 
 (defn current-form [db]
   (get-form db (:current-form db)))
+
+(defn current-form-state [db]
+  (:state (current-form db)))
 
 (defn str->date [s]
   (tf/parse date-formatter s))
@@ -90,6 +93,29 @@
   (tf/parse date-time-formatter s))
 
 (defn new-record [fields-defs]
-  (reduce (fn [r def] (assoc r (-> def :name keyword) (:default def)))
+  (reduce (fn [r field-def] (assoc r (-> field-def :name keyword) (:default field-def)))
           {}
           fields-defs))
+
+(defn next-form-state [action current-state]
+  (case [action current-state]
+    [:append :view]  :edit
+    [:edit :view]    :edit
+    [:confirm :edit] :view
+    [:discard :edit] :view
+    [:delete :view]  :deleting
+    current-state))
+
+(defn field-defs [db form-id]
+  (-> (get-form db form-id) :definition :fields-defs))
+
+(defn set-current-form-data [db new-form-data]
+  (assoc db :current-form-data (merge (:current-form-data db) new-form-data)))
+
+(def current-record-id (comp :current-record :current-form-data))
+(def current-records (comp :records :current-form-data))
+
+(defn current-data-record [db]
+  (some->>
+   (current-record-id db)
+   (get (current-records db))))

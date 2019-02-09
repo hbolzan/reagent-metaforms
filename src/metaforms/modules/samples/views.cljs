@@ -3,4 +3,4 @@
             [metaforms.modules.samples.db :as db]))
 
 (defn sample-view []
-  (cf-views/index db/form-definition []))
+  (cf-views/index db/form-definition))

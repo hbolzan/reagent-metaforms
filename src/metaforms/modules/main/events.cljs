@@ -7,8 +7,7 @@
    {:current-view :home
     :main         {:sidebar-visible? true
                    :sidebar-items    nil
-                   :breadcrumb-items [{:label "Início"}]
-                   }}))
+                   :breadcrumb-items [{:label "Início"}]}}))
 
 (rf/reg-event-db
  :toggle-sidebar
