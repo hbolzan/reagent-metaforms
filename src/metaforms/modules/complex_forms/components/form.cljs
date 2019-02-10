@@ -11,7 +11,7 @@
   [{:keys [id label] :as field} additional-group-class form-data]
   [:div {:key id :class (str "form-group" (some->> additional-group-class (str " ")))}
    [:label {:html-for id} label]
-   (input/input field ((-> field :name keyword) (:editing-data form-data)))])
+   (input/input field form-data)])
 
 (defn form-row
   [form-id row-index row-def fields-defs form-data]
