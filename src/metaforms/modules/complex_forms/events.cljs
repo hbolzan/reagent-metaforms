@@ -97,11 +97,11 @@
  (fn [{db :db} [_]]
    (let [new-records          (cf.logic/records<-editing-data db)
          current-record-index (cf.logic/current-record-index db)]
-     {:db       (cf.logic/set-current-form-data db {:new-record?  false?
+     {:db       (cf.logic/set-current-form-data db {:new-record?  false
                                                     :editing-data nil
-                                                    :current-record (if current-record-index
-                                                                      current-record-index
-                                                                      (-> new-records count dec))
+                                                    :current-record (cl/log (if current-record-index
+                                                                              current-record-index
+                                                                              (-> new-records count dec)))
                                                     :records      (cf.logic/records<-editing-data db)})
       :dispatch [:set-current-form-state :view]})))
 
@@ -109,22 +109,27 @@
  :do-form-delete
  (fn [{db :db} [_]]
    (if (cf.logic/current-record-index db)
-     {:dispatch [:confirm-form-delete :do-confirmed-form-delete]})))
-
-;; TODO: implement confirmation dialog
-(rf/reg-event-fx
- :confirm-form-delete
- (fn [{db :db} [_ next-action]]
-   {:dispatch [next-action]}))
+     {:dispatch [:ask-for-confirmation "confirmation message" :do-confirmed-form-delete]})))
 
 (rf/reg-event-fx
  :do-confirmed-form-delete
  (fn [{db :db} [_]]
-   {:db       (cf.logic/set-current-form-data db {:records        (cf.logic/delete-current-record db)
-                                                  :current-record (cf.logic/next-available-record-index db)})
-    :dispatch [:set-current-form-state :view]}))
+   (let [after-delete-records (cf.logic/delete-current-record db)]
+     {:db       (cf.logic/set-current-form-data db {:records        after-delete-records
+                                                    :editing-data   nil
+                                                    :new-record?    false
+                                                    :current-record (cf.logic/record-index-after-delete db after-delete-records)})
+      :dispatch [:set-current-form-state :view]})))
+
 
 (rf/reg-event-db
  :set-current-form-state
  (fn [db [_ new-state]]
    (assoc-in db [:complex-forms (:current-form db) :state] new-state)))
+
+;; TODO: implement confirmation dialog
+;; TODO: messages dictionary
+(rf/reg-event-fx
+ :ask-for-confirmation
+ (fn [{db :db} [_ confimation-message next-action]]
+   {:dispatch [next-action]}))

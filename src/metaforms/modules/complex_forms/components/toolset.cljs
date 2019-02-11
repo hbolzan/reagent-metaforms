@@ -3,7 +3,7 @@
             [re-frame.core :as rf]))
 
 (def action-buttons {:insert  {:icon           "plus-circle"
-                               :enabled-states [:view]
+                               :enabled-states [:view :empty]
                                :form-event     :append}
                      :delete  {:icon           "trash-alt"
                                :enabled-states [:view]
@@ -18,7 +18,7 @@
                                :enabled-states [:edit]
                                :form-event     :discard}
                      :search  {:icon           "search"
-                               :enabled-states [:view]
+                               :enabled-states [:view :empty]
                                :form-event     :search}
                      :refresh {:icon           "redo"
                                :enabled-states [:view]
@@ -66,9 +66,17 @@
                                           :button-types buttons}))
         (keys buttons))])
 
+(defn form-data+current-state->form-state
+  [form-data current-state]
+  (if (and (= current-state :view) (-> form-data :current-record nil?))
+    :empty
+    current-state))
+
 (defn toolset
   []
-  (let [form-state @(rf/subscribe [:current-form-state])]
+  (let [form-data  @(rf/subscribe [:current-form-data])
+        current-state @(rf/subscribe [:current-form-state])
+        form-state (form-data+current-state->form-state form-data current-state)]
     [:div {:className "btn-toolbar" :role "toolbar"}
      (btn-group form-state action-buttons)
      (btn-group form-state nav-buttons)]))

@@ -133,11 +133,10 @@
     (new-record<-editing-data db)))
 
 (defn delete-current-record [db]
-  (cl/remove-nth (current-records db) (current-record-index db)))
+  (into [] (cl/remove-nth (current-records db) (current-record-index db))))
 
-(defn next-available-record-index [db]
-  (let [records       (current-records db)
-        record-count  (count records)
+(defn record-index-after-delete [db after-delete-records]
+  (let [record-count  (count after-delete-records)
         current-index (current-record-index db)
         last-index    (when (> record-count 0) (dec record-count))]
     (if last-index
