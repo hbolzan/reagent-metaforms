@@ -2,7 +2,7 @@
   (:require [ajax.core :as ajax]
             [clojure.string :as str]
             [re-frame.core :as rf]
-            [metaforms.common.logic :as common.logic]
+            [metaforms.common.logic :as cl]
             [metaforms.modules.samples.db :as samples.db]
             [metaforms.modules.complex-forms.logic :as cf.logic]))
 
@@ -58,6 +58,8 @@
 ;; :append :edit :confirm :discard :delete :search :refresh
 ;; data navigation
 ;; :nav-first :nav-prior :nav-next :nav-last
+
+;; CRUD ACTIONS SECTION
 (rf/reg-event-fx
  :do-form-action
  (fn [{db :db} [_ form-action]]
@@ -65,6 +67,15 @@
          next-state    (cf.logic/next-form-state form-action current-state)]
      (when (not= current-state next-state)
        {:dispatch [(keyword (str "do-form-"(name form-action)))]}))))
+
+(rf/reg-event-fx
+ :do-form-edit
+ (fn [{db :db} [_ form-action]]
+   (if-let [current-record (cf.logic/current-data-record db)]
+     {:db (cf.logic/set-current-form-data db {:new-record? false
+                                              :editing-data (cf.logic/current-data-record db)})
+      :dispatch [:set-current-form-state :edit]}
+     {:dispatch [:do-form-append]})))
 
 (rf/reg-event-fx
  :do-form-append
@@ -75,33 +86,43 @@
       :dispatch [:set-current-form-state :edit]})))
 
 (rf/reg-event-fx
- :add-empty-record
- (fn [{db :db} [_ form-id]]
-   {:db       (cf.logic/set-current-form-data db {:new-record?  true
-                                                  :editing-data (cf.logic/new-record (cf.logic/field-defs db form-id))})
-    :dispatch [:set-current-form-state :edit]}))
-
-(rf/reg-event-fx
- :do-form-edit
- (fn [{db :db} [_ form-action]]
-   {:dispatch [:set-current-form-state :edit]}))
-
-(rf/reg-event-fx
  :do-form-discard
- (fn [{db :db} [_ form-action]]
+ (fn [{db :db} [_]]
    {:db       (cf.logic/set-current-form-data db {:new-record?  false
                                                   :editing-data nil})
     :dispatch [:set-current-form-state :view]}))
 
 (rf/reg-event-fx
  :do-form-confirm
- (fn [{db :db} [_ form-action]]
-   {:dispatch [:set-current-form-state :view]}))
+ (fn [{db :db} [_]]
+   (let [new-records          (cf.logic/records<-editing-data db)
+         current-record-index (cf.logic/current-record-index db)]
+     {:db       (cf.logic/set-current-form-data db {:new-record?  false?
+                                                    :editing-data nil
+                                                    :current-record (if current-record-index
+                                                                      current-record-index
+                                                                      (-> new-records count dec))
+                                                    :records      (cf.logic/records<-editing-data db)})
+      :dispatch [:set-current-form-state :view]})))
 
 (rf/reg-event-fx
  :do-form-delete
- (fn [{db :db} [_ form-action]]
-   {:dispatch [:set-current-form-state :view]}))
+ (fn [{db :db} [_]]
+   (if (cf.logic/current-record-index db)
+     {:dispatch [:confirm-form-delete :do-confirmed-form-delete]})))
+
+;; TODO: implement confirmation dialog
+(rf/reg-event-fx
+ :confirm-form-delete
+ (fn [{db :db} [_ next-action]]
+   {:dispatch [next-action]}))
+
+(rf/reg-event-fx
+ :do-confirmed-form-delete
+ (fn [{db :db} [_]]
+   {:db       (cf.logic/set-current-form-data db {:records        (cf.logic/delete-current-record db)
+                                                  :current-record (cf.logic/next-available-record-index db)})
+    :dispatch [:set-current-form-state :view]}))
 
 (rf/reg-event-db
  :set-current-form-state

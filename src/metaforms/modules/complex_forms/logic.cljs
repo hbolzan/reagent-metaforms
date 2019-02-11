@@ -112,10 +112,35 @@
 (defn set-current-form-data [db new-form-data]
   (assoc db :current-form-data (merge (:current-form-data db) new-form-data)))
 
-(def current-record-id (comp :current-record :current-form-data))
-(def current-records (comp :records :current-form-data))
+(def current-record-index #(-> % :current-form-data :current-record))
+(def current-records #(-> % :current-form-data :records))
+(def editing-data #(-> % :current-form-data :editing-data))
 
 (defn current-data-record [db]
   (some->>
-   (current-record-id db)
+   (current-record-index db)
    (get (current-records db))))
+
+(defn current-record<-editing-data [db record-index]
+  (assoc (current-records db) record-index (editing-data db)))
+
+(defn new-record<-editing-data [db]
+  (conj (current-records db) (editing-data db)))
+
+(defn records<-editing-data [db]
+  (if-let [record-index (current-record-index db)]
+    (current-record<-editing-data db record-index)
+    (new-record<-editing-data db)))
+
+(defn delete-current-record [db]
+  (cl/remove-nth (current-records db) (current-record-index db)))
+
+(defn next-available-record-index [db]
+  (let [records       (current-records db)
+        record-count  (count records)
+        current-index (current-record-index db)
+        last-index    (when (> record-count 0) (dec record-count))]
+    (if last-index
+      (if (> current-index last-index)
+        last-index
+        current-index))))
