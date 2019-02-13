@@ -37,7 +37,7 @@
    :id          id
    :placeholder label
    :value       (or editing-value current-value)
-   :onChange    (fn [e] (on-change e))
+   :onChange    (fn [e] (rf/dispatch [:input-change name (-> e .-target .-value)]))
    :readOnly    read-only})
 
 (defmethod field-def->input :default [field-def current-value editing-value]

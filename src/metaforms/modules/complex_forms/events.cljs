@@ -121,6 +121,12 @@
                                                     :current-record (cf.logic/record-index-after-delete db after-delete-records)})
       :dispatch [:set-current-form-state :view]})))
 
+(rf/reg-event-db
+ :input-change
+ (fn [db [_ field-name event]]
+   (js/console.log field-name)
+   (js/console.log event)
+   db))
 
 (rf/reg-event-db
  :set-current-form-state
