@@ -144,12 +144,6 @@
                                                       field-value)})))
 
 (rf/reg-event-db
- :input-change
- (fn [db [_ value]]
-   (js/console.log value)
-   (assoc db :current-input-value value)))
-
-(rf/reg-event-db
  :set-current-form-state
  (fn [db [_ new-state]]
    (assoc-in db [:complex-forms (:current-form db) :state] new-state)))
