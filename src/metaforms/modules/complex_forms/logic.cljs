@@ -93,7 +93,12 @@
   (tf/parse date-time-formatter s))
 
 (defn new-record [fields-defs]
-  (reduce (fn [r field-def] (assoc r (-> field-def :name keyword) (:default field-def)))
+  (reduce (fn [r field-def] (assoc r (-> field-def :name keyword) (or (:default field-def) "")))
+          {}
+          fields-defs))
+
+(defn empty-record [fields-defs]
+  (reduce (fn [r field-def] (assoc r (-> field-def :name keyword) ""))
           {}
           fields-defs))
 

@@ -69,11 +69,19 @@
        {:dispatch [(keyword (str "do-form-"(name form-action)))]}))))
 
 (rf/reg-event-fx
+ :do-form-clear
+ (fn [{db :db} [_ next-action]]
+   (js/console.log next-action)
+   {:db       (cf.logic/set-current-form-data db {:clearing?    true
+                                                  :editing-data (cf.logic/empty-record (cf.logic/field-defs db (:current-form db)))})
+    :dispatch [next-action]}))
+
+(rf/reg-event-fx
  :do-form-edit
- (fn [{db :db} [_ form-action]]
+ (fn [{db :db} [_]]
    (if-let [current-record (cf.logic/current-data-record db)]
-     {:db (cf.logic/set-current-form-data db {:new-record? false
-                                              :editing-data (cf.logic/current-data-record db)})
+     {:db       (cf.logic/set-current-form-data db {:new-record?  false
+                                                    :editing-data (cf.logic/current-data-record db)})
       :dispatch [:set-current-form-state :edit]}
      {:dispatch [:do-form-append]})))
 
@@ -122,11 +130,24 @@
       :dispatch [:set-current-form-state :view]})))
 
 (rf/reg-event-db
+ :input-focus
+ (fn [db [_ field-name]]
+   (cf.logic/set-current-form-data db {:editing field-name})))
+
+(rf/reg-event-db
+ :input-blur
+ (fn [db [_ field-name field-value]]
+   (cf.logic/set-current-form-data db {:editing      nil
+                                       :editing-data (assoc
+                                                      (cf.logic/editing-data db)
+                                                      (keyword field-name)
+                                                      field-value)})))
+
+(rf/reg-event-db
  :input-change
- (fn [db [_ field-name event]]
-   (js/console.log field-name)
-   (js/console.log event)
-   db))
+ (fn [db [_ value]]
+   (js/console.log value)
+   (assoc db :current-input-value value)))
 
 (rf/reg-event-db
  :set-current-form-state
@@ -137,5 +158,5 @@
 ;; TODO: messages dictionary
 (rf/reg-event-fx
  :ask-for-confirmation
- (fn [{db :db} [_ confimation-message next-action]]
-   {:dispatch [next-action]}))
+(fn [{db :db} [_ confimation-message next-action]]
+  {:dispatch [next-action]}))

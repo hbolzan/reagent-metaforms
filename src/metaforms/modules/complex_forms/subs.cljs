@@ -16,3 +16,8 @@
  :current-form-data
  (fn [db]
    (-> db :current-form-data)))
+
+(rf/reg-sub
+ :current-input-value
+ (fn [db]
+   (-> db :current-input-value)))

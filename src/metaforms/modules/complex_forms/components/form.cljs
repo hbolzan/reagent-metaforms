@@ -8,23 +8,24 @@
 
 ;; form-data => {:records [hash-map] :current-record integer :editing-data hash-map :new-record? boolean}
 (defn form-field
-  [{:keys [id label] :as field} additional-group-class form-data]
+  [{:keys [id label] :as field} additional-group-class form-data form-state]
   [:div {:key id :class (str "form-group" (some->> additional-group-class (str " ")))}
    [:label {:html-for id} label]
-   (input/input field form-data)])
+   (input/input field form-data form-state)])
 
 (defn form-row
-  [form-id row-index row-def fields-defs form-data]
+  [form-id row-index row-def fields-defs form-data form-state]
   [:div.form-row {:key (str "row-" row-index)}
    (doall
-    (map (fn [field bootstrap-width] (form-field field (l-cf/width->col-md-class bootstrap-width) form-data))
+    (map (fn [field bootstrap-width] (form-field field (l-cf/width->col-md-class bootstrap-width) form-data form-state))
          (l-cf/row-fields row-def fields-defs)
          (:bootstrap-widths row-def)))])
 
 (defn form [{:keys [id title rows-defs fields-defs] :as form-definition}]
-  (let [form-data @(rf/subscribe [:current-form-data])]
+  (let [form-data  @(rf/subscribe [:current-form-data])
+        form-state @(rf/subscribe [:current-form-state])]
     [cards/card
      title
      (toolset/toolset)
      [:div
-      (doall (map-indexed (fn [index row-def] (form-row id index row-def fields-defs form-data)) rows-defs))]]))
+      (doall (map-indexed (fn [index row-def] (form-row id index row-def fields-defs form-data form-state)) rows-defs))]]))

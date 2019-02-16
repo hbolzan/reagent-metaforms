@@ -20,31 +20,34 @@
                        lookup-result)]))
 
 (defmulti field-def->input
-  (fn [field-def current-value editing-value]
+  (fn [field-def value]
     (keyword (-> field-def :field-kind name) (-> field-def :data-type name))))
 
-(defmethod field-def->input :lookup/char [field-def current-value editing-value]
-  (dropdown field-def (or editing-value current-value)))
+(defmethod field-def->input :lookup/char [field-def value]
+  (dropdown field-def value))
 
-(defmethod field-def->input :lookup/integer [field-def current-value editing-value]
-  (dropdown field-def (or editing-value current-value)))
+(defmethod field-def->input :lookup/integer [field-def value]
+  (dropdown field-def value))
 
 (defn field-def->input-params
-  [{:keys [id name label on-change read-only]} current-value editing-value]
+  [{:keys [id name label on-change read-only]} value]
   {:type        "text"
    :className   "form-control"
    :name        name
    :id          id
-   :placeholder label
-   :value       (or editing-value current-value)
-   :onChange    (fn [e] (rf/dispatch [:input-change name (-> e .-target .-value)]))
+   ;; :placeholder label
+   :value       value
+   ;; :onChange    (fn [e] (rf/dispatch [:input-change (-> e .-target .-value)]))
+   :onFocus     #(rf/dispatch [:input-focus name])
+   :onBlur      (fn [e] (rf/dispatch [:input-blur name (-> e .-target .-value)]))
    :readOnly    read-only})
 
-(defmethod field-def->input :default [field-def current-value editing-value]
-  [:input (field-def->input-params field-def current-value editing-value)])
+(defmethod field-def->input :default [field-def value]
+  [:input (field-def->input-params field-def value)])
 
-(defn input [field-def {editing-data :editing-data records :records current-record-id :current-record}]
-  (let [field-key     (-> field-def :name keyword)
-        editing-value (field-key editing-data)
-        current-value (field-key (get records current-record-id))]
-    (field-def->input field-def current-value editing-value)))
+(defn input [field-def {editing :editing editing-data :editing-data records :records current-record-id :current-record} form-state]
+  (let [field-name    (:name field-def)
+        field-key     (-> field-name keyword)
+        current-value (or (field-key (get records current-record-id)) "")
+        editing-value (field-key editing-data)]
+    (field-def->input field-def (when-not (= editing field-name) (or editing-value current-value)))))
