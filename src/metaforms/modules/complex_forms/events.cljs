@@ -128,6 +128,13 @@
 (rf/reg-event-fx
  :do-form-confirm
  (fn [{db :db} _]
+   {:dispatch [:ask-for-confirmation
+               (l (if (cf.logic/new-record? db) :form/confirm-append? :form/confirm-edit?))
+               :do-confirmed-form-confirm]}))
+
+(rf/reg-event-fx
+ :do-confirmed-form-confirm
+ (fn [{db :db} _]
    (let [new-records          (cf.logic/records<-editing-data db)
          current-record-index (cf.logic/current-record-index db)]
      {:db       (cf.logic/set-current-form-data db {:new-record?    false
@@ -145,17 +152,7 @@
      {:dispatch [:ask-for-confirmation (l :form/confirm-delete?) :do-confirmed-form-delete]})))
 
 (rf/reg-event-fx
- :do-confirmed-form-delete
- (fn [{db :db} _]
-   (let [after-delete-records (cf.logic/delete-current-record db)]
-     {:db       (cf.logic/set-current-form-data db {:records        after-delete-records
-                                                    :editing-data   nil
-                                                    :new-record?    false
-                                                    :current-record (cf.logic/record-index-after-delete db after-delete-records)})
-      :dispatch [:set-current-form-state :view]})))
-
-(rf/reg-event-db
- :input-focus
+ :do-nput-focus
  (fn [db [_ field-name]]
    (cf.logic/set-current-form-data db {:editing field-name})))
 
