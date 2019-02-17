@@ -77,15 +77,6 @@
   (let [field-by-name (fn [name] (first (filter #(= (:name %) name) fields-defs)))]
     (mapv field-by-name (:fields row-def))))
 
-(defn get-form [db form-id]
-  (get-in db [:complex-forms form-id]))
-
-(defn current-form [db]
-  (get-form db (:current-form db)))
-
-(defn current-form-state [db]
-  (:state (current-form db)))
-
 (defn str->date [s]
   (tf/parse date-formatter s))
 
@@ -111,15 +102,30 @@
     [:delete :view]  :deleting
     current-state))
 
-(defn field-defs [db form-id]
-  (-> (get-form db form-id) :definition :fields-defs))
+(defn get-form [db form-id]
+  (get-in db [:complex-forms form-id]))
+
+(defn current-form [db]
+  (get-form db (:current-form db)))
+
+(defn current-form-state [db]
+  (:state (current-form db)))
+
+(defn current-form-data [db]
+  (:data (current-form db)))
+
+(defn fields-defs [db]
+  (-> (current-form db) :definition :fields-defs))
+
+(def current-record-index #(-> % current-form-data :current-record))
+(def current-records #(-> % current-form-data :records))
+(def editing-data #(-> % current-form-data :editing-data))
 
 (defn set-current-form-data [db new-form-data]
-  (assoc db :current-form-data (merge (:current-form-data db) new-form-data)))
+  (assoc-in db [:complex-forms (:current-form db) :data] (merge (current-form-data db) new-form-data)))
 
-(def current-record-index #(-> % :current-form-data :current-record))
-(def current-records #(-> % :current-form-data :records))
-(def editing-data #(-> % :current-form-data :editing-data))
+(defn set-current-record-index [db index]
+  (assoc-in db [:complex-forms (:current-form db) :data :current-record] index))
 
 (defn current-data-record [db]
   (some->>

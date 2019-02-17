@@ -29,13 +29,12 @@
 
 (defn load-form-definition-success [form-id response db]
   (let [form-definition (-> response :data first)]
-    (assoc
-     (assoc-in db [:complex-forms form-id] {:definition form-definition
-                                            :state      :view})
-     :current-form-data {:records        []
-                         :current-record nil
-                         :editing-data   nil
-                         :new-record?    false})))
+    (assoc-in db [:complex-forms form-id] {:definition form-definition
+                                           :state      :view
+                                           :data {:records        []
+                                                  :current-record nil
+                                                  :editing-data   nil
+                                                  :new-record?    false}})))
 
 (rf/reg-event-fx
  ::load-form-definition-success
@@ -59,6 +58,20 @@
 ;; data navigation
 ;; :nav-first :nav-prior :nav-next :nav-last
 
+;; NAVIGATION ACTIONS SECTION
+(rf/reg-event-fx
+ :nav-prior
+ (fn [{db :db} [_]]
+   (let [record-index (cf.logic/current-record-index db)]
+     {:db (if (> record-index 0) (dec record-index) record-index)})))
+
+(rf/reg-event-fx
+ :nav-next
+ (fn [{db :db} [_]]
+   (let [record-index (cf.logic/current-record-index db)
+         record-count (count (cf.logic/current-records db))]
+     {:db (if (< record-index record-count) (inc record-index) record-index)})))
+
 ;; CRUD ACTIONS SECTION
 (rf/reg-event-fx
  :do-form-action
@@ -67,14 +80,6 @@
          next-state    (cf.logic/next-form-state form-action current-state)]
      (when (not= current-state next-state)
        {:dispatch [(keyword (str "do-form-"(name form-action)))]}))))
-
-(rf/reg-event-fx
- :do-form-clear
- (fn [{db :db} [_ next-action]]
-   (js/console.log next-action)
-   {:db       (cf.logic/set-current-form-data db {:clearing?    true
-                                                  :editing-data (cf.logic/empty-record (cf.logic/field-defs db (:current-form db)))})
-    :dispatch [next-action]}))
 
 (rf/reg-event-fx
  :do-form-edit
@@ -88,10 +93,9 @@
 (rf/reg-event-fx
  :do-form-append
  (fn [{db :db} [_]]
-   (let [form-id (:current-form db)]
-     {:db       (cf.logic/set-current-form-data db {:new-record?  true
-                                                    :editing-data (cf.logic/new-record (cf.logic/field-defs db form-id))})
-      :dispatch [:set-current-form-state :edit]})))
+   {:db       (cf.logic/set-current-form-data db {:new-record?  true
+                                                  :editing-data (cf.logic/new-record (cf.logic/fields-defs db))})
+    :dispatch [:set-current-form-state :edit]}))
 
 (rf/reg-event-fx
  :do-form-discard
@@ -107,9 +111,9 @@
          current-record-index (cf.logic/current-record-index db)]
      {:db       (cf.logic/set-current-form-data db {:new-record?  false
                                                     :editing-data nil
-                                                    :current-record (cl/log (if current-record-index
-                                                                              current-record-index
-                                                                              (-> new-records count dec)))
+                                                    :current-record (if current-record-index
+                                                                      current-record-index
+                                                                      (-> new-records count dec))
                                                     :records      (cf.logic/records<-editing-data db)})
       :dispatch [:set-current-form-state :view]})))
 
