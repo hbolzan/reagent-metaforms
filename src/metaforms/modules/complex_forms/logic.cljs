@@ -95,11 +95,15 @@
 
 (defn next-form-state [action current-state]
   (case [action current-state]
-    [:append :view]  :edit
-    [:edit :view]    :edit
-    [:confirm :edit] :view
-    [:discard :edit] :view
-    [:delete :view]  :deleting
+    [:append :view]    :edit
+    [:edit :view]      :edit
+    [:confirm :edit]   :view
+    [:discard :edit]   :view
+    [:delete :view]    :deleting
+    [:nav-prior :view] :prior
+    [:nav-next :view]  :next
+    [:nav-first :view] :first
+    [:nav-last :view]  :last
     current-state))
 
 (defn get-form [db form-id]
@@ -120,6 +124,7 @@
 (def current-record-index #(-> % current-form-data :current-record))
 (def current-records #(-> % current-form-data :records))
 (def editing-data #(-> % current-form-data :editing-data))
+(def new-record? #(-> % current-form-data :new-record?))
 
 (defn set-current-form-data [db new-form-data]
   (assoc-in db [:complex-forms (:current-form db) :data] (merge (current-form-data db) new-form-data)))
@@ -139,9 +144,9 @@
   (conj (current-records db) (editing-data db)))
 
 (defn records<-editing-data [db]
-  (if-let [record-index (current-record-index db)]
-    (current-record<-editing-data db record-index)
-    (new-record<-editing-data db)))
+  (if (new-record? db)
+    (new-record<-editing-data db)
+    (current-record<-editing-data db (current-record-index db))))
 
 (defn delete-current-record [db]
   (into [] (cl/remove-nth (current-records db) (current-record-index db))))

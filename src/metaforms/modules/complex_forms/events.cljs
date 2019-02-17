@@ -58,21 +58,7 @@
 ;; data navigation
 ;; :nav-first :nav-prior :nav-next :nav-last
 
-;; NAVIGATION ACTIONS SECTION
-(rf/reg-event-fx
- :nav-prior
- (fn [{db :db} [_]]
-   (let [record-index (cf.logic/current-record-index db)]
-     {:db (if (> record-index 0) (dec record-index) record-index)})))
-
-(rf/reg-event-fx
- :nav-next
- (fn [{db :db} [_]]
-   (let [record-index (cf.logic/current-record-index db)
-         record-count (count (cf.logic/current-records db))]
-     {:db (if (< record-index record-count) (inc record-index) record-index)})))
-
-;; CRUD ACTIONS SECTION
+;; TOOLSET ENTRY POINT
 (rf/reg-event-fx
  :do-form-action
  (fn [{db :db} [_ form-action]]
@@ -81,6 +67,34 @@
      (when (not= current-state next-state)
        {:dispatch [(keyword (str "do-form-"(name form-action)))]}))))
 
+;; NAVIGATION ACTIONS
+(rf/reg-event-fx
+ :do-form-nav-first
+ (fn [{db :db} [_]]
+   {:db (cf.logic/set-current-record-index db 0)}))
+
+(rf/reg-event-fx
+ :do-form-nav-prior
+ (fn [{db :db} [_]]
+   (let [record-index (cf.logic/current-record-index db)
+         prior-index  (if (> record-index 0) (dec record-index) record-index)]
+     {:db (cf.logic/set-current-record-index db prior-index)})))
+
+(rf/reg-event-fx
+ :do-form-nav-next
+ (fn [{db :db} [_]]
+   (let [record-index (cf.logic/current-record-index db)
+         record-count (count (cf.logic/current-records db))
+         next-index   (if (< record-index (dec record-count)) (inc record-index) record-index)]
+     {:db (cf.logic/set-current-record-index db next-index)})))
+
+(rf/reg-event-fx
+ :do-form-nav-last
+ (fn [{db :db} [_]]
+   (let [record-count (count (cf.logic/current-records db))]
+     {:db (cf.logic/set-current-record-index db (when (> record-count 0) (dec record-count)))})))
+
+;; CRUD ACTIONS
 (rf/reg-event-fx
  :do-form-edit
  (fn [{db :db} [_]]
@@ -109,12 +123,12 @@
  (fn [{db :db} [_]]
    (let [new-records          (cf.logic/records<-editing-data db)
          current-record-index (cf.logic/current-record-index db)]
-     {:db       (cf.logic/set-current-form-data db {:new-record?  false
-                                                    :editing-data nil
-                                                    :current-record (if current-record-index
-                                                                      current-record-index
-                                                                      (-> new-records count dec))
-                                                    :records      (cf.logic/records<-editing-data db)})
+     {:db       (cf.logic/set-current-form-data db {:new-record?    false
+                                                    :editing-data   nil
+                                                    :current-record (if (cf.logic/new-record? db)
+                                                                      (-> new-records count dec)
+                                                                      current-record-index)
+                                                    :records        new-records})
       :dispatch [:set-current-form-state :view]})))
 
 (rf/reg-event-fx
