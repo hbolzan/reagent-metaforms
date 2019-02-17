@@ -104,6 +104,7 @@
     [:nav-next :view]  :next
     [:nav-first :view] :first
     [:nav-last :view]  :last
+    [:search :view]    :search
     current-state))
 
 (defn get-form [db form-id]

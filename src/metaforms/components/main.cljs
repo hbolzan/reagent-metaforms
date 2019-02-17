@@ -52,9 +52,8 @@
 (defn main-footer [content]
   [:footer.app-footer content
    [:div
-    [:a {:href "https://www.minipcp.com.br"}
-     "MiniPCP"]
-    [:span "© 2018 EFX Tecnologia"]]
+    [:a {:href "https://www.minipcp.com.br" :target "_blank"} "MiniPCP"]
+    [:span " © 2019 EFX Tecnologia"]]
    [:div.ml-auto
     [:span "Powered by "]
-    [:a {:href ""} "Reagent Metaforms"]]])
+    [:a {:href "https://github.com/hbolzan/reagent-metaforms" :target "_blank"} "Reagent Metaforms"]]])

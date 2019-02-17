@@ -1,4 +1,5 @@
-(ns metaforms.common.logic)
+(ns metaforms.common.logic
+  (:require [re-frame.core :as rf]))
 
 (def sum (partial reduce +))
 
@@ -22,6 +23,21 @@
   "Removes nth item from vector"
   [v n]
   (concat (subvec v 0 n) (subvec v (inc n))))
+
+(defn action->dispatch-action
+  "If action is not a vector, wraps it into a vector so it can be used as a dispatch action"
+  [action]
+  (if (= (type action) cljs.core/PersistentVector)
+    action
+    [(keyword action)]))
+
+(defn action->action-fn
+  "If action is not a function, returns a dispatcher function"
+  [action]
+  (cond
+    (nil? action) nil
+    (fn? action)  action
+    :else #(rf/dispatch (action->dispatch-action action))))
 
 (defn log [x]
   (js/console.log x)

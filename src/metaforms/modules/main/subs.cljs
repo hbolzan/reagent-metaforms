@@ -15,3 +15,13 @@
  :current-view
  (fn [db _]
    (:current-view db)))
+
+(rf/reg-sub
+ :modal-visible?
+ (fn [db _]
+   (-> db :modal :visible?)))
+
+(rf/reg-sub
+ :modal-params
+ (fn [db _]
+   (-> db :modal)))

@@ -3,15 +3,25 @@
             [test.metaforms.fixtures :as fixtures]
             [metaforms.modules.complex-forms.logic :as cf-logic]))
 
-(deftest empty-record-test
+(deftest new-record-test
   (is (=
        (cf-logic/new-record fixtures/fields-defs)
        {:id            19
         :name          "Some name"
-        :address       nil
+        :address       ""
         :initial_date  "2019-01-18"
         :date_and_time "2019-01-18T12:34:15Z"})
       "A new data record should be created with fields definitions considering default values"))
+
+(deftest empty-record-test
+  (is (=
+       (cf-logic/empty-record fixtures/fields-defs)
+       {:id            ""
+        :name          ""
+        :address       ""
+        :initial_date  ""
+        :date_and_time ""})
+      "A new data record should be created with empty values"))
 
 (deftest next-form-state-test
   (is (= (cf-logic/next-form-state :append :view) :edit))

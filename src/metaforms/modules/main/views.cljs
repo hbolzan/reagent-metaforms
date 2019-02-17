@@ -1,9 +1,11 @@
 (ns metaforms.modules.main.views
   (:require [reagent.core :as r]
             [re-frame.core :as rf]
+            [metaforms.common.views :as common.views]
             [metaforms.components.main :as main]
+            [metaforms.components.modal :as modal]
             [metaforms.modules.cadastros.views :as cadastros]
-            [metaforms.modules.complex-forms.views :as cf-views]
+            [metaforms.modules.complex-forms.views :as cf.views]
             [metaforms.modules.samples.views :as samples]))
 
 (defmulti route (fn [view content] view))
@@ -15,16 +17,7 @@
   (samples/sample-view))
 
 (defmethod route :complex-form [_ _]
-  (cf-views/generic-view))
-
-(defn not-found []
-  [:div.container
-   [:div.row.justify-content-center
-    [:div.col-md-6
-     [:div.clearfix
-      [:h1.float-left.display-3.mr-4 "404"]
-      [:h4.pt-3 "Oops! Função não disponível."]
-      [:p.text-muted "Escolha uma das opções disponíveis no menu."]]]]])
+  (cf.views/generic-view))
 
 (defmethod route :default [_ content]
   content)
@@ -39,5 +32,6 @@
      [main/main-body
       sidebar-items
       breadcrumb-items
-      (route view (not-found))]
-     [main/main-footer nil]]))
+      (route view (common.views/not-found))]
+     [main/main-footer nil]
+     (modal/dialog)]))
