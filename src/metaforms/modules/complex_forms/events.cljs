@@ -12,7 +12,7 @@
 (rf/reg-event-fx
  :set-form-definition
  (fn [{db :db} [_ form-pk]]
-   (let [form-id (-> form-pk str/lower-case (str/replace #"_" "-") keyword)]
+   (let [form-id (-> (str form-pk) str/lower-case (str/replace #"_" "-") keyword)]
      (if-let [form (cf.logic/get-form db form-id)]
        {:dispatch [:set-current-form form-id]}
        {:dispatch [:load-form-definition form-pk form-id]}))))

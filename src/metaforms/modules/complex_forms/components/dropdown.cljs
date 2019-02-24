@@ -40,7 +40,8 @@
         value               (:value @local-state)]
 
     ;; if last-modified-field interests me, i'll keep it's value in my own state
-    (if (= (:name last-modified-field) (first filter-args))
+    (if (and (not= (:value last-modified-field) (:filter-value @local-state))
+             (= (:name last-modified-field) (first filter-args)))
       (reset! local-state (assoc @local-state :filter-value (:value last-modified-field))))
 
     [:select (merge {:class "form-control"

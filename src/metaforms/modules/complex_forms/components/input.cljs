@@ -4,22 +4,31 @@
             [re-frame.core :as rf]
             [metaforms.modules.complex-forms.components.dropdown :as dropdown]))
 
-(defn update-value [new-value local-state form-state last-modified-field]
+(defn state-changing-to-edit? [local-state form-state]
+  (and (= form-state :edit) (not= (:state local-state) :edit)))
+
+(defn outer-value-changed-when-not-editing? [new-value local-state form-state]
+  (and (not= (:state local-state) :edit) (not= new-value (:value local-state))))
+  ;; (and (not= form-state :edit) (not= new-value (:value local-state))))
+
+(defn update-value [new-value local-state form-state last-modified-field outer-source-value]
   "May update value if changing state to :edit
    or outer value changed when not editing
    otherwise, only state and last-modified-value are updated"
-  (let [value (if (or (and (= form-state :edit) (not= (:state @local-state) :edit))
-                      (and (not= form-state :edit) (not= new-value (:value @local-state))))
-                new-value
-                (:value @local-state))]
-    (assoc @local-state :value value :state form-state :last-modified-field last-modified-field)))
+  (let [update-value?        (or (state-changing-to-edit? local-state form-state)
+                                 (outer-value-changed-when-not-editing? new-value local-state form-state))
+        last-modified-field' (if last-modified-field last-modified-field (:last-modified-field local-state))]
+    (merge local-state {:value               (if update-value? new-value (:value local-state))
+                        :state               form-state
+                        :last-modified-field last-modified-field'})))
 
 (defn update-state! [new-state local-state]
   (reset! local-state new-state))
 
-(defn do-update-state! [new-value local-state form-state last-modified-field]
+(defn do-update-state!
+  [new-value local-state form-state last-modified-field outer-source-value]
   (-> new-value
-      (update-value local-state form-state last-modified-field)
+      (update-value @local-state form-state last-modified-field outer-source-value)
       (update-state! local-state)))
 
 (defn update-value! [new-value local-state]
@@ -64,12 +73,29 @@
         filter-args   (if (not (empty? lookup-filter)) (str/split lookup-filter ";") [])]
     (first filter-args)))
 
+(defn calc-last-modified-field
+  [last-modified-field filter-source-field outer-source-value form-state local-state]
+  (if (not filter-source-field)
+    last-modified-field
+    (if (= form-state :view)
+      (if (or
+           (not= (:name last-modified-field) filter-source-field)
+           (= (:value last-modified-field) outer-source-value))
+        last-modified-field
+        {:name filter-source-field :value outer-source-value}
+        #_(assoc last-modified-field :value outer-source-value))
+      last-modified-field)))
+
 (defn input [field-def form-state all-defs]
   (let [local-state (r/atom {:value "" :state form-state :last-modified-field nil})]
     (fn [field-def form-state]
       (let [outer-value         @(rf/subscribe [:field-value (:name field-def)])
             filter-source-field (filter-source-field field-def)
-            filter-source-value (when filter-source-field @(rf/subscribe [:field-value filter-source-field]))
-            last-modified-field @(rf/subscribe [:last-modified-field])]
-        (do-update-state! outer-value local-state form-state last-modified-field)
-        (field-def->input (assoc field-def :filter-source-value filter-source-value) local-state form-state)))))
+            outer-source-value (when filter-source-field @(rf/subscribe [:field-value filter-source-field]))
+            last-modified-field (calc-last-modified-field @(rf/subscribe [:last-modified-field])
+                                                          filter-source-field
+                                                          outer-source-value
+                                                          form-state
+                                                          @local-state)]
+        (do-update-state! outer-value local-state form-state last-modified-field outer-source-value)
+        (field-def->input (assoc field-def :filter-source-value outer-source-value) local-state form-state)))))
