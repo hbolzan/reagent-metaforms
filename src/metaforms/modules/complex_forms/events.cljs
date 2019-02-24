@@ -152,18 +152,34 @@
      {:dispatch [:ask-for-confirmation (l :form/confirm-delete?) :do-confirmed-form-delete]})))
 
 (rf/reg-event-fx
- :do-nput-focus
+ :do-confirmed-form-delete
+ (fn [{db :db} _]
+   (let [after-delete-records (cf.logic/delete-current-record db)]
+     {:db       (cf.logic/set-current-form-data db {:records        after-delete-records
+                                                    :editing-data   nil
+                                                    :new-record?    false
+                                                    :current-record (cf.logic/record-index-after-delete db after-delete-records)})
+      :dispatch [:set-current-form-state :view]})))
+
+(rf/reg-event-fx
+ :do-input-focus
  (fn [db [_ field-name]]
    (cf.logic/set-current-form-data db {:editing field-name})))
 
-(rf/reg-event-db
+(rf/reg-event-fx
  :input-blur
+ (fn [{db :db} [_ field-name field-value]]
+   {:db (cf.logic/set-current-form-data db {:editing      nil
+                                            :editing-data (assoc
+                                                           (cf.logic/editing-data db)
+                                                           (keyword field-name)
+                                                           field-value)})
+    :dispatch [:field-value-changed field-name field-value]}))
+
+(rf/reg-event-db
+ :field-value-changed
  (fn [db [_ field-name field-value]]
-   (cf.logic/set-current-form-data db {:editing      nil
-                                       :editing-data (assoc
-                                                      (cf.logic/editing-data db)
-                                                      (keyword field-name)
-                                                      field-value)})))
+   (assoc db :last-modified-field {:name field-name :value field-value})))
 
 (rf/reg-event-db
  :set-current-form-state

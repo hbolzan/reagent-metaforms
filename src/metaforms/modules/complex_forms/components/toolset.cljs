@@ -41,12 +41,18 @@
 (defn disabled? [form-state enabled-states]
   (-> (.indexOf enabled-states form-state) (< 0)))
 
+(defn button-click [e]
+  (let [events (if (= (type e) Keyword) [e] e)]
+    (rf/dispatch-sync [:do-form-action (first events)])
+    (doseq [event (rest events)]
+      (rf/dispatch-sync [event]))))
+
 (defn button-props [form-state enabled-states button-type button-types]
   (merge
    {:type      "button"
     :className "btn btn-primary btn-lg"
     :key       (name button-type)
-    :onClick #(rf/dispatch [:do-form-action (-> button-types button-type :form-event)])}
+    :onClick #(button-click (-> button-types button-type :form-event))}
    (cond (disabled? form-state enabled-states)
          {:disabled :disabled})))
 

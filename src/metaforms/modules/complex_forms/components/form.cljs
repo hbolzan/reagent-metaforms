@@ -8,16 +8,17 @@
 
 ;; form-data => {:records [hash-map] :current-record integer :editing-data hash-map :new-record? boolean}
 (defn form-field
-  [{:keys [id label] :as field} additional-group-class form-state]
+  [{:keys [id label] :as field} additional-group-class form-state all-defs]
   [:div {:key id :class (str "form-group" (some->> additional-group-class (str " ")))}
    [:label {:html-for id} label]
-   (input/input field form-state)])
+   [input/input field form-state all-defs]])
 
 (defn form-row
   [form-id row-index row-def fields-defs form-state]
   [:div.form-row {:key (str "row-" row-index)}
    (doall
-    (map (fn [field bootstrap-width] (form-field field (l-cf/width->col-md-class bootstrap-width) form-state))
+    (map (fn [field bootstrap-width]
+           (form-field field (l-cf/width->col-md-class bootstrap-width) form-state fields-defs))
          (l-cf/row-fields row-def fields-defs)
          (:bootstrap-widths row-def)))])
 

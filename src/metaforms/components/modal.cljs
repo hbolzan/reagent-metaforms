@@ -47,7 +47,7 @@
     [:<>
      [:div {
             :class    (if visible? "show modal" "modal fade")
-            :tabindex -1
+            :tabIndex -1
             :role     "dialog"
             :style    (merge {:display      "block"
                               :paddingRight "14px"}
