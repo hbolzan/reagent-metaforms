@@ -3,15 +3,9 @@
             [reagent.core :as r]
             [re-frame.core :as rf]))
 
-#_(defn filtered-options [options filter-by local-state]
-  (if-let [filter-value (:filter-value @local-state)]
-    (do
-      (filter #(= ((keyword filter-by) %) filter-value) options))
-    options))
-
 (defn filtered-options [options filter-by filter-value]
-  (if filter-value
-    (do
+  (if filter-by
+    (when filter-value
       (filter #(= ((keyword filter-by) %) filter-value) options))
     options))
 
@@ -44,9 +38,6 @@
         filter-source-field (first filter-args)
         last-modified-field (:last-modified-field @local-state)
         value               (:value @local-state)]
-
-    (if (and filter-source-field (not (:filter-source-field @local-state)))
-      (reset! local-state (update-filter-source local-state filter-source-field)))
 
     ;; if last-modified-field interests me, i'll keep it's value in my own state
     (if (= (:name last-modified-field) (first filter-args))

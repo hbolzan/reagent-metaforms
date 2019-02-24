@@ -60,8 +60,8 @@
            (field-def->common-props field-def local-state form-state))])
 
 (defn filter-source-field [field-def]
-  (let [lookup-filter       (-> field-def :lookup-filter str/trim)
-        filter-args         (if (not (empty? lookup-filter)) (str/split lookup-filter ";") [])]
+  (let [lookup-filter (-> field-def :lookup-filter str/trim)
+        filter-args   (if (not (empty? lookup-filter)) (str/split lookup-filter ";") [])]
     (first filter-args)))
 
 (defn input [field-def form-state all-defs]
