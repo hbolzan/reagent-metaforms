@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [reagent.core :as r]
             [re-frame.core :as rf]
+            [react-input-mask :as InputElement]
             [metaforms.common.logic :as cl]
             [metaforms.modules.complex-forms.components.dropdown :as dropdown]
             [metaforms.modules.complex-forms.components.checkbox :as checkbox]))
@@ -40,9 +41,8 @@
   (when common-onchange?
     (merge props {:on-change (fn [e]
                          (let [value (-> e .-target .-value)]
-                           (js/console.log value)
                            (update-value! value local-state*)
-                           (rf/dispatch [:field-value-changed field-name value])))})))
+                           #_(rf/dispatch [:field-value-changed field-name value])))})))
 
 (defn field-def->common-props
   ([field-def local-state* form-state]
@@ -67,17 +67,20 @@
   [dropdown/dropdown field-def (field-def->common-props field-def local-state* form-state) local-state*])
 
 (defn field-def->input-params
-  [{:keys [id name label read-only]} local-state form-state]
+  [{:keys [id name label read-only mask mask-char format-chars]} local-state form-state]
   (let [viewing? (not= form-state :edit)]
-    {:type        "text"
-     :className   "form-control"
-     :name        name
-     :id          id
-     :value       (:value @local-state)
-     :readOnly    (or read-only viewing?)}))
+    {:type         "text"
+     :className    "form-control"
+     :name         name
+     :mask         mask
+     :mask-char    mask-char
+     :format-chars format-chars
+     :id           id
+     :value        (:value @local-state)
+     :readOnly     (or read-only viewing?)}))
 
 (defmethod field-def->input :default [field-def local-state form-state]
-  [:input (merge
+  [:> InputElement (merge
            (field-def->input-params field-def local-state form-state)
            (field-def->common-props field-def local-state form-state))])
 

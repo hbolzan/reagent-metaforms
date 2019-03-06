@@ -7,7 +7,12 @@
             [metaforms.modules.samples.db :as samples.db]
             [metaforms.modules.complex-forms.logic :as cf.logic]))
 
-  (def base-uri "http://localhost:8000/query/persistent/complex-tables/?id={id}&middleware=complex_forms&depth=1")
+(def api-host "http://localhost:8000")
+(def persistent-path "/query/persistent/")
+(def base-uri (str api-host persistent-path "complex-tables/?id={id}&middleware=complex_forms&depth=1"))
+(def persistent-post-base-uri (str api-host persistent-path ":complex-id/"))
+(def persistent-put-base-uri (str persistent-post-base-uri ":id/"))
+(def persistent-delete-base-uri (str api-host persistent-path "delete/:complex-id/:id/"))
 
 (rf/reg-event-fx
  :set-form-definition
@@ -20,13 +25,10 @@
 (rf/reg-event-fx
  :load-form-definition
  (fn [{db :db} [_ form-pk form-id]]
-   {:http-xhrio {:method          :get
-                 :uri             (str/replace base-uri #"\{id\}" form-pk)
-                 :format          (ajax/json-request-format)
-                 :response-format (ajax/json-response-format {:keywords? true})
-                 :timeout         8000
-                 :on-success      [::load-form-definition-success form-id]
-                 :on-failure      [::load-form-definition-failure]}}))
+   {:dispatch [:http-get
+               (str/replace base-uri #"\{id\}" form-pk)
+               [::load-form-definition-success form-id]
+               [::load-form-definition-failure]]}))
 
 (defn load-form-definition-success [form-id response db]
   (let [form-definition (-> response :data first)]
@@ -136,14 +138,29 @@
  :do-confirmed-form-confirm
  (fn [{db :db} _]
    (let [new-records          (cf.logic/records<-editing-data db)
-         current-record-index (cf.logic/current-record-index db)]
-     {:db       (cf.logic/set-current-form-data db {:new-record?    false
-                                                    :editing-data   nil
-                                                    :current-record (if (cf.logic/new-record? db)
-                                                                      (-> new-records count dec)
-                                                                      current-record-index)
-                                                    :records        new-records})
-      :dispatch [:set-current-form-state :view]})))
+         new-record?          (cf.logic/new-record? db)
+         current-record-index (cf.logic/current-record-index db)
+         current-record       (if new-record? (-> new-records count dec) current-record-index)
+         new-db               (cf.logic/set-current-form-data db {:new-record?    false
+                                                                  :editing-data   nil
+                                                                  :current-record current-record
+                                                                  :records        new-records})]
+     {:dispatch [:http-post
+                 (cf.logic/post-form-data-url db persistent-post-base-uri)
+                 (cf.logic/current-data-record new-db)
+                 [::form-confirm-success new-db]
+                 [::form-confirm-failure]]})))
+
+(rf/reg-event-fx
+ ::form-confirm-success
+ (fn [{db :db} [_ new-db response]]
+   {:db       new-db
+    :dispatch [:set-current-form-state :view]}))
+
+(rf/reg-event-fx
+ ::form-confirm-failure
+ (fn [{db :db} [_ result]]
+   (js/console.log "ERROR" result)))
 
 (rf/reg-event-fx
  :do-form-delete

@@ -119,6 +119,13 @@
 (defn current-form-data [db]
   (:data (current-form db)))
 
+(defn current-form-dataset-name [db]
+  (-> (current-form db) :definition :dataset-name))
+
+(defn post-form-data-url
+  [db persistent-post-base-uri]
+  (str/replace persistent-post-base-uri #":complex-id" (current-form-dataset-name db)))
+
 (defn fields-defs [db]
   (-> (current-form db) :definition :fields-defs))
 
@@ -133,10 +140,11 @@
 (defn set-current-record-index [db index]
   (assoc-in db [:complex-forms (:current-form db) :data :current-record] index))
 
+(defn data-record-by-index [db index]
+  (get (current-records db) index))
+
 (defn current-data-record [db]
-  (some->>
-   (current-record-index db)
-   (get (current-records db))))
+  (data-record-by-index db (current-record-index db)))
 
 (defn current-record<-editing-data [db record-index]
   (assoc (current-records db) record-index (editing-data db)))

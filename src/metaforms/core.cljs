@@ -2,6 +2,7 @@
   (:require [reagent.core :as r]
             [re-frame.core :as rf]
             [day8.re-frame.http-fx]
+            [metaforms.http.events]
             [metaforms.routes :as routes]
             [metaforms.modules.main.events]
             [metaforms.modules.complex-forms.events]
