@@ -147,7 +147,8 @@
                                                                   :records        new-records})]
      {:dispatch [:http-post
                  (cf.logic/post-form-data-url db persistent-post-base-uri)
-                 (cf.logic/current-data-record new-db)
+                 (cf.logic/data-record->typed-data (cf.logic/current-data-record new-db)
+                                                   (cf.logic/fields-defs new-db))
                  [::form-confirm-success new-db]
                  [::form-confirm-failure]]})))
 

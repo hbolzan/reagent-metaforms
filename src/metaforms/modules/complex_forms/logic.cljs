@@ -93,6 +93,31 @@
           {}
           fields-defs))
 
+(defn empty-number? [value data-type]
+  (and (some #{data-type} [:integer :float]) (js/isNaN value)))
+
+(defn date-or-time? [data-type]
+  (some #{data-type} [:date :time :timestamp]))
+
+(defn typecast [value data-type]
+  (let [result (cond
+                 (date-or-time? data-type) (if (empty? value) nil value)
+                 (= data-type :integer)    (js/parseInt value)
+                 (= data-type :float)      (js/parseFloat value)
+                 :else                     value)]
+    (if (empty-number? result data-type)
+      nil
+      result)))
+
+(defn record-typecast [data-record field-def]
+  (let [field-name (-> field-def :name)]
+    {field-name (typecast (get data-record (keyword field-name))
+                          (-> field-def :data-type keyword))}))
+
+(defn data-record->typed-data [data-record fields-defs]
+  (js/console.log data-record)
+  (cl/log (map #(record-typecast data-record %) fields-defs)))
+
 (defn next-form-state [action current-state]
   (case [action current-state]
     [:append :view]    :edit
