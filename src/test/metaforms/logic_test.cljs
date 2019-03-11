@@ -34,3 +34,39 @@
   (is (= (cf-logic/next-form-state :edit :edit) :edit))
   (is (= (cf-logic/next-form-state :confirm :view) :view))
   (is (= (cf-logic/next-form-state :delete :edit) :edit)))
+
+(deftest typecast-test
+  (is (= (cf-logic/typecast "abc" :char) "abc"))
+  (is (= (cf-logic/typecast "" :integer) nil))
+  (is (= (cf-logic/typecast "" :float) nil))
+  (is (= (cf-logic/typecast "123" :integer) 123))
+  (is (= (cf-logic/typecast "1.23" :float) 1.23))
+  (is (= (cf-logic/typecast "" :date) nil))
+  (is (= (cf-logic/typecast "2019-01-20" :date) "2019-01-20"))
+  (is (= (cf-logic/typecast "10:23" :time) "10:23"))
+  (is (= (cf-logic/typecast "2019-01-20T10:23" :time) "2019-01-20T10:23")))
+
+(deftest field-typecast-test
+  (is (= (cf-logic/field-typecast {:a "123" :b "abc" :c "1.23"}
+                         {:name "a" :data-type "integer"})
+         {"a" 123}))
+
+  (is (= (cf-logic/field-typecast {:a "123" :b "abc" :c "1.23"}
+                                  {:name "b" :data-type "char"})
+         {"b" "abc"})))
+
+(deftest data-record->typed-data-test
+  (let [data-record {:a "123" :b "abc" :c "1.23"}
+        fields-defs [{:name "a" :data-type "integer"}
+                     {:name "b" :data-type "char"}
+                     {:name "c" :data-type "float"}]]
+    (is (= (cf-logic/data-record->typed-data data-record fields-defs)
+           {"a" 123 "b" "abc" "c" 1.23})))
+
+  (let [data-record {:id "" :a "123" :b "abc" :c "1.23"}
+        fields-defs [{:name "id" :data-type "integer"}
+                     {:name "a" :data-type "integer"}
+                     {:name "b" :data-type "char"}
+                     {:name "c" :data-type "float"}]]
+    (is (= (cf-logic/data-record->typed-data data-record fields-defs)
+           {"id" nil "a" 123 "b" "abc" "c" 1.23}))))

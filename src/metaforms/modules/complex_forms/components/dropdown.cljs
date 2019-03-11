@@ -1,6 +1,7 @@
 (ns metaforms.modules.complex-forms.components.dropdown
   (:require [clojure.string :as str]
             [reagent.core :as r]
+            [metaforms.common.logic :as cl]
             [re-frame.core :as rf]))
 
 (defn filtered-options [options filter-by filter-value]
@@ -9,11 +10,26 @@
       (filter #(= ((keyword filter-by) %) filter-value) options))
     options))
 
-(defn dropdown-options [options lookup-key lookup-result]
+(defn render-dropdown-options [options lookup-key lookup-result]
   (map
    (fn [option] [:option {:value (lookup-key option)
-                         :key   (lookup-key option)} (lookup-result option)])
+                         :key   (or (lookup-key option) 0)} (lookup-result option)])
    options))
+
+(defn review-lookup-result-name [lookup-key-name lookup-result-name]
+  (if (= lookup-key-name lookup-result-name)
+    (str lookup-result-name "-dscr")
+    lookup-result-name))
+
+(defn dropdown-options [options label lookup-key-name lookup-result-name]
+  (let [lookup-key    (keyword lookup-key-name)
+        lookup-result (keyword (review-lookup-result-name lookup-key-name lookup-result-name))]
+    (render-dropdown-options (concat [{lookup-key nil lookup-result (str "-- " label " --")}]
+                                     (if (= lookup-key-name lookup-result-name)
+                                       (mapv #(assoc % lookup-result (lookup-key %)) options)
+                                       options))
+                             lookup-key
+                             lookup-result)))
 
 (defn update-filter-source [local-state filter-source-field]
   (assoc @local-state :filter-source-field filter-source-field))
@@ -28,12 +44,10 @@
       (:filter-value local-state*))))
 
 (defn dropdown
-  [{:keys [field-id name label options filter-source-value] :as defs}
+  [{:keys [field-id name label lookup-key lookup-result options filter-source-value] :as defs}
    common-props
    local-state]
-  (let [lookup-key          (-> defs :lookup-key keyword)
-        lookup-result       (-> defs :lookup-result keyword)
-        lookup-filter       (-> defs :lookup-filter str/trim)
+  (let [lookup-filter       (-> defs :lookup-filter str/trim)
         filter-args         (if (not (empty? lookup-filter)) (str/split lookup-filter ";") [])
         filter-source-field (first filter-args)
         last-modified-field (:last-modified-field @local-state)
@@ -48,9 +62,9 @@
                      :id    field-id
                      :value value}
                     common-props)
-     (dropdown-options (concat [{lookup-key "" lookup-result (str "-- " label " --")}]
-                               (filtered-options options
-                                                 (last filter-args)
-                                                 (filter-value local-state filter-source-value)))
+     (dropdown-options (filtered-options options
+                                         (last filter-args)
+                                         (filter-value local-state filter-source-value))
+                       label
                        lookup-key
                        lookup-result)]))

@@ -109,14 +109,15 @@
       nil
       result)))
 
-(defn record-typecast [data-record field-def]
+(defn field-typecast [data-record field-def]
   (let [field-name (-> field-def :name)]
     {field-name (typecast (get data-record (keyword field-name))
                           (-> field-def :data-type keyword))}))
 
 (defn data-record->typed-data [data-record fields-defs]
-  (js/console.log data-record)
-  (cl/log (map #(record-typecast data-record %) fields-defs)))
+  (reduce (fn [result field-def] (merge result (field-typecast data-record field-def)))
+          {}
+          fields-defs))
 
 (defn next-form-state [action current-state]
   (case [action current-state]
@@ -181,6 +182,17 @@
   (if (new-record? db)
     (new-record<-editing-data db)
     (current-record<-editing-data db (current-record-index db))))
+
+(defn current-record<-new-data [db record-index data]
+  (assoc (current-records db) record-index data))
+
+(defn new-record<-new-data [db data]
+  (conj (current-records db) data))
+
+(defn records<-new-data [db data]
+  (if (new-record? db)
+    (new-record<-new-data db data)
+    (current-record<-new-data db (current-record-index db) data)))
 
 (defn delete-current-record [db]
   (into [] (cl/remove-nth (current-records db) (current-record-index db))))

@@ -137,26 +137,25 @@
 (rf/reg-event-fx
  :do-confirmed-form-confirm
  (fn [{db :db} _]
-   (let [new-records          (cf.logic/records<-editing-data db)
-         new-record?          (cf.logic/new-record? db)
-         current-record-index (cf.logic/current-record-index db)
-         current-record       (if new-record? (-> new-records count dec) current-record-index)
-         new-db               (cf.logic/set-current-form-data db {:new-record?    false
-                                                                  :editing-data   nil
-                                                                  :current-record current-record
-                                                                  :records        new-records})]
-     {:dispatch [:http-post
-                 (cf.logic/post-form-data-url db persistent-post-base-uri)
-                 (cf.logic/data-record->typed-data (cf.logic/current-data-record new-db)
-                                                   (cf.logic/fields-defs new-db))
-                 [::form-confirm-success new-db]
-                 [::form-confirm-failure]]})))
+   {:dispatch [:http-post
+               (cf.logic/post-form-data-url db persistent-post-base-uri)
+               {:data (cf.logic/data-record->typed-data (cf.logic/editing-data db)
+                                                        (cf.logic/fields-defs db))}
+               [::form-confirm-success]
+               [::form-confirm-failure]]}))
 
 (rf/reg-event-fx
  ::form-confirm-success
- (fn [{db :db} [_ new-db response]]
-   {:db       new-db
-    :dispatch [:set-current-form-state :view]}))
+ (fn [{db :db} [_ response]]
+   (let [new-records          (cf.logic/records<-new-data db (-> response :data first))
+         new-record?          (cf.logic/new-record? db)
+         current-record-index (cf.logic/current-record-index db)
+         current-record       (if new-record? (-> new-records count dec) current-record-index)]
+     {:db       (cf.logic/set-current-form-data db {:new-record?    false
+                                                    :editing-data   nil
+                                                    :current-record current-record
+                                                    :records        new-records})
+      :dispatch [:set-current-form-state :view]})))
 
 (rf/reg-event-fx
  ::form-confirm-failure
