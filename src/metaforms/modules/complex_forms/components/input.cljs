@@ -3,7 +3,6 @@
             [reagent.core :as r]
             [re-frame.core :as rf]
             [react-input-mask :as InputElement]
-            [metaforms.common.logic :as cl]
             [metaforms.modules.complex-forms.components.dropdown :as dropdown]
             [metaforms.modules.complex-forms.components.checkbox :as checkbox]))
 
@@ -25,8 +24,8 @@
                         :state               form-state
                         :last-modified-field last-modified-field'})))
 
-(defn update-state! [new-state local-state]
-  (reset! local-state new-state))
+(defn update-state! [new-state local-state*]
+  (reset! local-state* new-state))
 
 (defn do-update-state!
   [new-value local-state* form-state last-modified-field outer-source-value]
@@ -34,8 +33,14 @@
       (update-value @local-state* form-state last-modified-field outer-source-value)
       (update-state! local-state*)))
 
+(defn local-state-set! [local-state* key value]
+  (update-state! (assoc @local-state* key value) local-state*))
+
+(defn local-state-get! [local-state* key]
+  (get @local-state* key))
+
 (defn update-value! [new-value local-state*]
-  (update-state! (assoc @local-state* :value new-value) local-state*))
+  (local-state-set! local-state* :value new-value))
 
 (defn merge-common-change [props field-name local-state* common-onchange?]
   (when common-onchange?
@@ -44,13 +49,27 @@
                            (update-value! value local-state*)
                            #_(rf/dispatch [:field-value-changed field-name value])))})))
 
+(defn value-changed? [local-state* new-value]
+  (not= (local-state-get! local-state* :initial-value) new-value))
+
+(defn common-on-blur [local-state* field-name validation event]
+  (let [new-value (-> event .-target .-value)]
+    ;; TODO: abort event bubbling if not valid
+    (when (and validation (not-empty new-value) (value-changed? local-state* new-value))
+      (rf/dispatch [:validate-field validation field-name new-value]))
+    ;; TODO: do this only if field is valid
+    (rf/dispatch [:input-blur name new-value])))
+
 (defn field-def->common-props
   ([field-def local-state* form-state]
    (field-def->common-props field-def local-state* form-state true))
-  ([{:keys [name read-only]} local-state* form-state common-onchange?]
-   (-> {:onBlur   (fn [e] (rf/dispatch [:input-blur name (-> e .-target .-value)]))
+  ([{:keys [name read-only validation]} local-state* form-state common-onchange?]
+   (-> {:onFocus  (fn [e] (local-state-set! local-state*
+                                           :initial-value
+                                           (-> e .-target .-value)))
+        ;; :onBlur   (fn [e] (rf/dispatch [:input-blur name (-> e .-target .-value)]))
+        :onBlur   (fn [e] (common-on-blur local-state* name validation e))
         :readOnly (or read-only (not= form-state :edit))}
-
        (merge-common-change name local-state* common-onchange?))))
 
 (defmulti field-def->input

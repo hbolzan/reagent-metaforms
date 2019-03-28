@@ -7,12 +7,16 @@
             [metaforms.modules.samples.db :as samples.db]
             [metaforms.modules.complex-forms.logic :as cf.logic]))
 
-(def api-host "http://localhost:8000")
-(def persistent-path "/query/persistent/")
+(def api-host "http://localhost:8000/")
+
+(def persistent-path "query/persistent/")
 (def base-uri (str api-host persistent-path "complex-tables/?id={id}&middleware=complex_forms&depth=1"))
 (def persistent-post-base-uri (str api-host persistent-path ":complex-id/"))
 (def persistent-put-base-uri (str persistent-post-base-uri ":id/"))
 (def persistent-delete-base-uri (str api-host persistent-path "delete/:complex-id/:id/"))
+
+(def validations-path "service/get/{service}/{method}/")
+(def validation-base-url (str api-host validations-path))
 
 (rf/reg-event-fx
  :set-form-definition
@@ -34,10 +38,10 @@
   (let [form-definition (-> response :data first)]
     (assoc-in db [:complex-forms form-id] {:definition form-definition
                                            :state      :view
-                                           :data {:records        []
-                                                  :current-record nil
-                                                  :editing-data   nil
-                                                  :new-record?    false}})))
+                                           :data       {:records        []
+                                                        :current-record nil
+                                                        :editing-data   nil
+                                                        :new-record?    false}})))
 
 (rf/reg-event-fx
  ::load-form-definition-success
@@ -202,3 +206,19 @@
  :set-current-form-state
  (fn [db [_ new-state]]
    (assoc-in db [:complex-forms (:current-form db) :state] new-state)))
+
+;; this event only will be triggered if
+;; - there is a validation definition for this field
+;; - field value changed
+;; - field value is not empty
+(rf/reg-event-fx
+ :validate-field
+ (fn [{db :db} [_ validation field-name new-value]]
+   ;; sends http request
+   (js/console.log field-name new-value validation)
+   ;; TODO: change db state to show overlay + spinner
+   {:db db
+    ;; build validation url
+    ;; dispatch http event
+    }
+   ))

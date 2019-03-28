@@ -155,6 +155,10 @@
 (defn fields-defs [db]
   (-> (current-form db) :definition :fields-defs))
 
+(defn one-field-def [db field-name]
+  (filter (fn [field-def] (= (:name field-def) field-name))
+          (fields-defs db)))
+
 (def current-record-index #(-> % current-form-data :current-record))
 (def current-records #(-> % current-form-data :records))
 (def editing-data #(-> % current-form-data :editing-data))
