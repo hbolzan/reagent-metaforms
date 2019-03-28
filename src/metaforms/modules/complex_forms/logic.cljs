@@ -209,3 +209,10 @@
       (if (> current-index last-index)
         last-index
         current-index))))
+
+(defn replace-tag [src tag value]
+  (str/replace src (str "{" tag "}") value))
+
+(defn build-validation-url [base-url validation field-value]
+  (map #(replace-tag base-url (first %) (last %)) [["service" (:service validation)]
+                                                   ["method" (:method validation)]]))
