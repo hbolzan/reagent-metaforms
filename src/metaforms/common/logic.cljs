@@ -1,5 +1,6 @@
 (ns metaforms.common.logic
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [clojure.string :as str]))
 
 (def sum (partial reduce +))
 
@@ -38,6 +39,9 @@
     (nil? action) nil
     (fn? action)  action
     :else #(rf/dispatch (action->dispatch-action action))))
+
+(defn replace-tag [src tag value]
+  (str/replace src (str "{" tag "}") value))
 
 (defn log [x]
   (js/console.log x)

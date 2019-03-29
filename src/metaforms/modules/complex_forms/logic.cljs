@@ -1,6 +1,5 @@
 (ns metaforms.modules.complex-forms.logic
-  (:require [re-frame.db :as rdb]
-            [cljs-time.core :as tc]
+  (:require [cljs-time.core :as tc]
             [cljs-time.format :as tf]
             [clojure.string :as str]
             [metaforms.common.logic :as cl]))
@@ -143,7 +142,10 @@
   (:state (current-form db)))
 
 (defn current-form-data [db]
-  (:data (current-form db)))
+  (cl/log (:data (current-form db))))
+
+(defn current-form-field-value [db field-name]
+  (-> db current-form-data :editing-data (get (keyword field-name))))
 
 (defn current-form-dataset-name [db]
   (-> (current-form db) :definition :dataset-name))
@@ -209,10 +211,3 @@
       (if (> current-index last-index)
         last-index
         current-index))))
-
-(defn replace-tag [src tag value]
-  (str/replace src (str "{" tag "}") value))
-
-(defn build-validation-url [base-url validation field-value]
-  (map #(replace-tag base-url (first %) (last %)) [["service" (:service validation)]
-                                                   ["method" (:method validation)]]))

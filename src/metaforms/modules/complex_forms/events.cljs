@@ -30,7 +30,7 @@
  :load-form-definition
  (fn [{db :db} [_ form-pk form-id]]
    {:dispatch [:http-get
-               (str/replace base-uri #"\{id\}" form-pk)
+               (cl/replace-tag base-uri "id" form-pk)
                [::load-form-definition-success form-id]
                [::load-form-definition-failure]]}))
 
