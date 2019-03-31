@@ -142,7 +142,7 @@
   (:state (current-form db)))
 
 (defn current-form-data [db]
-  (cl/log (:data (current-form db))))
+  (:data (current-form db)))
 
 (defn current-form-field-value [db field-name]
   (-> db current-form-data :editing-data (get (keyword field-name))))
