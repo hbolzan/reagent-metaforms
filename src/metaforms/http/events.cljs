@@ -24,8 +24,6 @@
 (rf/reg-event-fx
  :http-post
  (fn [{db :db} [_ uri payload on-success on-failure]]
-   (js/console.log uri)
-   (js/console.log (with-payload :post uri payload on-success on-failure))
    {:http-xhrio (with-payload :post uri payload on-success on-failure)}))
 
 (rf/reg-event-fx

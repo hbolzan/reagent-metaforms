@@ -54,11 +54,11 @@
 
 (defn common-on-blur [local-state* field-name validation event]
   (let [new-value (-> event .-target .-value)]
+    ;; TODO: do this only if field is valid
+    (rf/dispatch [:input-blur field-name new-value])
     ;; TODO: abort event bubbling if not valid
     (when (and validation (not-empty new-value) (value-changed? local-state* new-value))
-      (rf/dispatch [:validate-field validation field-name new-value]))
-    ;; TODO: do this only if field is valid
-    (rf/dispatch [:input-blur name new-value])))
+      (rf/dispatch [:validate-field validation field-name new-value]))))
 
 (defn field-def->common-props
   ([field-def local-state* form-state]

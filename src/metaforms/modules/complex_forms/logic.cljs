@@ -169,6 +169,9 @@
 (defn set-current-form-data [db new-form-data]
   (assoc-in db [:complex-forms (:current-form db) :data] (merge (current-form-data db) new-form-data)))
 
+(defn editing-data<-current-field [db field-name field-value]
+  (assoc (editing-data db) (keyword field-name) field-value))
+
 (defn set-current-record-index [db index]
   (assoc-in db [:complex-forms (:current-form db) :data :current-record] index))
 

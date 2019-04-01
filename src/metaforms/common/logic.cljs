@@ -43,6 +43,9 @@
 (defn replace-tag [src tag value]
   (str/replace src (str "{" tag "}") value))
 
+(defn set-spinner [db visible?]
+  (assoc db :spinner {:visible? visible?}))
+
 (defn log [x]
   (js/console.log x)
   x)

@@ -60,3 +60,8 @@
    (assoc db :modal (merge modal-params
                            {:visible? true
                             :on-confirm (cl/action->action-fn confirmation-action)}))))
+
+(rf/reg-event-db
+ :modal-spinner
+ (fn [db [_ {:keys [visible?] :as spinner-params}]]
+   (cl/set-spinner db visible?)))

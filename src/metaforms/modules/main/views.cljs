@@ -34,4 +34,5 @@
       breadcrumb-items
       (route view (common.views/not-found))]
      [main/main-footer nil]
-     (modal/dialog)]))
+     (modal/dialog)
+     (modal/spinner)]))

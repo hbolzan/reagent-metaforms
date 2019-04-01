@@ -25,3 +25,8 @@
  :modal-params
  (fn [db _]
    (-> db :modal)))
+
+(rf/reg-sub
+ :spinner-params
+ (fn [db _]
+   (-> db :spinner)))

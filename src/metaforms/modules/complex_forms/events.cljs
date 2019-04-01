@@ -5,7 +5,8 @@
             [metaforms.common.dictionary :refer [l]]
             [metaforms.common.logic :as cl]
             [metaforms.modules.samples.db :as samples.db]
-            [metaforms.modules.complex-forms.logic :as cf.logic]))
+            [metaforms.modules.complex-forms.logic :as cf.logic]
+            [metaforms.modules.complex-forms.validation-logic :as vl]))
 
 (def api-host "http://localhost:8000/")
 
@@ -187,14 +188,17 @@
  (fn [db [_ field-name]]
    (cf.logic/set-current-form-data db {:editing field-name})))
 
+(defn db-on-blur [db field-name field-value]
+  (cf.logic/set-current-form-data db {:editing      nil
+                                      :editing-data (assoc
+                                                     (cf.logic/editing-data db)
+                                                     (keyword field-name)
+                                                     field-value)}))
+
 (rf/reg-event-fx
  :input-blur
  (fn [{db :db} [_ field-name field-value]]
-   {:db (cf.logic/set-current-form-data db {:editing      nil
-                                            :editing-data (assoc
-                                                           (cf.logic/editing-data db)
-                                                           (keyword field-name)
-                                                           field-value)})
+   {:db       (db-on-blur db field-name field-value)
     :dispatch [:field-value-changed field-name field-value]}))
 
 (rf/reg-event-db
@@ -215,10 +219,24 @@
  :validate-field
  (fn [{db :db} [_ validation field-name new-value]]
    ;; sends http request
-   (js/console.log field-name new-value validation)
-   ;; TODO: change db state to show overlay + spinner
-   {:db db
-    ;; build validation url
-    ;; dispatch http event
-    }
+   (let [url (vl/build-validation-url (db-on-blur db field-name new-value)
+                                      validation-base-url
+                                      validation new-value)]
+     {:dispatch [:http-get url
+                 [::validate-field-success validation field-name]
+                 [::validate-field-error validation field-name]]
+      :db       (cl/set-spinner db true)}
+     )
    ))
+
+(rf/reg-event-fx
+ ::validate-field-success
+ (fn [{db :db} [_ validation field-name response]]
+   (js/console.log response)
+   {:db (cl/set-spinner db false)}))
+
+(rf/reg-event-fx
+ ::validate-field-error
+ (fn [{db :db} [_ validation field-name result]]
+   (js/console.log (-> result :response :data :messages :pt-br))
+   {:db (cl/set-spinner db false)}))

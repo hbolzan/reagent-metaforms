@@ -58,3 +58,25 @@
         [:div.modal-body [:p content]]
         (modal-footer on-confirm modal-close ok-button-label dismiss-button-label)]]]
      (modal-overlay visible?)]))
+
+(defn spinner []
+  (let [{visible? :visible?} @(rf/subscribe [:spinner-params])]
+    [:<>
+
+     [:div {
+            :class    (if visible? "show modal" "modal fade")
+            :tabIndex -1
+            :role     "dialog"
+            :style    (merge {:display      "block"
+                              :paddingRight "14px"}
+                             (when-not visible? {:zIndex -9999}))}
+
+      [:div.modal-dialog {:role "document"}
+       [:div.modal-content {:style {:height "150px"}}
+        ;; (modal-header title modal-close)
+        [:div.d-flex.justify-content-center
+         [:div.spinner-border {:role "status"}
+          [:span "Loading..."]]]
+        ]]]
+
+     (modal-overlay visible?)]))

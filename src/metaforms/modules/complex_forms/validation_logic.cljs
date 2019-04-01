@@ -16,15 +16,20 @@
 (defn single-argument [db validation field-value]
   (if (no-arguments-defined? validation)
     field-value
-    (cf.logic/current-form-field-value db (-> validation :single-argument keyword))))
+    (cl/log (cf.logic/current-form-field-value db (-> validation :single-argument keyword)))))
 
 (defn with-single-argument [url db validation field-value]
   (if-let [single-argument (single-argument db validation field-value)]
     (str url single-argument "/")
     url))
 
+(defn named-argument [db field-name]
+  (if-let [field-value (cf.logic/current-form-field-value db (keyword field-name))]
+    field-value
+    field-name))
+
 (defn named-arguments->url-params [db named-arguments]
-  (str/join "&" (map #(str (name (first %)) "=" (cf.logic/current-form-field-value db (-> % last keyword)))
+  (str/join "&" (map #(str (name (first %)) "=" (named-argument db (last %)))
                      named-arguments)))
 
 (defn with-named-arguments [url db validation]
