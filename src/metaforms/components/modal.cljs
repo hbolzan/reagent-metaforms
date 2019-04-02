@@ -61,22 +61,13 @@
 
 (defn spinner []
   (let [{visible? :visible?} @(rf/subscribe [:spinner-params])]
-    [:<>
-
-     [:div {
-            :class    (if visible? "show modal" "modal fade")
-            :tabIndex -1
-            :role     "dialog"
-            :style    (merge {:display      "block"
-                              :paddingRight "14px"}
-                             (when-not visible? {:zIndex -9999}))}
-
-      [:div.modal-dialog {:role "document"}
-       [:div.modal-content {:style {:height "150px"}}
-        ;; (modal-header title modal-close)
-        [:div.d-flex.justify-content-center
-         [:div.spinner-border {:role "status"}
-          [:span "Loading..."]]]
-        ]]]
-
-     (modal-overlay visible?)]))
+    (when visible?
+      [:<>
+       [:div {:style {:position "fixed"
+                      :left "0px"
+                      :top "0px"
+                      :width "100%"
+                      :height "100%"
+                      :zIndex 9999
+                      :background "url('img/ajax-loader.gif') 50% 50% no-repeat"}}]
+       #_(modal-overlay visible?)])))
