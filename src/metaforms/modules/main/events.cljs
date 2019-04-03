@@ -40,6 +40,15 @@
                                            :dismiss-button-label (l :common/no)
                                            :ok-button-label      (l :common/yes)}]}))
 
+(rf/reg-event-fx
+ :show-modal-alert
+ (fn [{db :db} [_ title message]]
+   {:dispatch [:modal-confirmation-dialog {:title           title
+                                           :content         message
+                                           :ok-button-label (l :common/ok)
+                                           :dismiss-button? false
+                                           :on-confirm      (rf/dispatch [:modal-close])}]}))
+
 (comment
   ;; modal-confimation-dialog confirmation-action may be
   ;; - a keyword representing an event id
@@ -57,9 +66,9 @@
 (rf/reg-event-db
  :modal-confirmation-dialog
  (fn [db [_ {:keys [confirmation-action] :as modal-params}]]
-   (assoc db :modal (merge modal-params
-                           {:visible? true
-                            :on-confirm (cl/action->action-fn confirmation-action)}))))
+   (assoc db :modal (merge {:visible? true
+                            :on-confirm (cl/action->action-fn confirmation-action)}
+                           modal-params))))
 
 (rf/reg-event-db
  :modal-spinner

@@ -233,10 +233,13 @@
  ::validate-field-success
  (fn [{db :db} [_ validation field-name response]]
    (js/console.log response)
+   (js/console.log validation)
    {:db (cl/set-spinner db false)}))
 
 (rf/reg-event-fx
  ::validate-field-error
  (fn [{db :db} [_ validation field-name result]]
-   (js/console.log (-> result :response :data :messages :pt-br))
-   {:db (cl/set-spinner db false)}))
+   (merge
+    {:db (cl/set-spinner db false)}
+    (when (:show-message-on-error validation)
+      {:dispatch [:show-modal-alert (l :common/warning) (-> result :response :data :messages :pt-br)]}))))

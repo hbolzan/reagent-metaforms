@@ -21,15 +21,17 @@
                    :onClick      on-close}
     [:span {:aria-hidden true} entities/times]]])
 
-(defn modal-footer [on-confirm on-close confirm-label close-label]
+(defn modal-footer [on-confirm on-close confirm-label close-label dismiss-button? confirm-button?]
   [:div.modal-footer
-   [:button.btn.btn-secondary {:type         "button"
-                               :data-dismiss "modal"
-                               :onClick      on-close}
-    close-label]
-   [:button.btn.btn-primary {:type    "button"
-                             :onClick (modal-confirm on-confirm)}
-    confirm-label]])
+   (when dismiss-button?
+     [:button.btn.btn-secondary {:type         "button"
+                                 :data-dismiss "modal"
+                                 :onClick      on-close}
+      close-label])
+   (when confirm-button?
+     [:button.btn.btn-primary {:type    "button"
+                               :onClick (modal-confirm on-confirm)}
+      confirm-label])])
 
 (defn modal-overlay [visible?]
   [:div {:class (if visible? "show modal-backdrop fade" "modal-backdrop fade")
@@ -42,8 +44,12 @@
          ok-button-label      :ok-button-label
          dismiss-button-label :dismiss-button-label
          on-confirm           :on-confirm
+         dismiss-button?      :dismiss-button?
+         confirm-button?      :confirm-button?
          :or                  {dismiss-button-label (l :modal/dismiss)
-                               ok-button-label      (l :common/ok)}} @(rf/subscribe [:modal-params])]
+                               ok-button-label      (l :common/ok)
+                               dismiss-button?      true
+                               confirm-button?      true}} @(rf/subscribe [:modal-params])]
     [:<>
      [:div {
             :class    (if visible? "show modal" "modal fade")
@@ -56,7 +62,7 @@
        [:div.modal-content
         (modal-header title modal-close)
         [:div.modal-body [:p content]]
-        (modal-footer on-confirm modal-close ok-button-label dismiss-button-label)]]]
+        (modal-footer on-confirm modal-close ok-button-label dismiss-button-label dismiss-button? confirm-button?)]]]
      (modal-overlay visible?)]))
 
 (defn spinner []
