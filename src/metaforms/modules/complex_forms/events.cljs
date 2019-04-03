@@ -225,15 +225,11 @@
      {:dispatch [:http-get url
                  [::validate-field-success validation field-name]
                  [::validate-field-error validation field-name]]
-      :db       (cl/set-spinner db true)}
-     )
-   ))
+      :db       (cl/set-spinner db true)})))
 
 (rf/reg-event-fx
  ::validate-field-success
  (fn [{db :db} [_ validation field-name response]]
-   (js/console.log response)
-   (js/console.log validation)
    {:db (cl/set-spinner db false)}))
 
 (rf/reg-event-fx

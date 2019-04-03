@@ -13,14 +13,27 @@
 (defn no-arguments-defined? [validation]
   (and (empty? (:single-argument validation)) (no-named-arguments? validation)))
 
+(def actions-map {:clear-separators cl/clear-separators})
+
+(defn apply-action [arg action]
+  ((get actions-map (keyword action)) arg))
+
+(defn apply-before-validate [arg actions]
+  (reduce (fn [r action] (apply-action r action)) arg actions))
+
+(defn before-validate [arg {actions :before-validate :as validation}]
+  (if (empty? actions)
+    arg
+    (apply-before-validate arg actions)))
+
 (defn single-argument [db validation field-value]
   (if (no-arguments-defined? validation)
     field-value
-    (cl/log (cf.logic/current-form-field-value db (-> validation :single-argument keyword)))))
+    (cf.logic/current-form-field-value db (-> validation :single-argument keyword))))
 
 (defn with-single-argument [url db validation field-value]
   (if-let [single-argument (single-argument db validation field-value)]
-    (str url single-argument "/")
+    (str url (before-validate single-argument validation) "/")
     url))
 
 (defn named-argument [db field-name]

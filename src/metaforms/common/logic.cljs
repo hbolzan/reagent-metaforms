@@ -46,6 +46,9 @@
 (defn set-spinner [db visible?]
   (assoc db :spinner {:visible? visible?}))
 
+(defn clear-separators [s]
+  (str/replace s #"[.\-/_]" ""))
+
 (defn log [x]
   (js/console.log x)
   x)

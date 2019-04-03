@@ -100,8 +100,8 @@
 
 (defmethod field-def->input :default [field-def local-state form-state]
   [:> InputElement (merge
-           (field-def->input-params field-def local-state form-state)
-           (field-def->common-props field-def local-state form-state))])
+                    (field-def->input-params field-def local-state form-state)
+                    (field-def->common-props field-def local-state form-state))])
 
 (defn filter-source-field [field-def]
   (let [lookup-filter (-> field-def :lookup-filter str/trim)
