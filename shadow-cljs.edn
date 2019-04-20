@@ -12,11 +12,13 @@
                  :test-dir "public/test"
                  :devtools {:http-root "public/test"
                             :http-port 8021}}
-          :app  {:target     :browser
-                 :output-dir "public/js"
-                 :asset-path "js"
-                 :modules    {:main {:entries [metaforms.core]}}
-                 :devtools   {:before-load metaforms.core/stop
-                              :after-load  metaforms.core/start
-                              :http-root   "public"
-                              :http-port   8020}}}}
+          :app  {:target          :browser
+                 :output-dir      "public/js"
+                 :asset-path      "js"
+                 :closure-defines {"goog.DEBUG" true}
+                 :release         {:closure-defines {"goog.DEBUG" false}}
+                 :modules         {:main {:entries [metaforms.core]}}
+                 :devtools        {:before-load metaforms.core/stop
+                                   :after-load  metaforms.core/start
+                                   :http-root   "public"
+                                   :http-port   8020}}}}

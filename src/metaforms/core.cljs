@@ -26,6 +26,7 @@
 
 (defn start []
   (js/console.log "Starting...")
+  (js/console.log (str "DEBUG: " goog.DEBUG))
   (rf/dispatch-sync [:initialize])
   (routes/app-routes)
   (r/render [app]

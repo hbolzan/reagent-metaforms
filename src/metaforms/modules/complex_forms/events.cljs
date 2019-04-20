@@ -8,7 +8,8 @@
             [metaforms.modules.complex-forms.logic :as cf.logic]
             [metaforms.modules.complex-forms.validation-logic :as vl]))
 
-(def api-host "http://localhost:8000/")
+;; release build must be served through the same domain and port
+(def api-host (if goog.DEBUG  "http://localhost:8000/" "/"))
 
 (def persistent-path "query/persistent/")
 (def base-uri (str api-host persistent-path "complex-tables/?id={id}&middleware=complex_forms&depth=1"))

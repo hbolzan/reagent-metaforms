@@ -1,5 +1,6 @@
 public/js
 public/test
+dist
 node_modules
 target
 .shadow-cljs
