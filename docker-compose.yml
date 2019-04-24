@@ -1,0 +1,9 @@
+version: "3"
+
+services:
+  front:
+      image: "hbolzan/metaforms-static:latest"
+      entrypoint: "busybox httpd -f -p 127.0.0.1:8080 -h /var/www/html"
+      # entrypoint: ["sh", "-c", "sleep 2073600"]
+
+  
