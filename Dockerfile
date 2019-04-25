@@ -1,4 +1,4 @@
-# reagent metaforms public frontend files
+reagent metaforms public frontend files
 FROM timbru31/java-node
 RUN yarn --version
 
@@ -15,4 +15,6 @@ RUN yarn release app
 FROM busybox
 RUN mkdir -p /var/www/html
 COPY --from=0 /reagent-metaforms/public/. /var/www/html/.
-# RUN busybox httpd -p 127.0.0.1:8080 -h /var/www/html
+# COPY public/. /var/www/html/.
+COPY ./docker-entrypoint.sh /docker-entrypoint.sh
+ENTRYPOINT  ["/docker-entrypoint.sh"]
