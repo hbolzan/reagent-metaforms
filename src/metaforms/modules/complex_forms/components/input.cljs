@@ -3,24 +3,31 @@
             [reagent.core :as r]
             [re-frame.core :as rf]
             [react-input-mask :as InputElement]
+            [metaforms.common.logic :as cl]
             [metaforms.modules.complex-forms.components.dropdown :as dropdown]
             [metaforms.modules.complex-forms.components.checkbox :as checkbox]))
 
-(defn state-changing-to-edit? [local-state form-state]
-  (and (= form-state :edit) (not= (:state local-state) :edit)))
-
-(defn outer-value-changed-when-not-editing? [new-value local-state form-state]
-  (and (not= (:state local-state) :edit) (not= new-value (:value local-state))))
-  ;; (and (not= form-state :edit) (not= new-value (:value local-state))))
-
-(defn update-value [new-value local-state form-state last-modified-field outer-source-value]
-  "May update value if changing state to :edit
-   or outer value changed when not editing
+(defn apply-outer-value? [outer-value local-state form-state]
+  "May update value if value changed AND
+   * changing state to :edit
+   * or outer value changed when not editing
+   * or value wrapped into a list - this forces to outer value
    otherwise, only state and last-modified-value are updated"
-  (let [update-value?        (or (state-changing-to-edit? local-state form-state)
-                                 (outer-value-changed-when-not-editing? new-value local-state form-state))
-        last-modified-field' (if last-modified-field last-modified-field (:last-modified-field local-state))]
-    (merge local-state {:value               (if update-value? new-value (:value local-state))
+  (let [state-changing-to-edit? (and (= form-state :edit) (not= (:state local-state) :edit))
+        editing?                (= (:state local-state) :edit)
+        outer-value-changed?    (not= outer-value (:value local-state))
+        force-outer-value?      (coll? outer-value)]
+    (and outer-value-changed?
+         (or (not editing?) state-changing-to-edit? force-outer-value?))))
+
+(defn new-value [outer-value local-state form-state]
+  (if (apply-outer-value? outer-value local-state form-state)
+    (if (coll? outer-value) (first outer-value) outer-value)
+    (:value local-state)))
+
+(defn update-value [outer-value local-state form-state last-modified-field outer-source-value]
+  (let [last-modified-field' (if last-modified-field last-modified-field (:last-modified-field local-state))]
+    (merge local-state {:value               (new-value outer-value local-state form-state)
                         :state               form-state
                         :last-modified-field last-modified-field'})))
 
@@ -28,8 +35,8 @@
   (reset! local-state* new-state))
 
 (defn do-update-state!
-  [new-value local-state* form-state last-modified-field outer-source-value]
-  (-> new-value
+  [outer-value local-state* form-state last-modified-field outer-source-value]
+  (-> outer-value
       (update-value @local-state* form-state last-modified-field outer-source-value)
       (update-state! local-state*)))
 
@@ -39,8 +46,8 @@
 (defn local-state-get! [local-state* key]
   (get @local-state* key))
 
-(defn update-value! [new-value local-state*]
-  (local-state-set! local-state* :value new-value))
+(defn update-value! [value local-state*]
+  (local-state-set! local-state* :value value))
 
 (defn merge-common-change [props field-name local-state* common-onchange?]
   (when common-onchange?
@@ -54,11 +61,10 @@
 
 (defn common-on-blur [local-state* field-name validation event]
   (let [new-value (-> event .-target .-value)]
-    ;; TODO: do this only if field is valid
-    (rf/dispatch [:input-blur field-name new-value])
     ;; TODO: abort event bubbling if not valid
-    (when (and validation (not-empty new-value) (value-changed? local-state* new-value))
-      (rf/dispatch [:validate-field validation field-name new-value]))))
+    (if (and validation (not-empty new-value) (value-changed? local-state* new-value))
+      (rf/dispatch [:validate-field validation field-name new-value])
+      (rf/dispatch [:input-blur field-name new-value]))))
 
 (defn field-def->common-props
   ([field-def local-state* form-state]

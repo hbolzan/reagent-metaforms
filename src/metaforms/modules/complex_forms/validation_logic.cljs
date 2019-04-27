@@ -55,3 +55,16 @@
       (with-single-argument db validation field-value)
       (replace-url-tags validation)
       (with-named-arguments db validation)))
+
+(defn get-in-path [path m]
+  "returns value from map following path"
+  (get-in m (map keyword (str/split path "."))))
+
+(defn expected-result-value [result-path response]
+  (get-in-path (str "data.additional_information." result-path) response))
+
+(defn expected-results->fields [validation response]
+  (reduce-kv
+   (fn [result field path] (assoc result field [(expected-result-value path response)]))
+   {}
+   (:expected-results validation)))

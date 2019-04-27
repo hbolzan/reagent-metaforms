@@ -212,7 +212,7 @@
  (fn [db [_ new-state]]
    (assoc-in db [:complex-forms (:current-form db) :state] new-state)))
 
-;; this event only will be triggered if
+;; this event only will be triggered by input if
 ;; - there is a validation definition for this field
 ;; - field value changed
 ;; - field value is not empty
@@ -224,14 +224,18 @@
                                       validation-base-url
                                       validation new-value)]
      {:dispatch [:http-get url
-                 [::validate-field-success validation field-name]
+                 [::validate-field-success validation field-name new-value]
                  [::validate-field-error validation field-name]]
       :db       (cl/set-spinner db true)})))
 
 (rf/reg-event-fx
  ::validate-field-success
- (fn [{db :db} [_ validation field-name response]]
-   {:db (cl/set-spinner db false)}))
+ (fn [{db :db} [_ validation field-name new-value response]]
+   {:db       (cf.logic/set-current-form-data
+               (cl/set-spinner db false)
+               {:editing      nil
+                :editing-data (cf.logic/set-editing-data db (vl/expected-results->fields validation response))})
+    :dispatch [:input-blur field-name new-value]}))
 
 (rf/reg-event-fx
  ::validate-field-error

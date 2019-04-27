@@ -42,3 +42,18 @@
       (is (= (vl/with-named-arguments url db {:named-arguments {:k "b"}}) "http://service/method/X/?k=B"))
       (is (= (vl/with-named-arguments url db {:named-arguments {:k "b" :y "a"}})
              "http://service/method/X/?k=B&y=A")))))
+
+(deftest get-in-path-test []
+  (is (= (vl/get-in-path "a.b.c" {:a {:b {:c "x"}}}) "x")))
+
+(deftest expected-result-value-test []
+  (is (= (vl/expected-result-value "a.b.c" {:data {:additional_information {:a {:b {:c "x"}}}}}) "x")))
+
+(deftest expected-results->fields-test []
+  (let [validation {:expected-results {:field_a "a.b" :field_b "a.c"}}
+        response_a {:data {:additional_information {:a {:b "B" :c "C"}}}}
+        response_b {:data {:additional_information {:a {:b "X" :c "Y"}}}}
+        ]
+    (is (= (vl/expected-results->fields validation response_a) {:field_a "B" :field_b "C"}))
+    (is (= (vl/expected-results->fields validation response_b) {:field_a "X" :field_b "Y"}))
+    (is (= (vl/expected-results->fields {} response_b) {}))))
