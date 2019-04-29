@@ -52,8 +52,8 @@
 (deftest expected-results->fields-test []
   (let [validation {:expected-results {:field_a "a.b" :field_b "a.c"}}
         response_a {:data {:additional_information {:a {:b "B" :c "C"}}}}
-        response_b {:data {:additional_information {:a {:b "X" :c "Y"}}}}
-        ]
-    (is (= (vl/expected-results->fields validation response_a) {:field_a "B" :field_b "C"}))
-    (is (= (vl/expected-results->fields validation response_b) {:field_a "X" :field_b "Y"}))
-    (is (= (vl/expected-results->fields {} response_b) {}))))
+        response_b {:data {:additional_information {:a {:b "X" :c "Y"}}}}]
+    ;; values wrapped into vectors force unconditional form fields to be updated
+    (is (= (vl/expected-results->fields validation response_a) {:field_a ["B"] :field_b ["C"]}))
+    (is (= (vl/expected-results->fields validation response_b) {:field_a ["X"] :field_b ["Y"]})
+        (is (= (vl/expected-results->fields {} response_b) {})))))

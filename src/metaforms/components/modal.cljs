@@ -46,10 +46,14 @@
          on-confirm           :on-confirm
          dismiss-button?      :dismiss-button?
          confirm-button?      :confirm-button?
+         modal-dialog-class   :modal-dialog-class
+         modal-content-class  :modal-content-class
          :or                  {dismiss-button-label (l :modal/dismiss)
                                ok-button-label      (l :common/ok)
                                dismiss-button?      true
-                               confirm-button?      true}} @(rf/subscribe [:modal-params])]
+                               confirm-button?      true
+                               modal-dialog-class   "modal-dialog"
+                               modal-content-class  "modal-content"}} @(rf/subscribe [:modal-params])]
     [:<>
      [:div {
             :class    (if visible? "show modal" "modal fade")
@@ -58,8 +62,8 @@
             :style    (merge {:display      "block"
                               :paddingRight "14px"}
                              (when-not visible? {:zIndex -9999}))}
-      [:div.modal-dialog {:role "document"}
-       [:div.modal-content
+      [:div {:class modal-dialog-class :role "document"}
+       [:div {:class modal-content-class}
         (modal-header title modal-close)
         [:div.modal-body [:p content]]
         (modal-footer on-confirm modal-close ok-button-label dismiss-button-label dismiss-button? confirm-button?)]]]
