@@ -10,6 +10,7 @@
    :modal/close   "Fechar"
    :modal/dismiss "Desistir"
    :modal/confirm "Confirmar"
+   :modal/select  "Selecionar"
 
    :dialog/confirmation "Confirmação"
    :dialog/verifying    "Verificando"

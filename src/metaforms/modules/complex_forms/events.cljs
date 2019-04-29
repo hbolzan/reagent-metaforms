@@ -80,6 +80,7 @@
 (rf/reg-event-fx
  :do-form-search
  (fn [{db :db} _]
+   {:dispatch [:show-modal-window "Search" "Search window test" nil]}
    ))
 
 ;; NAVIGATION ACTIONS

@@ -49,6 +49,17 @@
                                            :dismiss-button? false
                                            :on-confirm      (rf/dispatch [:modal-close])}]}))
 
+(rf/reg-event-fx
+ :show-modal-window
+ (fn [{db :db} [_ title content next-action]]
+   {:dispatch [:modal-confirmation-dialog {:title                title
+                                           :content              content
+                                           :confirmation-action  next-action
+                                           :modal-dialog-class   "modal-window-dialog"
+                                           :modal-content-class   "modal-window-content"
+                                           :dismiss-button-label (l :modal/dismiss)
+                                           :ok-button-label      (l :modal/select)}]}))
+
 (comment
   ;; modal-confimation-dialog confirmation-action may be
   ;; - a keyword representing an event id
