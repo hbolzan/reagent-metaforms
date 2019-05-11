@@ -5,6 +5,7 @@
             [metaforms.common.dictionary :refer [l]]
             [metaforms.common.logic :as cl]
             [metaforms.modules.samples.db :as samples.db]
+            [metaforms.modules.complex-forms.components.search :as search]
             [metaforms.modules.complex-forms.logic :as cf.logic]
             [metaforms.modules.complex-forms.validation-logic :as vl]))
 
@@ -57,11 +58,27 @@
  (fn [{db :db} [_ result]]
    (js/console.log "ERROR" result)))
 
-(rf/reg-event-db
+(rf/reg-event-fx
  :set-current-form
- (fn [db [_ form-id]]
-   (merge db {:current-view :complex-form
-              :current-form form-id})))
+ (fn [{db :db} [_ form-id]]
+   {:db (merge db {:current-view :complex-form
+                   :current-form form-id})
+    :dispatch [:form-load-data]}))
+
+(rf/reg-event-fx
+ :form-load-data
+ (fn [{db :db} _]
+   {:dispatch [:http-get
+               (cf.logic/form-data-url db persistent-get-base-uri)
+               [::form-load-data-success]
+               [::form-load-data-failure]]}))
+
+(rf/reg-event-fx
+ ::form-load-data-success
+ (fn [{db :db} [_ response]]
+   {:db (cf.logic/set-current-form-data db {:records (:data response)})}))
+
+;; (cf.logic/form-data-url db persistent-get-base-uri)
 
 ;; form actions
 ;; :append :edit :confirm :discard :delete :search :refresh
@@ -81,8 +98,29 @@
 (rf/reg-event-fx
  :do-form-search
  (fn [{db :db} _]
+   {:dispatch [:show-modal-window "Search" [search/data-grid
+                                            (cf.logic/current-records db)
+                                            (cf.logic/fields-defs db)] nil]}))
+
+(rf/reg-event-fx
+ :form-search-query
+ (fn [{db :db} _]
+   {:dispatch [:http-get
+               (cf.logic/form-data-url db persistent-get-base-uri)
+               [::form-search-query-success]
+               [::form-search-query-failure]]}))
+
+(rf/reg-event-fx
+ ::form-search-query-success
+ (fn [{db :db} [_ response]]
+   ;;(:current-form db)
    {:dispatch [:show-modal-window "Search" "Search window test" nil]}
    ))
+
+(rf/reg-event-fx
+ ::form-search-query-failure
+ (fn [{db :db} [_ result]]
+   {:dispatch [:show-modal-alert (l :common/error) (l :form/search-failure)]}))
 
 ;; NAVIGATION ACTIONS
 (rf/reg-event-fx
@@ -146,7 +184,7 @@
  :do-confirmed-form-confirm
  (fn [{db :db} _]
    {:dispatch [:http-post
-               (cf.logic/post-form-data-url db persistent-post-base-uri)
+               (cf.logic/form-data-url db persistent-post-base-uri)
                {:data (cf.logic/data-record->typed-data (cf.logic/editing-data db)
                                                         (cf.logic/fields-defs db))}
                [::form-confirm-success]

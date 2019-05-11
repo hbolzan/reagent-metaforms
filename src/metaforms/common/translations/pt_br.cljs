@@ -18,4 +18,5 @@
    :form/confirm-delete? "Tem certeza que quer excluir este registro?"
    :form/confirm-edit?   "Confirma alterações no registro atual?"
    :form/confirm-append? "Confirma inclusão de novo registro?"
+   :form/search-failure  "Ocorreu um erro ao tentar abrir a janela de pesquisa"
    })

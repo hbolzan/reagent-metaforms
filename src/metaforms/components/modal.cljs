@@ -65,7 +65,8 @@
       [:div {:class modal-dialog-class :role "document"}
        [:div {:class modal-content-class}
         (modal-header title modal-close)
-        [:div.modal-body [:p content]]
+        [:div.modal-body {:id "main-modal-body"}
+         content]
         (modal-footer on-confirm modal-close ok-button-label dismiss-button-label dismiss-button? confirm-button?)]]]
      (modal-overlay visible?)]))
 

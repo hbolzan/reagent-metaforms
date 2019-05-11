@@ -150,9 +150,9 @@
 (defn current-form-dataset-name [db]
   (-> (current-form db) :definition :dataset-name))
 
-(defn post-form-data-url
-  [db persistent-post-base-uri]
-  (str/replace persistent-post-base-uri #":complex-id" (current-form-dataset-name db)))
+(defn form-data-url
+  [db persistent-base-uri]
+  (str/replace persistent-base-uri #":complex-id" (current-form-dataset-name db)))
 
 (defn fields-defs [db]
   (-> (current-form db) :definition :fields-defs))

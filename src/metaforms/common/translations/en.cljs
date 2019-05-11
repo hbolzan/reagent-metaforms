@@ -18,4 +18,5 @@
    :form/confirm-delete? "Are you sure you want to delete the current record?"
    :form/confirm-edit?   "Confirm changes on current record?"
    :form/confirm-append? "Confirm new record?"
+   :form/search-failure  "An error ocurred while trying to open the search window"
    })
