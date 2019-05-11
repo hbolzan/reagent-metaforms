@@ -1,6 +1,7 @@
 (ns metaforms.modules.complex-forms.events
   (:require [ajax.core :as ajax]
             [clojure.string :as str]
+            [re-frame.db :as rdb]
             [re-frame.core :as rf]
             [metaforms.common.dictionary :refer [l]]
             [metaforms.common.logic :as cl]
@@ -63,6 +64,7 @@
  (fn [{db :db} [_ form-id]]
    {:db (merge db {:current-view :complex-form
                    :current-form form-id})
+    ;; TODO: this must be removed later
     :dispatch [:form-load-data]}))
 
 (rf/reg-event-fx
@@ -98,9 +100,27 @@
 (rf/reg-event-fx
  :do-form-search
  (fn [{db :db} _]
-   {:dispatch [:show-modal-window "Search" [search/data-grid
-                                            (cf.logic/current-records db)
-                                            (cf.logic/fields-defs db)] nil]}))
+   {:dispatch [:show-modal-window
+               "Search" ;; TODO: get title from dictionary
+               [search/data-grid
+                (cf.logic/current-records db)
+                (cf.logic/fields-defs db)
+                (fn [row-index selected-object] (rf/dispatch [:form-search-select-record row-index]))
+                (fn [selected-cell] (rf/dispatch [:search-grid-select-cell selected-cell]))]
+               #(rf/dispatch
+                 [:form-search-select-record
+                  (get-in (cf.logic/current-form-data @rdb/app-db) [:search :selected-cell :rowIdx])])]}))
+
+(rf/reg-event-fx
+ :search-grid-select-cell
+ (fn [{db :db} [_ selected-cell]]
+   {:db (cf.logic/set-current-form-data db {:search {:selected-cell (cl/js-map->clj-map selected-cell)}})}))
+
+(rf/reg-event-fx
+ :form-search-select-record
+ (fn [{db :db} [_ row-index]]
+   {:db       (cf.logic/set-current-form-data db {:current-record row-index})
+    :dispatch [:modal-close]}))
 
 (rf/reg-event-fx
  :form-search-query

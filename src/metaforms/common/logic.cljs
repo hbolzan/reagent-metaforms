@@ -49,6 +49,9 @@
 (defn clear-separators [s]
   (str/replace s #"[.\-/_]" ""))
 
+(defn js-map->clj-map [m]
+  (reduce-kv (fn [acc k v] (assoc acc (keyword k) v)) {} (js->clj m)))
+
 (defn log [x]
   (js/console.log x)
   x)

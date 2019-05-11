@@ -19,31 +19,40 @@
    [:tr {:key (random-uuid)}
     (mapv (fn [field-def] [:th {:key (random-uuid)} (:label field-def)]) fields-defs)]])
 
-#_(defn data-grid [data fields-defs]
+#_(defn data-grid [data fields-defs on-row-double-click]
   (r/create-class
    {:dislay-name "data-grid"
 
     :component-did-mount
-    (fn [this] (js/console.log "did-mount" (-> js/document (.getElementById "main-modal-body") .-offsetHeight)))
+    ;; (fn [this] (js/console.log "did-mount" (-> js/document (.getElementById "main-modal-body") .-offsetHeight)))
+    (fn [this] ((-> this .setState) {:selected {:idx 0 :rowIdx 0}}))
 
     :component-did-update
     (fn [this] (js/console.log "did-update" (react-dom/findDOMNode this)))
 
     :reagent-render
-    (fn [data fields-defs]
+    (fn [data fields-defs on-row-double-click]
       [:div
-       [:> ReactDataGrid {:columns   (fields-defs->data-grid-cols fields-defs)
-                          :rowGetter #(get (clj->js data) %)
-                          :rowsCount (count fields-defs)
-                          :minHeight 150}]])}))
+       [:> ReactDataGrid {:columns          (fields-defs->data-grid-cols fields-defs)
+                          :rowGetter        #(get (clj->js data) %)
+                          :rowsCount        (count data)
+                          ;; https://github.com/adazzle/react-data-grid/issues/736
+                          :minHeight        (- (-> js/window .-visualViewport .-height) 250)
+                          :onRowDoubleClick on-row-double-click
+                          :onCellSelected   (fn [& args] (js/console.log args))
+                          :enableCellSelect true
+                          }]])}))
 
-(defn data-grid [data fields-defs]
+(defn data-grid [data fields-defs on-row-double-click on-cell-selected]
   [:div {:style {:min-height "100%"}}
-   [:> ReactDataGrid {:columns   (fields-defs->data-grid-cols fields-defs)
-                      :rowGetter #(get (clj->js data) %)
-                      :rowsCount (count fields-defs)
+   [:> ReactDataGrid {:columns          (fields-defs->data-grid-cols fields-defs)
+                      :rowGetter        #(get (clj->js data) %)
+                      :rowsCount        (count data)
                       ;; https://github.com/adazzle/react-data-grid/issues/736
-                      :minHeight (- (-> js/window .-visualViewport .-height) 250)}]])
+                      :minHeight        (- (-> js/window .-visualViewport .-height) 250)
+                      :onRowDoubleClick on-row-double-click
+                      :onCellSelected   on-cell-selected
+                      }]])
 
 (defn data-table [data fields-defs]
   [:div.container-fluid
