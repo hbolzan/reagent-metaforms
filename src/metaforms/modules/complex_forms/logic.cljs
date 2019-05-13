@@ -139,23 +139,30 @@
   (get-form db (:current-form db)))
 
 (defn current-form-state [db]
-  (:state (current-form db)))
+  (-> db current-form :state))
 
 (defn current-form-data [db]
-  (:data (current-form db)))
+  (-> db current-form :data))
 
 (defn current-form-field-value [db field-name]
   (-> db current-form-data :editing-data (get (keyword field-name))))
 
-(defn current-form-dataset-name [db]
-  (-> (current-form db) :definition :dataset-name))
+(defn current-form-definition [db]
+  (-> db current-form :definition))
 
-(defn form-data-url
-  [db persistent-base-uri]
-  (str/replace persistent-base-uri #":complex-id" (current-form-dataset-name db)))
+(defn current-form-dataset-name [db]
+  (-> db current-form-definition :dataset-name))
+
+(defn replace-url-tag [url tag value]
+  (str/replace url (str ":" tag) value))
+
+(defn replace-complex-id [db url]
+  (replace-url-tag url "complex-id" (current-form-dataset-name db)))
+
+(def form-data-url replace-complex-id)
 
 (defn fields-defs [db]
-  (-> (current-form db) :definition :fields-defs))
+  (-> db current-form-definition :fields-defs))
 
 (defn one-field-def [db field-name]
   (filter (fn [field-def] (= (:name field-def) field-name))
@@ -181,6 +188,18 @@
 
 (defn current-data-record [db]
   (data-record-by-index db (current-record-index db)))
+
+(defn current-record-pk-values [db]
+  (map (fn [pk-field] (-> db
+                         current-data-record
+                         (get (keyword pk-field))))
+       (-> db current-form-definition :pk-fields)))
+
+(defn replace-url-with-pk
+  [db base-url pk-tag-name]
+  (replace-url-tag (replace-complex-id db base-url)
+                   pk-tag-name
+                   (-> db current-record-pk-values first)))
 
 (defn current-record<-editing-data [db record-index]
   (assoc (current-records db) record-index (editing-data db)))

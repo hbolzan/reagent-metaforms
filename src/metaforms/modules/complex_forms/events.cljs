@@ -196,27 +196,41 @@
 (rf/reg-event-fx
  :do-form-confirm
  (fn [{db :db} _]
-   {:dispatch [:ask-for-confirmation
-               (l (if (cf.logic/new-record? db) :form/confirm-append? :form/confirm-edit?))
-               :do-confirmed-form-confirm]}))
+   (let [new-record? (cf.logic/new-record? db)]
+     {:dispatch [:ask-for-confirmation
+                 (l (if new-record? :form/confirm-append? :form/confirm-edit?))
+                 (if new-record? :do-confirmed-form-confirm-append :do-confirmed-form-confirm-edit)]})))
+
+(defn form-confirm-dispatch-data [db method url]
+  [method
+   url
+   {:data (cf.logic/data-record->typed-data (cf.logic/editing-data db)
+                                            (cf.logic/fields-defs db))}
+   [::form-confirm-success]
+   [::form-confirm-failure]])
 
 (rf/reg-event-fx
- :do-confirmed-form-confirm
+ :do-confirmed-form-confirm-append
  (fn [{db :db} _]
-   {:dispatch [:http-post
-               (cf.logic/form-data-url db persistent-post-base-uri)
-               {:data (cf.logic/data-record->typed-data (cf.logic/editing-data db)
-                                                        (cf.logic/fields-defs db))}
-               [::form-confirm-success]
-               [::form-confirm-failure]]}))
+   {:dispatch (form-confirm-dispatch-data
+               db
+               :http-post
+               (cf.logic/form-data-url db persistent-post-base-uri))}))
+
+(rf/reg-event-fx
+ :do-confirmed-form-confirm-edit
+ (fn [{db :db} _]
+   {:dispatch (form-confirm-dispatch-data
+               db
+               :http-put
+               (cf.logic/replace-url-with-pk db persistent-put-base-uri "id"))}))
 
 (rf/reg-event-fx
  ::form-confirm-success
  (fn [{db :db} [_ response]]
    (let [new-records          (cf.logic/records<-new-data db (-> response :data first))
-         new-record?          (cf.logic/new-record? db)
          current-record-index (cf.logic/current-record-index db)
-         current-record       (if new-record? (-> new-records count dec) current-record-index)]
+         current-record       (if (cf.logic/new-record? db) (-> new-records count dec) current-record-index)]
      {:db       (cf.logic/set-current-form-data db {:new-record?    false
                                                     :editing-data   nil
                                                     :current-record current-record
@@ -232,10 +246,23 @@
  :do-form-delete
  (fn [{db :db} _]
    (if (cf.logic/current-record-index db)
-     {:dispatch [:ask-for-confirmation (l :form/confirm-delete?) :do-confirmed-form-delete]})))
+     {:dispatch [:ask-for-confirmation (l :form/confirm-delete?) :do-form-delete-remote]})))
 
 (rf/reg-event-fx
- :do-confirmed-form-delete
+ :do-form-delete-remote
+ (fn [{db :db} _]
+   {:dispatch [:http-delete
+               (cf.logic/replace-url-with-pk db persistent-delete-base-uri "id")
+               [:form-delete-remote-success]
+               [:form-delete-remote-failure]]}))
+
+(rf/reg-event-fx
+ :form-delete-remote-failure
+ (fn [{db :db} _]
+   {:dispatch [:show-modal-alert (l :common/error) (l :form/delete-failure)]}))
+
+(rf/reg-event-fx
+ :form-delete-remote-success
  (fn [{db :db} _]
    (let [after-delete-records (cf.logic/delete-current-record db)]
      {:db       (cf.logic/set-current-form-data db {:records        after-delete-records
