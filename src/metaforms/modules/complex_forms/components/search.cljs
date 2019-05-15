@@ -3,13 +3,13 @@
             [re-frame.core :as rf]
             [metaforms.modules.complex-forms.logic :as cf.logic]
             [react-data-grid :as ReactDataGrid]
-            [react-dom :as react-dom]))
+            [react-dom :as react-dom]
+            [metaforms.modules.main.dom-helpers :as dom.helpers]))
 
 (defn fields-defs->data-grid-cols [fields-defs]
   (mapv (fn [field-def] {:key (:name field-def) :name (:label field-def)}) fields-defs))
 
-(defn search-value []
-  (-> (.getElementById js/document "search-field") .-value))
+(def search-value (dom.helpers/input-by-id-value-fn "search-field"))
 
 (defn search-header [on-search-button-click]
   [:div.form-group
