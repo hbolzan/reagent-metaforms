@@ -103,13 +103,21 @@
    {:dispatch [:show-modal-window
                "Search" ;; TODO: get title from dictionary
                [search/data-grid
-                (cf.logic/current-records db)
                 (cf.logic/fields-defs db)
+                (fn [search-value] (rf/dispatch [:search-button-click search-value]))
                 (fn [row-index selected-object] (rf/dispatch [:form-search-select-record row-index]))
                 (fn [selected-cell] (rf/dispatch [:search-grid-select-cell selected-cell]))]
                #(rf/dispatch
                  [:form-search-select-record
                   (get-in (cf.logic/current-form-data @rdb/app-db) [:search :selected-cell :rowIdx])])]}))
+
+(rf/reg-event-fx
+ :search-button-click
+ (fn [{db :db} [_ search-value]]
+   {:dispatch [:http-get
+               (cf.logic/form-data-url db (str persistent-get-base-uri "?_search_=" search-value))
+               [::form-load-data-success]
+               [::form-load-data-failure]]}))
 
 (rf/reg-event-fx
  :search-grid-select-cell

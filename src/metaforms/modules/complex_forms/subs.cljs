@@ -18,6 +18,11 @@
    (cf.logic/current-form-data db)))
 
 (rf/reg-sub
+ :current-form-records
+ (fn [db _]
+   (cf.logic/current-records db)))
+
+(rf/reg-sub
  :field-value
  (fn [db [_ field-name]]
    (when (not-empty field-name)
