@@ -4,6 +4,7 @@
             [metaforms.modules.complex-forms.logic :as cf.logic]
             [react-data-grid :as ReactDataGrid]
             [react-dom :as react-dom]
+            [metaforms.common.helpers :as helpers]
             [metaforms.modules.main.dom-helpers :as dom.helpers]))
 
 (defn fields-defs->data-grid-cols [fields-defs]
@@ -11,13 +12,22 @@
 
 (def search-value (dom.helpers/input-by-id-value-fn "search-field"))
 
+(defn on-search-button-click* [on-search-button-click e]
+  (on-search-button-click (search-value)))
+
+(defn on-key-down* [on-search-button-click e]
+  (let [key (.-key e)]
+    (cond
+      (helpers/is-key? key :enter) (on-search-button-click* on-search-button-click e)
+      (helpers/is-key? key :esc)   (rf/dispatch [:modal-close]))))
+
 (defn search-header [on-search-button-click]
   [:div.form-group
    [:label {:for "search-field"} "Search"] ;; TODO: use dictionary
    [:div.input-group.mb-3
-    [:input.form-control {:type "text" :id "search-field"}]
+    [:input.form-control {:type "text" :id "search-field" :onKeyDown (partial on-key-down* on-search-button-click)}]
     [:div.input-group-append
-     [:button.btn.btn-primary {:type "button" :on-click #(on-search-button-click (search-value))}
+     [:button.btn.btn-primary {:type "button" :on-click (partial on-search-button-click*)}
       [:i.fa.fa-search]]]]])
 
 (defn data-grid [fields-defs on-search-button-click on-row-double-click on-cell-selected]
