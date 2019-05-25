@@ -27,7 +27,7 @@
    [:div.input-group.mb-3
     [:input.form-control {:type "text" :id "search-field" :onKeyDown (partial on-key-down* on-search-button-click)}]
     [:div.input-group-append
-     [:button.btn.btn-primary {:type "button" :on-click (partial on-search-button-click*)}
+     [:button.btn.btn-primary {:type "button" :on-click (partial on-search-button-click* on-search-button-click)}
       [:i.fa.fa-search]]]]])
 
 (defn data-grid [fields-defs on-search-button-click on-row-double-click on-cell-selected]

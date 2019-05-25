@@ -9,9 +9,9 @@
 
 (defn apply-outer-value? [outer-value local-state form-state]
   "May update value if value changed AND
-   * changing state to :edit
+   * state is changing to :edit
    * or outer value changed when not editing
-   * or value wrapped into a list - this forces to outer value
+   * or value is wrapped into a list - this forces to outer value
    otherwise, only state and last-modified-value are updated"
   (let [state-changing-to-edit? (and (= form-state :edit) (not= (:state local-state) :edit))
         editing?                (= (:state local-state) :edit)
@@ -80,7 +80,9 @@
 
 (defmulti field-def->input
   (fn [field-def local-state* form-state]
-    (keyword (-> field-def :field-kind name) (-> field-def :data-type name))))
+    (if (-> field-def :mask empty?)
+      (keyword (-> field-def :field-kind name) (-> field-def :data-type name))
+      :masked-input)))
 
 (defmethod field-def->input :yes-no/char [field-def local-state* form-state]
   (checkbox/yes-no field-def (field-def->common-props field-def local-state* form-state false) local-state*))
@@ -91,23 +93,35 @@
 (defmethod field-def->input :lookup/integer [field-def local-state* form-state]
   [dropdown/dropdown field-def (field-def->common-props field-def local-state* form-state) local-state*])
 
+(defn with-mask [params {mask :mask mask-char :mask-char}]
+  (if (empty? mask)
+    params
+    (merge params {:mask         mask
+                   :mask-char    mask-char})))
+
 (defn field-def->input-params
-  [{:keys [id name label read-only mask mask-char format-chars]} local-state form-state]
+  [{:keys [id name label read-only format-chars] :as field-def} local-state form-state]
   (let [viewing? (not= form-state :edit)]
     {:type         "text"
      :className    "form-control"
      :name         name
-     :mask         mask
-     :mask-char    mask-char
      :format-chars format-chars
      :id           id
      :value        (:value @local-state)
      :readOnly     (or read-only viewing?)}))
 
+
+(defmethod field-def->input :masked-input [field-def local-state form-state]
+  [:> InputElement (with-mask
+                     (merge
+                      (field-def->input-params field-def local-state form-state)
+                      (field-def->common-props field-def local-state form-state))
+                     field-def)])
+
 (defmethod field-def->input :default [field-def local-state form-state]
-  [:> InputElement (merge
-                    (field-def->input-params field-def local-state form-state)
-                    (field-def->common-props field-def local-state form-state))])
+  [:input (merge
+           (field-def->input-params field-def local-state form-state)
+           (field-def->common-props field-def local-state form-state))])
 
 (defn filter-source-field [field-def]
   (let [lookup-filter (-> field-def :lookup-filter str/trim)
