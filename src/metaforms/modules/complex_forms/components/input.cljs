@@ -93,22 +93,22 @@
 (defmethod field-def->input :lookup/integer [field-def local-state* form-state]
   [dropdown/dropdown field-def (field-def->common-props field-def local-state* form-state) local-state*])
 
-(defn with-mask [params {mask :mask mask-char :mask-char}]
+(defn with-mask [params {mask :mask mask-char :mask-char format-chars :format-chars}]
   (if (empty? mask)
     params
     (merge params {:mask         mask
-                   :mask-char    mask-char})))
+                   :mask-char    mask-char
+                   :format-chars format-chars})))
 
 (defn field-def->input-params
-  [{:keys [id name label read-only format-chars] :as field-def} local-state form-state]
+  [{:keys [id name label read-only] :as field-def} local-state form-state]
   (let [viewing? (not= form-state :edit)]
-    {:type         "text"
-     :className    "form-control"
-     :name         name
-     :format-chars format-chars
-     :id           id
-     :value        (:value @local-state)
-     :readOnly     (or read-only viewing?)}))
+    {:type      "text"
+     :className "form-control"
+     :name      name
+     :id        id
+     :value     (:value @local-state)
+     :readOnly  (or read-only viewing?)}))
 
 
 (defmethod field-def->input :masked-input [field-def local-state form-state]

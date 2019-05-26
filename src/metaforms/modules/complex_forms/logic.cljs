@@ -1,80 +1,14 @@
 (ns metaforms.modules.complex-forms.logic
-  (:require [cljs-time.core :as tc]
-            [cljs-time.format :as tf]
+  (:require [cljs-time.format :as tf]
             [clojure.string :as str]
             [metaforms.common.logic :as cl]))
 
-(def empty-row {:width 0 :widths []})
-(def field-width-multiplier 7)
-(def bootstrap-grid-cols 12)
-(def bootstrap-md-width 720)
+
 (def date-formatter (tf/formatter "yyyy-MM-dd"))
 (def date-time-formatter (tf/formatter "yyyy-MM-dd'T'HH':'mm':'ssZ"))
 
-(defn set-last [coll x]
-  (if (< (count coll) 1)
-    [x]
-    (conj (pop coll) x)))
-
-(defn add-width-to-row [row width]
-  (merge row {:width  (+ (:width row) width)
-              :widths (conj (:widths row) width)}))
-
-(defn add-to-row? [row width container-width]
-  (boolean (and (< (count (:widths row)) bootstrap-grid-cols)
-                (<= (+ (:width row) width) container-width))))
-
-(defn row-reducer [container-width rows width]
-  (let [current-row (last rows)]
-    (if (add-to-row? current-row width container-width)
-      (set-last rows (add-width-to-row current-row width))
-      (conj rows {:width width :widths [width]}))))
-
-(defn distribute-widths [widths container-width]
-  (reduce (partial row-reducer container-width) [empty-row] widths))
-
-(defn review-grid-widths [widths grid-size]
-  (let [total-width (cl/sum widths)]
-    (cond
-      (< (cl/sum widths) grid-size) (review-grid-widths (cl/inc-nth widths (cl/min-index widths)) grid-size)
-      (> (cl/sum widths) grid-size) (review-grid-widths (cl/dec-nth widths (cl/max-index widths)) grid-size)
-      :else                         widths)))
-
-(defn row-widths->grid-widths [grid-size row]
-  (let [row-width (:width row)
-        rate      (/ row-width grid-size)]
-    (review-grid-widths (mapv (fn [width] (-> (/ width rate) double Math/round)) (:widths row)) grid-size)))
-
-(defn assoc-bootstrap-widths [row bootstrap-widths]
-  (assoc row :bootstrap-widths bootstrap-widths))
-
-(defn final-rows->final-defs [final-rows fields-defs]
-  (reduce (fn [{output :output next-rows :rest :as results} row]
-            {:output (into output [(merge row {:defs (take (count (:widths row)) next-rows)})])
-             :rest   (drop (count (:widths row)) next-rows)})
-          {:output [] :rest fields-defs}
-          final-rows))
-
-(defn row-def-defs->fields [row-def]
-  (let [names (mapv :name (:defs row-def))]
-    (-> row-def (dissoc :defs) (assoc :fields names))))
-
-(defn distribute-fields [fields-defs container-width]
-  (let [distributed-rows      (distribute-widths (mapv :width fields-defs) (/ container-width field-width-multiplier))
-        bootstrap-widths-rows (mapv (partial row-widths->grid-widths bootstrap-grid-cols) distributed-rows)
-        final-rows            (mapv assoc-bootstrap-widths distributed-rows bootstrap-widths-rows)]
-    (mapv row-def-defs->fields (:output (final-rows->final-defs final-rows fields-defs)))))
-
-(def empty-by-type {:char    ""
-                    :integer 0
-                    :float   0.0})
-
-(defn width->col-md-class [width]
-  (str "col-md-" width))
-
-(defn row-fields [row-def fields-defs]
-  (let [field-by-name (fn [name] (first (filter #(= (:name %) name) fields-defs)))]
-    (mapv field-by-name (:fields row-def))))
+(defn form-pk->form-id [form-pk]
+  (-> (str form-pk) str/lower-case (str/replace #"_" "-") keyword))
 
 (defn str->date [s]
   (tf/parse date-formatter s))
@@ -118,6 +52,15 @@
           {}
           fields-defs))
 
+(defn load-form-definition-success [form-id response db]
+  (let [form-definition (-> response :data first)]
+    (assoc-in db [:complex-forms form-id] {:definition form-definition
+                                           :state      :view
+                                           :data       {:records        []
+                                                        :current-record nil
+                                                        :editing-data   nil
+                                                        :new-record?    false}})))
+
 (defn next-form-state [action current-state]
   (case [action current-state]
     [:append :view]    :edit
@@ -138,28 +81,35 @@
 (defn current-form [db]
   (get-form db (:current-form db)))
 
-(defn current-form-state [db]
-  (-> db current-form :state))
+(defn current-form-some-prop [db prop] (-> db current-form prop))
+(defn form-by-id-some-prop [db form-id prop] (-> db (get-form form-id) prop))
 
-(defn current-form-data [db]
-  (-> db current-form :data))
+(defn current-form-state [db] (current-form-some-prop db :state))
+(defn form-by-id-state [db form-id] (form-by-id-some-prop db form-id :state))
+
+(defn current-form-data [db] (current-form-some-prop db :data))
+(defn form-by-id-data [db form-id] (form-by-id-some-prop db form-id :data))
 
 (defn current-form-field-value [db field-name]
   (-> db current-form-data :editing-data (get (keyword field-name))))
 
-(defn current-form-definition [db]
-  (-> db current-form :definition))
+(defn form-by-id-field-value [db form-id field-name]
+  (-> db (form-by-id-data form-id) :editing-data (get (keyword field-name))))
 
-(defn current-form-dataset-name [db]
-  (-> db current-form-definition :dataset-name))
+(defn current-form-definition [db] (current-form-some-prop db :definition))
+(defn form-by-id-definition [db form-id] (form-by-id-some-prop db form-id :definition))
+
+(defn current-form-dataset-name [db] (-> db current-form-definition :dataset-name))
+(defn form-by-id-dataset-name [db form-id] (-> db (form-by-id-definition form-id) :dataset-name))
 
 (defn replace-url-tag [url tag value]
   (str/replace url (str ":" tag) value))
 
-(defn replace-complex-id [db url]
-  (replace-url-tag url "complex-id" (current-form-dataset-name db)))
+(defn replace-complex-id [url dataset-name]
+  (replace-url-tag url "complex-id" dataset-name))
 
-(def form-data-url replace-complex-id)
+(defn current-form-data-url [db url] (replace-complex-id url (current-form-dataset-name db)))
+(defn form-by-id-data-url [db form-id url] (replace-complex-id url (form-by-id-dataset-name db form-id)))
 
 (defn fields-defs [db]
   (-> db current-form-definition :fields-defs))
@@ -169,68 +119,115 @@
           (fields-defs db)))
 
 (def current-record-index #(-> % current-form-data :current-record))
+(def form-by-id-current-record-index #(-> %1 (form-by-id-data %2) :current-record))
 (def current-records #(-> % current-form-data :records))
-(def editing-data #(-> % current-form-data :editing-data))
+(def form-by-id-current-records #(-> %1 (form-by-id-data %2) :records))
+(def current-form-editing-data #(-> % current-form-data :editing-data))
+(def form-by-id-editing-data #(-> %1 (form-by-id-data %2) :editing-data))
 (def new-record? #(-> % current-form-data :new-record?))
+(def form-by-id-new-record? #(-> %1 (form-by-id-data %2) :new-record?))
 
-(defn set-current-form-data [db new-form-data]
-  (assoc-in db [:complex-forms (:current-form db) :data] (merge (current-form-data db) new-form-data)))
+(defn form-by-id-set-data [db form-id data]
+  (assoc-in db [:complex-forms form-id :data] (merge (form-by-id-data db form-id) data)))
 
-(defn set-editing-data [db fields]
+(defn current-form-set-data [db new-form-data]
+  (form-by-id-set-data db (:current-form db) new-form-data))
+
+(defn set-current-form-editing-data [db fields]
   "merges fields into current editing data"
-  (merge (editing-data db) fields))
+  (merge (current-form-editing-data db) fields))
+
+(defn set-form-by-id-editing-data [db form-id fields]
+  "merges fields into form editing data"
+  (merge (form-by-id-editing-data db form-id) fields))
+
+(defn form-by-id-set-record-index [db form-id index]
+  (assoc-in db [:complex-forms form-id :data :current-record] index))
 
 (defn set-current-record-index [db index]
-  (assoc-in db [:complex-forms (:current-form db) :data :current-record] index))
+  (form-by-id-set-record-index db (:current-form db) index))
 
 (defn data-record-by-index [db index]
   (get (current-records db) index))
 
+(defn form-by-id-data-record-by-index [db form-id index]
+  (get (form-by-id-current-records db form-id) index))
+
 (defn current-data-record [db]
   (data-record-by-index db (current-record-index db)))
 
+(defn form-by-id-current-data-record [db form-id]
+  (form-by-id-data-record-by-index db form-id (form-by-id-current-record-index db form-id)))
+
+(defn record-pk-values [data-record form-definition]
+  (map (fn [pk-field] (-> pk-field keyword data-record)) (:pk-fields form-definition)))
+
 (defn current-record-pk-values [db]
-  (map (fn [pk-field] (-> db
-                         current-data-record
-                         (get (keyword pk-field))))
-       (-> db current-form-definition :pk-fields)))
+  (record-pk-values (current-data-record db) (current-form-definition db)))
 
-(defn replace-url-with-pk
-  [db base-url pk-tag-name]
-  (replace-url-tag (replace-complex-id db base-url)
+(defn form-by-id-current-record-pk-values [db form-id]
+  (record-pk-values (form-by-id-current-data-record db form-id) (form-by-id-definition db form-id)))
+
+(defn form-by-id-replace-url-with-pk
+  [db form-id base-url pk-tag-name]
+  (replace-url-tag (form-by-id-data-url db form-id base-url)
                    pk-tag-name
-                   (-> db current-record-pk-values first)))
+                   (-> db (form-by-id-current-record-pk-values form-id) first)))
 
-(defn current-record<-editing-data [db record-index]
-  (assoc (current-records db) record-index (editing-data db)))
+(defn current-form-replace-url-with-pk
+  [db base-url pk-tag-name]
+  (form-by-id-replace-url-with-pk db (:current-form db) base-url pk-tag-name))
 
-(defn new-record<-editing-data [db]
-  (conj (current-records db) (editing-data db)))
+(defn form-by-id-current-record<-editing-data [db form-id record-index]
+  (assoc (form-by-id-current-records db form-id) record-index (form-by-id-editing-data db form-id)))
+
+(defn form-by-id-new-record<-editing-data [db form-id]
+  (conj (form-by-id-current-records db form-id) (form-by-id-editing-data db form-id)))
+
+(defn form-by-id-records<-editing-data [db form-id]
+  (if (form-by-id-new-record? db form-id)
+    (form-by-id-new-record<-editing-data db form-id)
+    (form-by-id-current-record<-editing-data db form-id (form-by-id-current-record-index db form-id))))
 
 (defn records<-editing-data [db]
-  (if (new-record? db)
-    (new-record<-editing-data db)
-    (current-record<-editing-data db (current-record-index db))))
+  (form-by-id-records<-editing-data db (:current-form db)))
+
+(defn form-by-id-current-record<-new-data [db form-id record-index data]
+  (assoc (form-by-id-current-records db form-id) record-index data))
 
 (defn current-record<-new-data [db record-index data]
   (assoc (current-records db) record-index data))
 
+(defn form-by-id-new-record<-new-data [db form-id data]
+  (conj (form-by-id-current-records db form-id) data))
+
 (defn new-record<-new-data [db data]
   (conj (current-records db) data))
 
+(defn form-by-id-records<-new-data [db form-id data]
+  (if (form-by-id-new-record? db form-id)
+    (form-by-id-new-record<-new-data db form-id data)
+    (form-by-id-current-record<-new-data db form-id (form-by-id-current-record-index db form-id) data)))
+
 (defn records<-new-data [db data]
-  (if (new-record? db)
-    (new-record<-new-data db data)
-    (current-record<-new-data db (current-record-index db) data)))
+  (form-by-id-records<-new-data db (:current-form db) data))
+
+(defn form-by-id-delete-current-record [db form-id]
+  (into [] (cl/remove-nth
+            (form-by-id-current-records db form-id)
+            (form-by-id-current-record-index db form-id))))
 
 (defn delete-current-record [db]
-  (into [] (cl/remove-nth (current-records db) (current-record-index db))))
+  (form-by-id-delete-current-record db (:current-form db)))
 
-(defn record-index-after-delete [db after-delete-records]
+(defn form-by-id-record-index-after-delete [db form-id after-delete-records]
   (let [record-count  (count after-delete-records)
-        current-index (current-record-index db)
+        current-index (form-by-id-current-record-index db form-id)
         last-index    (when (> record-count 0) (dec record-count))]
     (if last-index
       (if (> current-index last-index)
         last-index
         current-index))))
+
+(defn record-index-after-delete [db after-delete-records]
+  (form-by-id-record-index-after-delete db (:current-form db) after-delete-records))

@@ -1,63 +1,46 @@
 (ns metaforms.modules.complex-forms.events
-  (:require [ajax.core :as ajax]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [re-frame.db :as rdb]
             [re-frame.core :as rf]
-            [metaforms.common.dictionary :refer [l]]
+            [metaforms.common.dictionary :refer [l error-result->error-message]]
             [metaforms.common.logic :as cl]
-            [metaforms.modules.samples.db :as samples.db]
+            [metaforms.modules.complex-forms.constants :as cf.consts]
             [metaforms.modules.complex-forms.components.search :as search]
             [metaforms.modules.complex-forms.logic :as cf.logic]
             [metaforms.modules.complex-forms.validation-logic :as vl]))
 
-;; release build must be served through the same domain and port
-(def api-host (if goog.DEBUG  "http://localhost:8000/api/" "/api/"))
-
-(def persistent-path "query/persistent/")
-(def base-uri (str api-host persistent-path "complex-tables/?id={id}&middleware=complex_forms&depth=1"))
-(def persistent-get-base-uri (str api-host persistent-path ":complex-id/"))
-(def persistent-post-base-uri (str api-host persistent-path ":complex-id/"))
-(def persistent-put-base-uri (str persistent-post-base-uri ":id/"))
-(def persistent-delete-base-uri (str api-host persistent-path "delete/:complex-id/:id/"))
-
-(def validations-path "service/get/{service}/{method}/")
-(def validation-base-url (str api-host validations-path))
-
 (rf/reg-event-fx
  :set-form-definition
  (fn [{db :db} [_ form-pk]]
-   (let [form-id (-> (str form-pk) str/lower-case (str/replace #"_" "-") keyword)]
+   (let [form-id (cf.logic/form-pk->form-id form-pk)]
      (if-let [form (cf.logic/get-form db form-id)]
        {:dispatch [:set-current-form form-id]}
-       {:dispatch [:load-form-definition form-pk form-id]}))))
+       {:dispatch [:load-form-definition
+                   form-pk
+                   [::load-form-definition-success form-id]
+                   [::load-form-definition-failure form-id]]}))))
 
 (rf/reg-event-fx
  :load-form-definition
- (fn [{db :db} [_ form-pk form-id]]
+ (fn [{db :db} [_ form-pk on-success on-failure]]
    {:dispatch [:http-get
-               (cl/replace-tag base-uri "id" form-pk)
-               [::load-form-definition-success form-id]
-               [::load-form-definition-failure]]}))
-
-(defn load-form-definition-success [form-id response db]
-  (let [form-definition (-> response :data first)]
-    (assoc-in db [:complex-forms form-id] {:definition form-definition
-                                           :state      :view
-                                           :data       {:records        []
-                                                        :current-record nil
-                                                        :editing-data   nil
-                                                        :new-record?    false}})))
+               (cl/replace-tag cf.consts/base-uri "id" form-pk)
+               on-success
+               on-failure]}))
 
 (rf/reg-event-fx
  ::load-form-definition-success
  (fn [{db :db} [_ form-id response]]
-   {:db        (load-form-definition-success form-id response db)
+   {:db        (cf.logic/load-form-definition-success form-id response db)
     :dispatch [:set-current-form form-id]}))
 
 (rf/reg-event-fx
  ::load-form-definition-failure
- (fn [{db :db} [_ result]]
-   (js/console.log "ERROR" result)))
+ (fn [{db :db} [_ form-id result]]
+   {:dispatch [:show-modal-alert
+               (l :common/error)
+               (str (l :form/load-definition-failure {:form-id form-id}) ". "
+                    (error-result->error-message result (l :error/unknown)))]}))
 
 (rf/reg-event-fx
  :set-current-form
@@ -65,22 +48,30 @@
    {:db (merge db {:current-view :complex-form
                    :current-form form-id})
     ;; TODO: this must be removed later
-    :dispatch [:form-load-data]}))
+    :dispatch [:form-load-data form-id]}))
 
 (rf/reg-event-fx
  :form-load-data
- (fn [{db :db} _]
+ (fn [{db :db} [_ form-id]]
    {:dispatch [:http-get
-               (cf.logic/form-data-url db persistent-get-base-uri)
+               (cf.logic/current-form-data-url db cf.consts/persistent-get-base-uri)
                [::form-load-data-success]
-               [::form-load-data-failure]]}))
+               [::form-load-data-failure form-id]]}))
 
 (rf/reg-event-fx
  ::form-load-data-success
  (fn [{db :db} [_ response]]
-   {:db (cf.logic/set-current-form-data db {:records (:data response)})}))
+   {:db (cf.logic/current-form-set-data db {:records (:data response)})}))
 
-;; (cf.logic/form-data-url db persistent-get-base-uri)
+(rf/reg-event-fx
+ ::form-load-data-failure
+ (fn [{db :db} [_ form-id result]]
+   {:dispatch [:show-modal-alert
+               (l :common/error)
+               (str (l :form/load-data-failure {:form-id form-id}) ". "
+                    (error-result->error-message result (l :error/unknown)))]}))
+
+;; (cf.logic/current-form-data-url db cf.consts/persistent-get-base-uri)
 
 ;; form actions
 ;; :append :edit :confirm :discard :delete :search :refresh
@@ -115,26 +106,26 @@
  :search-button-click
  (fn [{db :db} [_ search-value]]
    {:dispatch [:http-get
-               (cf.logic/form-data-url db (str persistent-get-base-uri "?_search_=" search-value))
+               (cf.logic/current-form-data-url db (str cf.consts/persistent-get-base-uri "?_search_=" search-value))
                [::form-load-data-success]
                [::form-load-data-failure]]}))
 
 (rf/reg-event-fx
  :search-grid-select-cell
  (fn [{db :db} [_ selected-cell]]
-   {:db (cf.logic/set-current-form-data db {:search {:selected-cell (cl/js-map->clj-map selected-cell)}})}))
+   {:db (cf.logic/current-form-set-data db {:search {:selected-cell (cl/js-map->clj-map selected-cell)}})}))
 
 (rf/reg-event-fx
  :form-search-select-record
  (fn [{db :db} [_ row-index]]
-   {:db       (cf.logic/set-current-form-data db {:current-record row-index})
+   {:db       (cf.logic/current-form-set-data db {:current-record row-index})
     :dispatch [:modal-close]}))
 
 (rf/reg-event-fx
  :form-search-query
  (fn [{db :db} _]
    {:dispatch [:http-get
-               (cf.logic/form-data-url db persistent-get-base-uri)
+               (cf.logic/current-form-data-url db cf.consts/persistent-get-base-uri)
                [::form-search-query-success]
                [::form-search-query-failure]]}))
 
@@ -182,7 +173,7 @@
  :do-form-edit
  (fn [{db :db} _]
    (if-let [current-record (cf.logic/current-data-record db)]
-     {:db       (cf.logic/set-current-form-data db {:new-record?  false
+     {:db       (cf.logic/current-form-set-data db {:new-record?  false
                                                     :editing-data (cf.logic/current-data-record db)})
       :dispatch [:set-current-form-state :edit]}
      {:dispatch [:do-form-append]})))
@@ -190,14 +181,14 @@
 (rf/reg-event-fx
  :do-form-append
  (fn [{db :db} _]
-   {:db       (cf.logic/set-current-form-data db {:new-record?  true
+   {:db       (cf.logic/current-form-set-data db {:new-record?  true
                                                   :editing-data (cf.logic/new-record (cf.logic/fields-defs db))})
     :dispatch [:set-current-form-state :edit]}))
 
 (rf/reg-event-fx
  :do-form-discard
  (fn [{db :db} _]
-   {:db       (cf.logic/set-current-form-data db {:new-record?  false
+   {:db       (cf.logic/current-form-set-data db {:new-record?  false
                                                   :editing-data nil})
     :dispatch [:set-current-form-state :view]}))
 
@@ -212,7 +203,7 @@
 (defn form-confirm-dispatch-data [db method url]
   [method
    url
-   {:data (cf.logic/data-record->typed-data (cf.logic/editing-data db)
+   {:data (cf.logic/data-record->typed-data (cf.logic/current-form-editing-data db)
                                             (cf.logic/fields-defs db))}
    [::form-confirm-success]
    [::form-confirm-failure]])
@@ -223,7 +214,7 @@
    {:dispatch (form-confirm-dispatch-data
                db
                :http-post
-               (cf.logic/form-data-url db persistent-post-base-uri))}))
+               (cf.logic/current-form-data-url db cf.consts/persistent-post-base-uri))}))
 
 (rf/reg-event-fx
  :do-confirmed-form-confirm-edit
@@ -231,7 +222,7 @@
    {:dispatch (form-confirm-dispatch-data
                db
                :http-put
-               (cf.logic/replace-url-with-pk db persistent-put-base-uri "id"))}))
+               (cf.logic/current-form-replace-url-with-pk db cf.consts/persistent-put-base-uri "id"))}))
 
 (rf/reg-event-fx
  ::form-confirm-success
@@ -239,7 +230,7 @@
    (let [new-records          (cf.logic/records<-new-data db (-> response :data first))
          current-record-index (cf.logic/current-record-index db)
          current-record       (if (cf.logic/new-record? db) (-> new-records count dec) current-record-index)]
-     {:db       (cf.logic/set-current-form-data db {:new-record?    false
+     {:db       (cf.logic/current-form-set-data db {:new-record?    false
                                                     :editing-data   nil
                                                     :current-record current-record
                                                     :records        new-records})
@@ -260,7 +251,7 @@
  :do-form-delete-remote
  (fn [{db :db} _]
    {:dispatch [:http-delete
-               (cf.logic/replace-url-with-pk db persistent-delete-base-uri "id")
+               (cf.logic/current-form-replace-url-with-pk db cf.consts/persistent-delete-base-uri "id")
                [:form-delete-remote-success]
                [:form-delete-remote-failure]]}))
 
@@ -273,7 +264,7 @@
  :form-delete-remote-success
  (fn [{db :db} _]
    (let [after-delete-records (cf.logic/delete-current-record db)]
-     {:db       (cf.logic/set-current-form-data db {:records        after-delete-records
+     {:db       (cf.logic/current-form-set-data db {:records        after-delete-records
                                                     :editing-data   nil
                                                     :new-record?    false
                                                     :current-record (cf.logic/record-index-after-delete db after-delete-records)})
@@ -282,12 +273,12 @@
 (rf/reg-event-fx
  :do-input-focus
  (fn [db [_ field-name]]
-   (cf.logic/set-current-form-data db {:editing field-name})))
+   (cf.logic/current-form-set-data db {:editing field-name})))
 
 (defn db-on-blur [db field-name field-value]
-  (cf.logic/set-current-form-data db {:editing      nil
+  (cf.logic/current-form-set-data db {:editing      nil
                                       :editing-data (assoc
-                                                     (cf.logic/editing-data db)
+                                                     (cf.logic/current-form-editing-data db)
                                                      (keyword field-name)
                                                      field-value)}))
 
@@ -316,7 +307,7 @@
  (fn [{db :db} [_ validation field-name new-value]]
    ;; sends http request
    (let [url (vl/build-validation-url (db-on-blur db field-name new-value)
-                                      validation-base-url
+                                      cf.consts/validation-base-url
                                       validation new-value)]
      {:dispatch [:http-get url
                  [::validate-field-success validation field-name new-value]
@@ -326,10 +317,10 @@
 (rf/reg-event-fx
  ::validate-field-success
  (fn [{db :db} [_ validation field-name new-value response]]
-   {:db       (cf.logic/set-current-form-data
+   {:db       (cf.logic/current-form-set-data
                (cl/set-spinner db false)
                {:editing      nil
-                :editing-data (cf.logic/set-editing-data db (vl/expected-results->fields validation response))})
+                :editing-data (cf.logic/set-current-form-editing-data db (vl/expected-results->fields validation response))})
     :dispatch [:input-blur field-name new-value]}))
 
 (rf/reg-event-fx

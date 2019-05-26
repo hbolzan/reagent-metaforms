@@ -4,7 +4,7 @@
             [metaforms.modules.complex-forms.components.input :as input]
             [metaforms.components.cards :as cards]
             [metaforms.modules.complex-forms.components.toolset :as toolset]
-            [metaforms.modules.complex-forms.logic :as l-cf]))
+            [metaforms.modules.complex-forms.view-logic :as view-logic]))
 
 ;; form-data => {:records [hash-map] :current-record integer :editing-data hash-map :new-record? boolean}
 (defn form-field
@@ -18,8 +18,8 @@
   [:div.form-row {:key (str "row-" row-index)}
    (doall
     (map (fn [field bootstrap-width]
-           (form-field field (l-cf/width->col-md-class bootstrap-width) form-state fields-defs))
-         (l-cf/row-fields row-def fields-defs)
+           (form-field field (view-logic/width->col-md-class bootstrap-width) form-state fields-defs))
+         (view-logic/row-fields row-def fields-defs)
          (:bootstrap-widths row-def)))])
 
 (defn form [{:keys [id title rows-defs fields-defs] :as form-definition}]

@@ -1,7 +1,7 @@
 (ns metaforms.modules.complex-forms.views
   (:require [re-frame.core :as rf]
             [metaforms.modules.complex-forms.components.form :as complex.form]
-            [metaforms.modules.complex-forms.logic :as cf-l]))
+            [metaforms.modules.complex-forms.view-logic :as view-logic]))
 
 (defn fields-defs-with-id [form-id fields-defs]
   (mapv #(assoc % :id (str (name form-id) "-" (:name %))) fields-defs))
@@ -11,7 +11,7 @@
     (complex.form/form
      (merge form-definition
             {:fields-defs fields-defs
-             :rows-defs   (cf-l/distribute-fields fields-defs cf-l/bootstrap-md-width)}))))
+             :rows-defs   (view-logic/distribute-fields fields-defs view-logic/bootstrap-md-width)}))))
 
 (defn generic-view []
   (let [{form-definition :definition} @(rf/subscribe [:current-form])]

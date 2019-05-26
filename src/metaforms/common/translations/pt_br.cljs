@@ -15,9 +15,13 @@
    :dialog/confirmation "Confirmação"
    :dialog/verifying    "Verificando"
 
-   :form/confirm-delete? "Tem certeza que quer excluir este registro?"
-   :form/confirm-edit?   "Confirma alterações no registro atual?"
-   :form/confirm-append? "Confirma inclusão de novo registro?"
-   :form/search-failure  "Ocorreu um erro ao tentar abrir a janela de pesquisa"
-   :form/delete-failure  "Ocorreu um erro ao tentar excluir o registro atual"
+   :form/confirm-delete?         "Tem certeza que quer excluir este registro?"
+   :form/confirm-edit?           "Confirma alterações no registro atual?"
+   :form/confirm-append?         "Confirma inclusão de novo registro?"
+   :form/search-failure          "Ocorreu um erro ao tentar abrir a janela de pesquisa"
+   :form/delete-failure          "Ocorreu um erro ao tentar excluir o registro atual"
+   :form/load-definition-failure "Ocorreu um erro ao tentar ler a definição da tabela complexa '{form-id}'"
+   :form/load-data-failure       "Ocorreu um erro ao tentar consultar os dados da tabela '{form-id}'"
+
+   :error/unknown "Erro desconhencido"
    })
