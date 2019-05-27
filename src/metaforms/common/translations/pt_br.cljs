@@ -23,5 +23,7 @@
    :form/load-definition-failure "Ocorreu um erro ao tentar ler a definição da tabela complexa '{form-id}'"
    :form/load-data-failure       "Ocorreu um erro ao tentar consultar os dados da tabela '{form-id}'"
 
+   :bundle/load-definition-failure "Ocorreu um erro ao tentar ler a definição do conjunto '{bundle-id}'"
+
    :error/unknown "Erro desconhencido"
    })

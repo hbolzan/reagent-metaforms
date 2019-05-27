@@ -41,11 +41,9 @@
   (rf/dispatch [:set-breadcrumbs (path->breadcrumbs path)])
   (rf/dispatch [:set-view view-id]))
 
-;; primeiro teste - pega form-definition de samples
-(defn handle-complex-form-route [form-id]
-  (let [form-definition samples.db/form-definition]
-    (rf/dispatch [:set-breadcrumbs (path->breadcrumbs (str "/forms/" (:title form-definition)))])
-    (rf/dispatch [:set-form-definition :sample])))
+(defn handle-remote-form-bundle-route [bundle-id]
+  (rf/dispatch [:set-breadcrumbs (path->breadcrumbs (str "/bundles/" bundle-id))])
+  (rf/dispatch [:load-complex-bundle-definition bundle-id]))
 
 (defn handle-remote-complex-form-route [complex-form-id]
   (rf/dispatch [:set-breadcrumbs (path->breadcrumbs (str "/forms/" complex-form-id))])
@@ -57,14 +55,14 @@
   (defroute "/cadastros" []
     (handle-route "/cadastros" :cadastros))
 
-  (defroute "/sample" []
-    (handle-route "/sample" :sample))
-
-  (defroute "/forms/sample" []
-    (handle-complex-form-route :sample))
-
   (defroute "/forms/complex" []
     (handle-remote-complex-form-route "CAD_CLIENTES"))
+
+  (defroute "/forms/complex/:complex-id" {:as params}
+    (handle-remote-complex-form-route (:complex-id params)))
+
+  (defroute "/forms/bundles/:bundle-id" {:as params}
+    (handle-remote-form-bundle-route (:bundle-id params)))
 
   (defroute "*" {:as params}
     (handle-route (:* params) :not-found))
