@@ -2,10 +2,7 @@
   (:require [goog.events :as events]
             [goog.history.EventType :as EventType]
             [re-frame.core :as rf]
-            [secretary.core :as secretary]
-
-            ;; provisório - somente para testes
-            [metaforms.modules.samples.db :as samples.db])
+            [secretary.core :as secretary])
   (:require-macros [secretary.core :refer [defroute]])
   (:import goog.history.Html5History))
 
@@ -43,7 +40,7 @@
 
 (defn handle-remote-form-bundle-route [bundle-id]
   (rf/dispatch [:set-breadcrumbs (path->breadcrumbs (str "/bundles/" bundle-id))])
-  (rf/dispatch [:load-complex-bundle-definition bundle-id]))
+  (rf/dispatch [:set-complex-bundle-definition bundle-id]))
 
 (defn handle-remote-complex-form-route [complex-form-id]
   (rf/dispatch [:set-breadcrumbs (path->breadcrumbs (str "/forms/" complex-form-id))])

@@ -1,5 +1,6 @@
 (ns metaforms.modules.complex-forms.views
   (:require [re-frame.core :as rf]
+            [metaforms.common.logic :as cl]
             [metaforms.modules.complex-forms.components.form :as complex.form]
             [metaforms.modules.complex-forms.view-logic :as view-logic]))
 
@@ -14,5 +15,6 @@
              :rows-defs   (view-logic/distribute-fields fields-defs view-logic/bootstrap-md-width)}))))
 
 (defn generic-view []
-  (let [{form-definition :definition} @(rf/subscribe [:current-form])]
+  (let [current-form @(rf/subscribe [:current-form])
+        {form-definition :definition} current-form]
     (index form-definition)))

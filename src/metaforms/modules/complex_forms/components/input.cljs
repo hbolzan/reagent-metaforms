@@ -124,7 +124,7 @@
            (field-def->common-props field-def local-state form-state))])
 
 (defn filter-source-field [field-def]
-  (let [lookup-filter (-> field-def :lookup-filter str/trim)
+  (let [lookup-filter (-> field-def :lookup-filter cl/safe-trim)
         filter-args   (if (not (empty? lookup-filter)) (str/split lookup-filter ";") [])]
     (first filter-args)))
 

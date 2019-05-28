@@ -6,6 +6,7 @@
             [metaforms.routes :as routes]
             [metaforms.modules.main.events]
             [metaforms.modules.complex-forms.events]
+            [metaforms.modules.complex-bundles.events]
             [metaforms.modules.main.subs]
             [metaforms.modules.complex-forms.subs]
             [metaforms.components.main :as main]

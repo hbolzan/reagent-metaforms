@@ -47,7 +47,7 @@
   [{:keys [field-id name label lookup-key lookup-result options filter-source-value] :as defs}
    common-props
    local-state]
-  (let [lookup-filter       (-> defs :lookup-filter str/trim)
+  (let [lookup-filter       (-> defs :lookup-filter cl/safe-trim)
         filter-args         (if (not (empty? lookup-filter)) (str/split lookup-filter ";") [])
         filter-source-field (first filter-args)
         last-modified-field (:last-modified-field @local-state)

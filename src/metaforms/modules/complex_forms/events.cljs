@@ -31,7 +31,7 @@
 (rf/reg-event-fx
  ::load-form-definition-success
  (fn [{db :db} [_ form-id response]]
-   {:db        (cf.logic/load-form-definition-success form-id response db)
+   {:db        (cf.logic/load-form-definition-success db form-id response)
     :dispatch [:set-current-form form-id]}))
 
 (rf/reg-event-fx
@@ -46,9 +46,7 @@
  :set-current-form
  (fn [{db :db} [_ form-id]]
    {:db (merge db {:current-view :complex-form
-                   :current-form form-id})
-    ;; TODO: this must be removed later
-    :dispatch [:form-load-data form-id]}))
+                   :current-form form-id})}))
 
 (rf/reg-event-fx
  :form-load-data

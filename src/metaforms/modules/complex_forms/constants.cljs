@@ -10,7 +10,7 @@
 (def persistent-put-base-uri (str persistent-post-base-uri ":id/"))
 (def persistent-delete-base-uri (str api-host persistent-path "delete/:complex-id/:id/"))
 
-(def complex-bundles-base-uri (str api-host persistent-path "complex-bundles/?id=:bundle-id&depth=1"))
+(def complex-bundles-base-uri (str api-host persistent-path "complex-bundles/?id={bundle-id}&middleware=complex_bundles_parse&depth=1"))
 
 (def validations-path "service/get/{service}/{method}/")
 (def validation-base-url (str api-host validations-path))

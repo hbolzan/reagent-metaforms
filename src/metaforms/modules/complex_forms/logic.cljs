@@ -1,6 +1,7 @@
 (ns metaforms.modules.complex-forms.logic
   (:require [cljs-time.format :as tf]
             [clojure.string :as str]
+            [metaforms.common.helpers :as helpers]
             [metaforms.common.logic :as cl]))
 
 
@@ -52,14 +53,23 @@
           {}
           fields-defs))
 
-(defn load-form-definition-success [form-id response db]
-  (let [form-definition (-> response :data first)]
-    (assoc-in db [:complex-forms form-id] {:definition form-definition
-                                           :state      :view
-                                           :data       {:records        []
-                                                        :current-record nil
-                                                        :editing-data   nil
-                                                        :new-record?    false}})))
+(defn load-form-definition
+  ([db form-id form-definition]
+   (load-form-definition db form-id form-definition nil))
+  ([db form-id form-definition children]
+   (assoc-in db
+             [:complex-forms form-id]
+             (helpers/assoc-if {:definition form-definition
+                                :state      :view
+                                :data       {:records        []
+                                             :current-record nil
+                                             :editing-data   nil
+                                             :new-record?    false}}
+                               :children
+                               children))))
+
+(defn load-form-definition-success [db form-id response]
+  (load-form-definition db form-id (-> response :data first)))
 
 (defn next-form-state [action current-state]
   (case [action current-state]
