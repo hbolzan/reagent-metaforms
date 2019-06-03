@@ -119,6 +119,9 @@
 (defn fields-defs [db]
   (-> db current-form-definition :fields-defs))
 
+(defn form-by-id-fields-defs [db form-id]
+  (-> db (form-by-id-definition form-id) :fields-defs))
+
 (defn one-field-def [db field-name]
   (filter (fn [field-def] (= (:name field-def) field-name))
           (fields-defs db)))

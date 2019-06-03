@@ -48,18 +48,10 @@
    {:db (merge db {:current-view :complex-form
                    :current-form form-id})}))
 
-;; (rf/reg-event-fx
-;;  :form-load-data
-;;  (fn [{db :db} [_ form-id]]
-;;    {:dispatch [:http-get
-;;                (cf.logic/current-form-data-url db cf.consts/persistent-get-base-uri)
-;;                [::form-load-data-success]
-;;                [::form-load-data-failure form-id]]}))
-
 (rf/reg-event-fx
  ::form-load-data-success
- (fn [{db :db} [_ response]]
-   {:db (cf.logic/current-form-set-data db {:records (:data response)})}))
+ (fn [{db :db} [_ form-id response]]
+   {:db (cf.logic/form-by-id-set-data db form-id {:records (:data response)})}))
 
 (rf/reg-event-fx
  ::form-load-data-failure
@@ -87,44 +79,44 @@
 (rf/reg-event-fx
  :do-form-action
  (fn [{db :db} [_ form-action form-id]]
-   (js/console.log form-id)
-   (let [current-state (cf.logic/current-form-state db)
+   (let [current-state (cf.logic/form-by-id-state db form-id)
          next-state    (cf.logic/next-form-state form-action current-state)]
      (when (not= current-state next-state)
-       {:dispatch [(keyword (str "do-form-"(name form-action)))]}))))
+       {:dispatch [(keyword (str "do-form-"(name form-action))) form-id]}))))
 
 ;; SEARCH
 (rf/reg-event-fx
  :do-form-search
- (fn [{db :db} _]
+ (fn [{db :db} [_ form-id]]
    {:dispatch [:show-modal-window
                "Search" ;; TODO: get title from dictionary
                [search/data-grid
                 (cf.logic/fields-defs db)
-                (fn [search-value] (rf/dispatch [:search-button-click search-value]))
-                (fn [row-index selected-object] (rf/dispatch [:form-search-select-record row-index]))
-                (fn [selected-cell] (rf/dispatch [:search-grid-select-cell selected-cell]))]
+                (fn [search-value] (rf/dispatch [:search-button-click form-id search-value]))
+                (fn [row-index selected-object] (rf/dispatch [:form-search-select-record form-id row-index]))
+                (fn [selected-cell] (rf/dispatch [:search-grid-select-cell form-id selected-cell]))]
                #(rf/dispatch
                  [:form-search-select-record
-                  (get-in (cf.logic/current-form-data @rdb/app-db) [:search :selected-cell :rowIdx])])]}))
+                  form-id
+                  (get-in (cf.logic/form-by-id-data @rdb/app-db form-id) [:search :selected-cell :rowIdx])])]}))
 
 (rf/reg-event-fx
  :search-button-click
- (fn [{db :db} [_ search-value]]
+ (fn [{db :db} [_ form-id search-value]]
    {:dispatch [:http-get
-               (cf.logic/current-form-data-url db (str cf.consts/persistent-get-base-uri "?_search_=" search-value))
-               [::form-load-data-success]
-               [::form-load-data-failure]]}))
+               (cf.logic/form-by-id-data-url db form-id (str cf.consts/persistent-get-base-uri "?_search_=" search-value))
+               [::form-load-data-success form-id]
+               [::form-load-data-failure form-id]]}))
 
 (rf/reg-event-fx
  :search-grid-select-cell
- (fn [{db :db} [_ selected-cell]]
-   {:db (cf.logic/current-form-set-data db {:search {:selected-cell (cl/js-map->clj-map selected-cell)}})}))
+ (fn [{db :db} [_ form-id selected-cell]]
+   {:db (cf.logic/form-by-id-set-data db form-id {:search {:selected-cell (cl/js-map->clj-map selected-cell)}})}))
 
 (rf/reg-event-fx
  :form-search-select-record
- (fn [{db :db} [_ row-index]]
-   {:db       (cf.logic/current-form-set-data db {:current-record row-index})
+ (fn [{db :db} [_ form-id row-index]]
+   {:db       (cf.logic/form-by-id-set-data db form-id {:current-record row-index})
     :dispatch [:modal-close]}))
 
 (rf/reg-event-fx
@@ -149,89 +141,93 @@
 ;; NAVIGATION ACTIONS
 (rf/reg-event-fx
  :do-form-nav-first
- (fn [{db :db} _]
-   {:db (cf.logic/set-current-record-index db 0)}))
+ (fn [{db :db} [_ form-id]]
+   {:db (cf.logic/form-by-id-set-record-index db form-id 0)}))
 
 (rf/reg-event-fx
  :do-form-nav-prior
- (fn [{db :db} _]
-   (let [record-index (cf.logic/current-record-index db)
+ (fn [{db :db} [_ form-id]]
+   (let [record-index (cf.logic/form-by-id-current-record-index db form-id)
          prior-index  (if (> record-index 0) (dec record-index) record-index)]
-     {:db (cf.logic/set-current-record-index db prior-index)})))
+     {:db (cf.logic/form-by-id-set-record-index db form-id prior-index)})))
 
 (rf/reg-event-fx
  :do-form-nav-next
- (fn [{db :db} _]
-   (let [record-index (cf.logic/current-record-index db)
-         record-count (count (cf.logic/current-records db))
+ (fn [{db :db} [_ form-id]]
+   (let [record-index (cf.logic/form-by-id-current-record-index db form-id)
+         record-count (count (cf.logic/form-by-id-current-records db form-id))
          next-index   (if (< record-index (dec record-count)) (inc record-index) record-index)]
-     {:db (cf.logic/set-current-record-index db next-index)})))
+     {:db (cf.logic/form-by-id-set-record-index db form-id next-index)})))
 
 (rf/reg-event-fx
  :do-form-nav-last
- (fn [{db :db} _]
+ (fn [{db :db} [_ form-id]]
    (let [record-count (count (cf.logic/current-records db))]
-     {:db (cf.logic/set-current-record-index db (when (> record-count 0) (dec record-count)))})))
+     {:db (cf.logic/form-by-id-set-record-index db form-id (when (> record-count 0) (dec record-count)))})))
 
 ;; CRUD ACTIONS
 (rf/reg-event-fx
  :do-form-edit
- (fn [{db :db} _]
-   (if-let [current-record (cf.logic/current-data-record db)]
-     {:db       (cf.logic/current-form-set-data db {:new-record?  false
-                                                    :editing-data (cf.logic/current-data-record db)})
-      :dispatch [:set-current-form-state :edit]}
-     {:dispatch [:do-form-append]})))
+ (fn [{db :db} [_ form-id]]
+   (if-let [current-record (cf.logic/form-by-id-current-data-record db form-id)]
+     {:db       (cf.logic/form-by-id-set-data db form-id {:new-record?  false
+                                                          :editing-data (cf.logic/current-data-record db)})
+      :dispatch [:set-current-form-state form-id :edit]}
+     {:dispatch [:do-form-append form-id]})))
 
 (rf/reg-event-fx
  :do-form-append
- (fn [{db :db} _]
-   {:db       (cf.logic/current-form-set-data db {:new-record?  true
-                                                  :editing-data (cf.logic/new-record (cf.logic/fields-defs db))})
-    :dispatch [:set-current-form-state :edit]}))
+ (fn [{db :db} [_ form-id]]
+   {:db       (cf.logic/form-by-id-set-data db
+                                            form-id
+                                            {:new-record?  true
+                                             :editing-data (cf.logic/new-record (cf.logic/form-by-id-fields-defs db form-id))})
+    :dispatch [:set-current-form-state form-id :edit]}))
 
 (rf/reg-event-fx
  :do-form-discard
- (fn [{db :db} _]
-   {:db       (cf.logic/current-form-set-data db {:new-record?  false
-                                                  :editing-data nil})
-    :dispatch [:set-current-form-state :view]}))
+ (fn [{db :db} [_ form-id]]
+   {:db       (cf.logic/form-by-id-set-data db form-id {:new-record?  false
+                                                        :editing-data nil})
+    :dispatch [:set-current-form-state form-id :view]}))
 
 (rf/reg-event-fx
  :do-form-confirm
- (fn [{db :db} _]
-   (let [new-record? (cf.logic/new-record? db)]
+ (fn [{db :db} [_ form-id]]
+   (let [new-record? (cf.logic/form-by-id-new-record? db form-id)]
      {:dispatch [:ask-for-confirmation
                  (l (if new-record? :form/confirm-append? :form/confirm-edit?))
-                 (if new-record? :do-confirmed-form-confirm-append :do-confirmed-form-confirm-edit)]})))
+                 [(if new-record? :do-confirmed-form-confirm-append :do-confirmed-form-confirm-edit) form-id]]})))
 
-(defn form-confirm-dispatch-data [db method url]
+(defn form-confirm-dispatch-data [db form-id method url]
   [method
    url
    {:data (cf.logic/data-record->typed-data (cf.logic/current-form-editing-data db)
                                             (cf.logic/fields-defs db))}
-   [::form-confirm-success]
-   [::form-confirm-failure]])
+   [::form-confirm-success form-id]
+   [::form-confirm-failure form-id]])
 
 (rf/reg-event-fx
  :do-confirmed-form-confirm-append
- (fn [{db :db} _]
+ (fn [{db :db} [_ form-id]]
    {:dispatch (form-confirm-dispatch-data
                db
+               form-id
                :http-post
                (cf.logic/current-form-data-url db cf.consts/persistent-post-base-uri))}))
 
 (rf/reg-event-fx
  :do-confirmed-form-confirm-edit
- (fn [{db :db} _]
+ (fn [{db :db} [_ form-id]]
    {:dispatch (form-confirm-dispatch-data
                db
+               form-id
                :http-put
                (cf.logic/current-form-replace-url-with-pk db cf.consts/persistent-put-base-uri "id"))}))
 
 (rf/reg-event-fx
  ::form-confirm-success
- (fn [{db :db} [_ response]]
+ (fn [{db :db} [_ form-id response]]
    (let [new-records          (cf.logic/records<-new-data db (-> response :data first))
          current-record-index (cf.logic/current-record-index db)
          current-record       (if (cf.logic/new-record? db) (-> new-records count dec) current-record-index)]
@@ -239,7 +235,7 @@
                                                     :editing-data   nil
                                                     :current-record current-record
                                                     :records        new-records})
-      :dispatch [:set-current-form-state :view]})))
+      :dispatch [:set-current-form-state form-id :view]})))
 
 (rf/reg-event-fx
  ::form-confirm-failure
@@ -248,17 +244,17 @@
 
 (rf/reg-event-fx
  :do-form-delete
- (fn [{db :db} _]
-   (if (cf.logic/current-record-index db)
-     {:dispatch [:ask-for-confirmation (l :form/confirm-delete?) :do-form-delete-remote]})))
+ (fn [{db :db} [_ form-id]]
+   (if (cf.logic/form-by-id-current-record-index db form-id)
+     {:dispatch [:ask-for-confirmation (l :form/confirm-delete?) [:do-form-delete-remote form-id]]})))
 
 (rf/reg-event-fx
  :do-form-delete-remote
- (fn [{db :db} _]
+ (fn [{db :db} [_ form-id]]
    {:dispatch [:http-delete
-               (cf.logic/current-form-replace-url-with-pk db cf.consts/persistent-delete-base-uri "id")
-               [:form-delete-remote-success]
-               [:form-delete-remote-failure]]}))
+               (cf.logic/form-by-id-replace-url-with-pk db form-id cf.consts/persistent-delete-base-uri "id")
+               [:form-delete-remote-success form-id]
+               [:form-delete-remote-failure form-id]]}))
 
 (rf/reg-event-fx
  :form-delete-remote-failure
@@ -267,13 +263,18 @@
 
 (rf/reg-event-fx
  :form-delete-remote-success
- (fn [{db :db} _]
-   (let [after-delete-records (cf.logic/delete-current-record db)]
-     {:db       (cf.logic/current-form-set-data db {:records        after-delete-records
-                                                    :editing-data   nil
-                                                    :new-record?    false
-                                                    :current-record (cf.logic/record-index-after-delete db after-delete-records)})
-      :dispatch [:set-current-form-state :view]})))
+ (fn [{db :db} [_ form-id]]
+   (let [after-delete-records (cf.logic/form-by-id-delete-current-record db form-id)]
+     {:db       (cf.logic/form-by-id-set-data
+                 db
+                 form-id
+                 {:records        after-delete-records
+                  :editing-data   nil
+                  :new-record?    false
+                  :current-record (cf.logic/form-by-id-record-index-after-delete db
+                                                                                 form-id
+                                                                                 after-delete-records)})
+      :dispatch [:set-current-form-state form-id :view]})))
 
 (rf/reg-event-fx
  :do-input-focus
@@ -300,8 +301,9 @@
 
 (rf/reg-event-db
  :set-current-form-state
- (fn [db [_ new-state]]
-   (assoc-in db [:complex-forms (:current-form db) :state] new-state)))
+ (fn [db [_ form-id new-state]]
+   (js/console.log form-id)
+   (cl/log (cf.logic/form-by-id-set-some-prop db form-id :state new-state))))
 
 ;; this event only will be triggered by input if
 ;; - there is a validation definition for this field
