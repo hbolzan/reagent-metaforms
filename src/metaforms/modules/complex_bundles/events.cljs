@@ -53,24 +53,6 @@
      {:db       (assoc db :current-bundle bundle-id)
       :dispatch [:set-current-form (first bundled-forms-ids)]})))
 
-#_(rf/reg-event-fx
- :complex-table-parent-data-changed
- (fn [{db :db} [_ table-id parent-data]]
-   (let [old-parent-data (cf.logic/form-by-id-some-prop db table-id :parent-data)
-         bundle          (->> (cf.logic/form-by-id-definition db table-id) :bundle-id (cb.logic/get-bundle db))
-         bundled-table   (first (filter #(= (:definition-id %) (name table-id)) (:bundled-tables bundle)))
-         master-fields   (:master-fields bundled-table)
-         related-fields  (:related-fields bundled-table)]
-     (when (cb.logic/parent-data-changed? old-parent-data parent-data master-fields)
-       (let [with-parent-data (cf.logic/form-by-id-set-some-prop db table-id :parent-data parent-data)]
-         (if (cb.logic/empty-parent-data? parent-data master-fields)
-           {:db (cf.logic/form-by-id-set-data with-parent-data table-id {:records []})}
-           {:dispatch [:http-get (cb.logic/child-url db table-id parent-data bundled-table)
-                       [::child-load-data-success table-id]
-                       [::child-load-data-failure table-id]]
-            }))
-       ))))
-
 (rf/reg-event-fx
  :complex-table-parent-data-changed
  (fn [{db :db} [_ table-id]]
@@ -80,16 +62,16 @@
          old-parent-data (cf.logic/form-by-id-some-prop db (keyword (:id bundle) (:definition-id bundled-table)) :parent-data)
          master-fields   (:master-fields bundled-table)
          related-fields  (:related-fields bundled-table)]
+     (js/console.log parent-data)
      (let [with-parent-data (cf.logic/form-by-id-set-some-prop db table-id :parent-data parent-data)]
-       (if (cb.logic/parent-data-changed? old-parent-data parent-data master-fields)
+       (when (cb.logic/parent-data-changed? old-parent-data parent-data master-fields)
          (if (cb.logic/empty-parent-data? parent-data master-fields)
            {:db (cf.logic/form-by-id-set-data with-parent-data table-id {:records []})}
            {:db       with-parent-data
             :dispatch [:http-get (cb.logic/child-url db table-id parent-data bundled-table)
                        [::child-load-data-success table-id]
                        [::child-load-data-failure table-id]]
-            })
-         {:db with-parent-data})))))
+            }))))))
 
 (rf/reg-event-fx
  ::child-load-data-success

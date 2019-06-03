@@ -25,15 +25,15 @@
          (view-logic/row-fields row-def fields-defs)
          (:bootstrap-widths row-def)))])
 
-(defn form-child [key child-id]
-  (let [child-form  @(rf/subscribe [:form-by-id child-id])
-        data  (or (:records @(rf/subscribe [:form-by-id-data child-id])) [])
-        ]
+(defn form-child [key parent-id child-id]
+  (let [child-form @(rf/subscribe [:form-by-id child-id])
+        parent-data @(rf/subscribe [:form-by-id-data parent-id])
+        data       (or (:records @(rf/subscribe [:form-by-id-data child-id])) [])]
     (rf/dispatch [:complex-table-parent-data-changed child-id])
     [cards/card
      ^{:key key}
      (-> child-form :definition :title)
-     (toolset/toolset)
+     (toolset/toolset child-id)
      [:div {:style {:min-height "100%"}}
       [:div.row
        [:div.col-md-12
@@ -48,10 +48,10 @@
 
 (defn form [{:keys [id title rows-defs fields-defs children] :as form-definition}]
   (let [form-state @(rf/subscribe [:current-form-state])
-        ]
+        form-id @(rf/subscribe [:current-form-id])]
     [cards/card
      title
-     (toolset/toolset)
+     (toolset/toolset form-id)
      [:div
       (doall (map-indexed (fn [index row-def] (form-row id index row-def fields-defs form-state)) rows-defs))
-      (when children (map-indexed (fn [i child] [form-child {:key i} child]) children))]]))
+      (when children (map-indexed (fn [i child] [form-child {:key i} form-id child]) children))]]))

@@ -79,10 +79,10 @@
     current-state))
 
 (defn toolset
-  []
-  (let [form-data  @(rf/subscribe [:current-form-data])
-        current-state @(rf/subscribe [:current-form-state])
-        form-state (form-data+current-state->form-state form-data current-state)]
+  [form-id]
+  (let [form-data     @(rf/subscribe [:form-by-id-data form-id])
+        current-state @(rf/subscribe [:form-by-id-state form-id])
+        form-state    (form-data+current-state->form-state form-data current-state)]
     [:div {:className "btn-toolbar" :role "toolbar"}
      (btn-group form-state action-buttons)
      (btn-group form-state nav-buttons)]))

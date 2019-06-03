@@ -4,6 +4,11 @@
             [metaforms.modules.complex-forms.logic :as cf.logic]))
 
 (rf/reg-sub
+ :current-form-id
+ (fn [db _]
+   (:current-form db)))
+
+(rf/reg-sub
  :current-form
  (fn [db _]
    (cf.logic/current-form db)))
@@ -17,6 +22,11 @@
  :current-form-state
  (fn [db _]
    (cf.logic/current-form-state db)))
+
+(rf/reg-sub
+ :form-by-id-state
+ (fn [db [_ form-id]]
+   (cf.logic/form-by-id-state db form-id)))
 
 (rf/reg-sub
  :current-record-index
