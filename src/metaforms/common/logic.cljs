@@ -2,6 +2,17 @@
   (:require [re-frame.core :as rf]
             [clojure.string :as str]))
 
+(defn numeric? [s]
+  (not (js/isNaN s)))
+
+(defn sql-quoted [s]
+  (str "'" s "'"))
+
+(defn sql-quoted-if [s pred]
+  (if (pred s)
+    (sql-quoted s)
+    s))
+
 (def sum (partial reduce +))
 
 (defn index-by-fn [a fn]

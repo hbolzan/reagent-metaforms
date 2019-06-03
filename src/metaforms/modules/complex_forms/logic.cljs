@@ -53,20 +53,15 @@
           {}
           fields-defs))
 
-(defn load-form-definition
-  ([db form-id form-definition]
-   (load-form-definition db form-id form-definition nil))
-  ([db form-id form-definition children]
-   (assoc-in db
-             [:complex-forms form-id]
-             (helpers/assoc-if {:definition form-definition
-                                :state      :view
-                                :data       {:records        []
-                                             :current-record nil
-                                             :editing-data   nil
-                                             :new-record?    false}}
-                               :children
-                               children))))
+(defn load-form-definition [db form-id form-definition]
+  (assoc-in db
+            [:complex-forms form-id]
+            {:definition form-definition
+             :state      :view
+             :data       {:records        []
+                          :current-record nil
+                          :editing-data   nil
+                          :new-record?    false}}))
 
 (defn load-form-definition-success [db form-id response]
   (load-form-definition db form-id (-> response :data first)))
@@ -136,6 +131,9 @@
 (def form-by-id-editing-data #(-> %1 (form-by-id-data %2) :editing-data))
 (def new-record? #(-> % current-form-data :new-record?))
 (def form-by-id-new-record? #(-> %1 (form-by-id-data %2) :new-record?))
+
+(defn form-by-id-set-some-prop [db form-id prop value]
+  (assoc-in db [:complex-forms form-id prop] value))
 
 (defn form-by-id-set-data [db form-id data]
   (assoc-in db [:complex-forms form-id :data] (merge (form-by-id-data db form-id) data)))
@@ -241,3 +239,6 @@
 
 (defn record-index-after-delete [db after-delete-records]
   (form-by-id-record-index-after-delete db (:current-form db) after-delete-records))
+
+(defn fields-defs->data-grid-cols [fields-defs]
+  (mapv (fn [field-def] {:key (:name field-def) :name (:label field-def)}) fields-defs))

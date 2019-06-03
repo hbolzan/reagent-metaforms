@@ -1,5 +1,6 @@
 (ns metaforms.modules.complex-forms.subs
   (:require [re-frame.core :as rf]
+            [metaforms.common.logic :as cl]
             [metaforms.modules.complex-forms.logic :as cf.logic]))
 
 (rf/reg-sub
@@ -8,14 +9,39 @@
    (cf.logic/current-form db)))
 
 (rf/reg-sub
+ :form-by-id
+ (fn [db [_ form-id]]
+   (cf.logic/get-form db form-id)))
+
+(rf/reg-sub
  :current-form-state
  (fn [db _]
    (cf.logic/current-form-state db)))
 
 (rf/reg-sub
+ :current-record-index
+ (fn [db _]
+   (cf.logic/current-record-index db)))
+
+(rf/reg-sub
+ :current-record
+ (fn [db _]
+   (cf.logic/current-data-record db)))
+
+(rf/reg-sub
+ :current-form-editing-data
+ (fn [db _]
+   (cf.logic/current-form-editing-data db)))
+
+(rf/reg-sub
  :current-form-data
  (fn [db _]
    (cf.logic/current-form-data db)))
+
+(rf/reg-sub
+ :form-by-id-data
+ (fn [db [_ form-id]]
+   (cf.logic/form-by-id-data db form-id)))
 
 (rf/reg-sub
  :current-form-records

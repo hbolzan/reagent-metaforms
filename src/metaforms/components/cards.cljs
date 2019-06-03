@@ -11,7 +11,7 @@
      [:div.card
       [:div.card-header.bg-primary {:style {:padding-top "2px" :padding-bottom "2px"}}
        [:strong title]]
-      (when toolbar 
+      (when toolbar
         [:div.card-header
          toolbar])
       [:div.card-body

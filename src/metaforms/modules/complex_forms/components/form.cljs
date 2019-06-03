@@ -1,9 +1,12 @@
 (ns metaforms.modules.complex-forms.components.form
   (:require [reagent.core :as r]
             [re-frame.core :as rf]
+            [react-data-grid :as ReactDataGrid]
             [metaforms.modules.complex-forms.components.input :as input]
             [metaforms.components.cards :as cards]
+            [metaforms.common.logic :as cl]
             [metaforms.modules.complex-forms.components.toolset :as toolset]
+            [metaforms.modules.complex-forms.logic :as cf.logic]
             [metaforms.modules.complex-forms.view-logic :as view-logic]))
 
 ;; form-data => {:records [hash-map] :current-record integer :editing-data hash-map :new-record? boolean}
@@ -22,10 +25,33 @@
          (view-logic/row-fields row-def fields-defs)
          (:bootstrap-widths row-def)))])
 
-(defn form [{:keys [id title rows-defs fields-defs] :as form-definition}]
-  (let [form-state @(rf/subscribe [:current-form-state])]
+(defn form-child [key child-id]
+  (let [child-form  @(rf/subscribe [:form-by-id child-id])
+        data  (or (:records @(rf/subscribe [:form-by-id-data child-id])) [])
+        ]
+    (rf/dispatch [:complex-table-parent-data-changed child-id])
+    [cards/card
+     ^{:key key}
+     (-> child-form :definition :title)
+     (toolset/toolset)
+     [:div {:style {:min-height "100%"}}
+      [:div.row
+       [:div.col-md-12
+        [:div
+         [:> ReactDataGrid {:columns   (cf.logic/fields-defs->data-grid-cols (-> child-form :definition :fields-defs))
+                            :rowGetter #(get (clj->js data) %)
+                            :rowsCount (count data)
+                            :minHeight 350
+                            }]]]]]]))
+
+
+
+(defn form [{:keys [id title rows-defs fields-defs children] :as form-definition}]
+  (let [form-state @(rf/subscribe [:current-form-state])
+        ]
     [cards/card
      title
      (toolset/toolset)
      [:div
-      (doall (map-indexed (fn [index row-def] (form-row id index row-def fields-defs form-state)) rows-defs))]]))
+      (doall (map-indexed (fn [index row-def] (form-row id index row-def fields-defs form-state)) rows-defs))
+      (when children (map-indexed (fn [i child] [form-child {:key i} child]) children))]]))

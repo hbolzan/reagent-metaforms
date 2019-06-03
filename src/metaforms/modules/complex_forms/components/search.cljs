@@ -7,9 +7,6 @@
             [metaforms.common.helpers :as helpers]
             [metaforms.modules.main.dom-helpers :as dom.helpers]))
 
-(defn fields-defs->data-grid-cols [fields-defs]
-  (mapv (fn [field-def] {:key (:name field-def) :name (:label field-def)}) fields-defs))
-
 (def search-value (dom.helpers/input-by-id-value-fn "search-field"))
 
 (defn on-search-button-click* [on-search-button-click e]
@@ -36,11 +33,10 @@
      [:div.row
       [:div.col-md-12
        (search-header on-search-button-click)]]
-     [:> ReactDataGrid {:columns          (fields-defs->data-grid-cols fields-defs)
+     [:> ReactDataGrid {:columns          (cf.logic/fields-defs->data-grid-cols fields-defs)
                         :rowGetter        #(get (clj->js data) %)
                         :rowsCount        (count data)
                         ;; https://github.com/adazzle/react-data-grid/issues/736
                         :minHeight        (- (-> js/window .-visualViewport .-height) 340)
                         :onRowDoubleClick on-row-double-click
-                        :onCellSelected   on-cell-selected
-                        }]]))
+                        :onCellSelected   on-cell-selected}]]))

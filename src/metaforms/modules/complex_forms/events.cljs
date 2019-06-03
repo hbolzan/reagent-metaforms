@@ -48,13 +48,13 @@
    {:db (merge db {:current-view :complex-form
                    :current-form form-id})}))
 
-(rf/reg-event-fx
- :form-load-data
- (fn [{db :db} [_ form-id]]
-   {:dispatch [:http-get
-               (cf.logic/current-form-data-url db cf.consts/persistent-get-base-uri)
-               [::form-load-data-success]
-               [::form-load-data-failure form-id]]}))
+;; (rf/reg-event-fx
+;;  :form-load-data
+;;  (fn [{db :db} [_ form-id]]
+;;    {:dispatch [:http-get
+;;                (cf.logic/current-form-data-url db cf.consts/persistent-get-base-uri)
+;;                [::form-load-data-success]
+;;                [::form-load-data-failure form-id]]}))
 
 (rf/reg-event-fx
  ::form-load-data-success
@@ -68,6 +68,13 @@
                (l :common/error)
                (str (l :form/load-data-failure {:form-id form-id}) ". "
                     (error-result->error-message result (l :error/unknown)))]}))
+
+(rf/reg-event-fx
+ :current-form-current-record-changed
+ (fn [{db :db} _]
+   ;; update all children
+   ;; (when (children? {:dispatch [:update-children]}))
+   ))
 
 ;; (cf.logic/current-form-data-url db cf.consts/persistent-get-base-uri)
 
@@ -131,8 +138,7 @@
  ::form-search-query-success
  (fn [{db :db} [_ response]]
    ;;(:current-form db)
-   {:dispatch [:show-modal-window "Search" "Search window test" nil]}
-   ))
+   {:dispatch [:show-modal-window "Search" "Search window test" nil]}))
 
 (rf/reg-event-fx
  ::form-search-query-failure

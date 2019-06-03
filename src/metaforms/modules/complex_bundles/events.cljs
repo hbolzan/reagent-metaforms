@@ -14,25 +14,27 @@
  :set-complex-bundle-definition
  (fn [{db :db} [_ bundle-id]]
    (if-let [bundle (cb.logic/get-bundle db bundle-id)]
-     {:dispatch [:set-current-bundle bundle-id]}
-     {:dispatch [:load-complex-bundle-definition bundle-id]})))
+     {:dispatch [:set-current-bundle (keyword bundle-id)]}
+     {:dispatch
+      [:load-complex-bundle-definition (keyword bundle-id)]})))
 
 (rf/reg-event-fx
  :load-complex-bundle-definition
  (fn [{db :db} [_ bundle-id]]
    {:dispatch [:http-get
-               (cl/replace-tag cf.consts/complex-bundles-base-uri "bundle-id" bundle-id)
+               (cl/replace-tag cf.consts/complex-bundles-base-uri "bundle-id" (name bundle-id))
                [::load-complex-bundle-success bundle-id]
                [::load-complex-bundle-failure bundle-id]]}))
 
 (rf/reg-event-fx
  ::load-complex-bundle-success
  (fn [{db :db} [_ bundle-id response]]
-   (let [bundle (-> response :data)]
-     {:db       (cb.logic/load-bundled-forms (cb.logic/load-bundle-definition-success db bundle-id bundle)
-                                             bundle-id
-                                             (:bundled-tables bundle)
-                                             cf.logic/load-form-definition)
+   (let [bundle (-> response :data) db-with-bundles
+         (cb.logic/load-bundle-definition-success db bundle-id bundle)]
+     {:db (cb.logic/load-bundled-forms db-with-bundles
+                                       bundle-id
+                                       (:bundled-tables bundle)
+                                       cf.logic/load-form-definition)
       :dispatch [:set-current-bundle bundle-id]})))
 
 (rf/reg-event-fx
@@ -46,5 +48,56 @@
 (rf/reg-event-fx
  :set-current-bundle
  (fn [{db :db} [_ bundle-id]]
-   {:db       (assoc db :current-bundle bundle-id)
-    :dispatch [:set-current-form (first (cb.logic/bundle-forms-ids (cb.logic/get-bundle db bundle-id)))]}))
+   (let [bundle            (cb.logic/get-bundle db bundle-id)
+         bundled-forms-ids (map #(keyword (:id bundle) (:definition-id %)) (:bundled-tables bundle))]
+     {:db       (assoc db :current-bundle bundle-id)
+      :dispatch [:set-current-form (first bundled-forms-ids)]})))
+
+#_(rf/reg-event-fx
+ :complex-table-parent-data-changed
+ (fn [{db :db} [_ table-id parent-data]]
+   (let [old-parent-data (cf.logic/form-by-id-some-prop db table-id :parent-data)
+         bundle          (->> (cf.logic/form-by-id-definition db table-id) :bundle-id (cb.logic/get-bundle db))
+         bundled-table   (first (filter #(= (:definition-id %) (name table-id)) (:bundled-tables bundle)))
+         master-fields   (:master-fields bundled-table)
+         related-fields  (:related-fields bundled-table)]
+     (when (cb.logic/parent-data-changed? old-parent-data parent-data master-fields)
+       (let [with-parent-data (cf.logic/form-by-id-set-some-prop db table-id :parent-data parent-data)]
+         (if (cb.logic/empty-parent-data? parent-data master-fields)
+           {:db (cf.logic/form-by-id-set-data with-parent-data table-id {:records []})}
+           {:dispatch [:http-get (cb.logic/child-url db table-id parent-data bundled-table)
+                       [::child-load-data-success table-id]
+                       [::child-load-data-failure table-id]]
+            }))
+       ))))
+
+(rf/reg-event-fx
+ :complex-table-parent-data-changed
+ (fn [{db :db} [_ table-id]]
+   (let [bundle          (->> db :current-bundle (cb.logic/get-bundle db))
+         bundled-table   (first (filter #(= (:definition-id %) (name table-id)) (:bundled-tables bundle)))
+         parent-data     (or (cf.logic/current-form-editing-data db) (cf.logic/current-data-record db))
+         old-parent-data (cf.logic/form-by-id-some-prop db (keyword (:id bundle) (:definition-id bundled-table)) :parent-data)
+         master-fields   (:master-fields bundled-table)
+         related-fields  (:related-fields bundled-table)]
+     (let [with-parent-data (cf.logic/form-by-id-set-some-prop db table-id :parent-data parent-data)]
+       (if (cb.logic/parent-data-changed? old-parent-data parent-data master-fields)
+         (if (cb.logic/empty-parent-data? parent-data master-fields)
+           {:db (cf.logic/form-by-id-set-data with-parent-data table-id {:records []})}
+           {:db       with-parent-data
+            :dispatch [:http-get (cb.logic/child-url db table-id parent-data bundled-table)
+                       [::child-load-data-success table-id]
+                       [::child-load-data-failure table-id]]
+            })
+         {:db with-parent-data})))))
+
+(rf/reg-event-fx
+ ::child-load-data-success
+ (fn [{db :db} [_ complex-table-id response]]
+   {:db (cf.logic/form-by-id-set-data db complex-table-id {:records (-> response :data)})}))
+
+(rf/reg-event-fx
+ ::child-load-data-failure
+ (fn [{db :db} [_ complex-table-id result]]
+   (str (l :form/load-data-failure {:form-id complex-table-id}) ". "
+        (error-result->error-message result (l :error/unknown)))))
