@@ -86,7 +86,8 @@
 ;; TOOLSET ENTRY POINT
 (rf/reg-event-fx
  :do-form-action
- (fn [{db :db} [_ form-action]]
+ (fn [{db :db} [_ form-action form-id]]
+   (js/console.log form-id)
    (let [current-state (cf.logic/current-form-state db)
          next-state    (cf.logic/next-form-state form-action current-state)]
      (when (not= current-state next-state)

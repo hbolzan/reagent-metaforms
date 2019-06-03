@@ -26,9 +26,9 @@
          (:bootstrap-widths row-def)))])
 
 (defn form-child [key parent-id child-id]
-  (let [child-form @(rf/subscribe [:form-by-id child-id])
+  (let [child-form  @(rf/subscribe [:form-by-id child-id])
         parent-data @(rf/subscribe [:form-by-id-data parent-id])
-        data       (or (:records @(rf/subscribe [:form-by-id-data child-id])) [])]
+        data        (or (:records @(rf/subscribe [:form-by-id-data child-id])) [])]
     (rf/dispatch [:complex-table-parent-data-changed child-id])
     [cards/card
      ^{:key key}

@@ -62,7 +62,6 @@
          old-parent-data (cf.logic/form-by-id-some-prop db (keyword (:id bundle) (:definition-id bundled-table)) :parent-data)
          master-fields   (:master-fields bundled-table)
          related-fields  (:related-fields bundled-table)]
-     (js/console.log parent-data)
      (let [with-parent-data (cf.logic/form-by-id-set-some-prop db table-id :parent-data parent-data)]
        (when (cb.logic/parent-data-changed? old-parent-data parent-data master-fields)
          (if (cb.logic/empty-parent-data? parent-data master-fields)

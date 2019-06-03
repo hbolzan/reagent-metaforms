@@ -41,33 +41,34 @@
 (defn disabled? [form-state enabled-states]
   (-> (.indexOf enabled-states form-state) (< 0)))
 
-(defn button-click [e]
+(defn button-click [form-id e]
   (let [events (if (= (type e) Keyword) [e] e)]
-    (rf/dispatch-sync [:do-form-action (first events)])
+    (rf/dispatch-sync [:do-form-action (first events) form-id])
     (doseq [event (rest events)]
-      (rf/dispatch-sync [event]))))
+      (rf/dispatch-sync [event form-id]))))
 
-(defn button-props [form-state enabled-states button-type button-types]
+(defn button-props [form-id form-state enabled-states button-type button-types]
   (merge
    {:type      "button"
     :className "btn btn-primary btn-lg"
     :key       (name button-type)
-    :onClick #(button-click (-> button-types button-type :form-event))}
+    :onClick #(button-click form-id (-> button-types button-type :form-event))}
    (cond (disabled? form-state enabled-states)
          {:disabled :disabled})))
 
 (defn toolset-button
-  [form-state {:keys [button-type button-types]}]
+  [form-id form-state {:keys [button-type button-types]}]
   (let [icon-class     (-> button-types button-type :icon)
         enabled-states (-> button-types button-type :enabled-states)]
-    [:button (button-props form-state enabled-states button-type button-types)
+    [:button (button-props form-id form-state enabled-states button-type button-types)
                 [:i {:className (str "fas fa-" icon-class)}]]))
 
 (defn btn-group
-  [form-state buttons]
+  [form-id form-state buttons]
   [:div
    {:className "btn-group mr-2" :role "group"}
-   (map (fn [button-type] (toolset-button form-state
+   (map (fn [button-type] (toolset-button form-id
+                                          form-state
                                          {:button-type  button-type
                                           :button-types buttons}))
         (keys buttons))])
@@ -84,5 +85,5 @@
         current-state @(rf/subscribe [:form-by-id-state form-id])
         form-state    (form-data+current-state->form-state form-data current-state)]
     [:div {:className "btn-toolbar" :role "toolbar"}
-     (btn-group form-state action-buttons)
-     (btn-group form-state nav-buttons)]))
+     (btn-group form-id form-state action-buttons)
+     (btn-group form-id form-state nav-buttons)]))
