@@ -25,16 +25,16 @@
                                :form-event     :refresh}})
 
 (def nav-buttons {:first {:icon           "fast-backward"
-                          :enabled-states [:view :edit]
+                          :enabled-states [:view]
                           :form-event     :nav-first}
                   :prior {:icon           "step-backward"
-                          :enabled-states [:view :edit]
+                          :enabled-states [:view]
                           :form-event     :nav-prior}
                   :next  {:icon           "step-forward"
-                          :enabled-states [:view :edit]
+                          :enabled-states [:view]
                           :form-event     :nav-next}
                   :last  {:icon           "fast-forward"
-                          :enabled-states [:view :edit]
+                          :enabled-states [:view]
                           :form-event     :nav-last}}
   )
 
@@ -80,10 +80,12 @@
     current-state))
 
 (defn toolset
-  [form-id]
-  (let [form-data     @(rf/subscribe [:form-by-id-data form-id])
-        current-state @(rf/subscribe [:form-by-id-state form-id])
-        form-state    (form-data+current-state->form-state form-data current-state)]
-    [:div {:className "btn-toolbar" :role "toolbar"}
-     (btn-group form-id form-state action-buttons)
-     (btn-group form-id form-state nav-buttons)]))
+  ([form-id]
+   (toolset form-id action-buttons nav-buttons))
+  ([form-id action-btns nav-btns]
+   (let [form-data     @(rf/subscribe [:form-by-id-data form-id])
+         current-state @(rf/subscribe [:form-by-id-state form-id])
+         form-state    (form-data+current-state->form-state form-data current-state)]
+     [:div {:className "btn-toolbar" :role "toolbar"}
+      (btn-group form-id form-state action-btns)
+      (btn-group form-id form-state nav-btns)])))

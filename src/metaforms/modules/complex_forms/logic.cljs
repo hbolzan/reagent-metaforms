@@ -243,5 +243,7 @@
 (defn record-index-after-delete [db after-delete-records]
   (form-by-id-record-index-after-delete db (:current-form db) after-delete-records))
 
-(defn fields-defs->data-grid-cols [fields-defs]
-  (mapv (fn [field-def] {:key (:name field-def) :name (:label field-def)}) fields-defs))
+(defn fields-defs->data-grid-cols [fields-defs read-only?]
+  (mapv (fn [field-def] {:key      (:name field-def)
+                         :name     (:label field-def)
+                         :editable (not read-only?)}) fields-defs))

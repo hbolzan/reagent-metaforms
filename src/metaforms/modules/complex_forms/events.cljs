@@ -302,8 +302,7 @@
 (rf/reg-event-db
  :set-current-form-state
  (fn [db [_ form-id new-state]]
-   (js/console.log form-id)
-   (cl/log (cf.logic/form-by-id-set-some-prop db form-id :state new-state))))
+   (cf.logic/form-by-id-set-some-prop db form-id :state new-state)))
 
 ;; this event only will be triggered by input if
 ;; - there is a validation definition for this field

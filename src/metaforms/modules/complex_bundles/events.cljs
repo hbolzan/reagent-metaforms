@@ -75,7 +75,10 @@
 (rf/reg-event-fx
  ::child-load-data-success
  (fn [{db :db} [_ complex-table-id response]]
-   {:db (cf.logic/form-by-id-set-data db complex-table-id {:records (-> response :data)})}))
+   (let [records (-> response :data)]
+     {:db (-> db
+              (cf.logic/form-by-id-set-data complex-table-id {:records records})
+              (cf.logic/form-by-id-set-record-index complex-table-id (when (count records) 0)))})))
 
 (rf/reg-event-fx
  ::child-load-data-failure

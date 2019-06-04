@@ -26,23 +26,38 @@
          (:bootstrap-widths row-def)))])
 
 (defn form-child [key parent-id child-id]
-  (let [child-form  @(rf/subscribe [:form-by-id child-id])
-        parent-data @(rf/subscribe [:form-by-id-data parent-id])
-        data        (or (:records @(rf/subscribe [:form-by-id-data child-id])) [])]
-    (rf/dispatch [:complex-table-parent-data-changed child-id])
-    [cards/card
-     ^{:key key}
-     (-> child-form :definition :title)
-     (toolset/toolset child-id)
-     [:div {:style {:min-height "100%"}}
-      [:div.row
-       [:div.col-md-12
-        [:div
-         [:> ReactDataGrid {:columns   (cf.logic/fields-defs->data-grid-cols (-> child-form :definition :fields-defs))
-                            :rowGetter #(get (clj->js data) %)
-                            :rowsCount (count data)
-                            :minHeight 350
-                            }]]]]]]))
+  (r/create-class
+   {:display-name         "Test Grid"
+    :component-did-mount  (fn [this] (js/console.log "component-did-mount")
+                            #_(js/console.log (r/state this)))
+    :component-did-update (fn [this old-argv]
+                            (js/console.log "component-did-update")
+                            #_(js/console.log old-argv)
+                            #_(this.selectCell {:idx 0 :cellIdx 0}))
+    :reagent-render
+    (fn [key parent-id child-id]
+      (let [child-form  @(rf/subscribe [:form-by-id child-id])
+            parent-data @(rf/subscribe [:form-by-id-data parent-id])
+            data        (or (:records @(rf/subscribe [:form-by-id-data child-id])) [])
+            grid        [:> ReactDataGrid {:columns             (cf.logic/fields-defs->data-grid-cols
+                                                                 (-> child-form :definition :fields-defs)
+                                                                 false)
+                                           :rowGetter           #(get (clj->js data) %)
+                                           :rowsCount           (count data)
+                                           :minHeight           350
+                                           :enableCellAutoFocus true
+                                           :enableCellSelect    true
+                                           }]]
+        (rf/dispatch [:complex-table-parent-data-changed child-id])
+        [cards/card
+         ^{:key key}
+         (-> child-form :definition :title)
+         (toolset/toolset child-id (dissoc toolset/action-buttons :search) toolset/nav-buttons)
+         [:div {:style {:min-height "100%"}}
+          [:div.row
+           [:div.col-md-12
+            [:div
+             grid]]]]]))}))
 
 
 

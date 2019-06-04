@@ -28,12 +28,12 @@
       [:i.fa.fa-search]]]]])
 
 (defn data-grid [fields-defs on-search-button-click on-row-double-click on-cell-selected]
-  (let [data  @(rf/subscribe [:current-form-records])]
+  (let [data @(rf/subscribe [:current-form-records])]
     [:div {:style {:min-height "100%"}}
      [:div.row
       [:div.col-md-12
        (search-header on-search-button-click)]]
-     [:> ReactDataGrid {:columns          (cf.logic/fields-defs->data-grid-cols fields-defs)
+     [:> ReactDataGrid {:columns          (cf.logic/fields-defs->data-grid-cols fields-defs true)
                         :rowGetter        #(get (clj->js data) %)
                         :rowsCount        (count data)
                         ;; https://github.com/adazzle/react-data-grid/issues/736
