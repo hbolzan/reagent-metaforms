@@ -2,6 +2,18 @@
 # yarn lockfile v1
 
 
+ag-grid-community@^21.0.0:
+  version "21.0.0"
+  resolved "https://registry.yarnpkg.com/ag-grid-community/-/ag-grid-community-21.0.0.tgz#73628395d9ee3a1abe1b786c18fb371b29e0450b"
+  integrity sha512-41PnbO8SctPFFHnb1sjgaFvBqyCBuJhYpFXuta8YH4xhN9Y4y1SRXZ54aw3hyfa1ipB/T7nAzm11enc5lYHazw==
+
+ag-grid-react@^21.0.0:
+  version "21.0.0"
+  resolved "https://registry.yarnpkg.com/ag-grid-react/-/ag-grid-react-21.0.0.tgz#65f83e35a1be9a0f8d14ddb73681f23fcb8fab1b"
+  integrity sha512-ITaKBdJjDegjAKDw8LqRPjQMlDIk3CulgncpQVEOUqcHSyY+hzJnTS1l/nX2cSq4HZkl0Y7oOrKe9Am0bqu/6Q==
+  dependencies:
+    prop-types "^15.6.2"
+
 asap@~2.0.3:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/asap/-/asap-2.0.6.tgz#e50347611d7e690943208bbdafebcbc2fb866d46"

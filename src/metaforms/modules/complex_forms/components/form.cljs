@@ -28,12 +28,8 @@
 (defn form-child [key parent-id child-id]
   (r/create-class
    {:display-name         "Test Grid"
-    :component-did-mount  (fn [this] (js/console.log "component-did-mount")
-                            #_(js/console.log (r/state this)))
-    :component-did-update (fn [this old-argv]
-                            (js/console.log "component-did-update")
-                            #_(js/console.log old-argv)
-                            #_(this.selectCell {:idx 0 :cellIdx 0}))
+    :component-did-mount  (fn [this])
+    :component-did-update (fn [this old-argv])
     :reagent-render
     (fn [key parent-id child-id]
       (let [child-form  @(rf/subscribe [:form-by-id child-id])
@@ -47,6 +43,7 @@
                                            :minHeight           350
                                            :enableCellAutoFocus true
                                            :enableCellSelect    true
+                                           :selectedRows        [0]
                                            }]]
         (rf/dispatch [:complex-table-parent-data-changed child-id])
         [cards/card
