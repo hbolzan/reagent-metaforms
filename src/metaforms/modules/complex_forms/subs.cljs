@@ -34,6 +34,11 @@
    (cf.logic/current-record-index db)))
 
 (rf/reg-sub
+ :form-by-id-record-index
+ (fn [db [_ form-id]]
+   (cf.logic/form-by-id-current-record-index db form-id)))
+
+(rf/reg-sub
  :current-record
  (fn [db _]
    (cf.logic/current-data-record db)))

@@ -21,3 +21,59 @@
     margin: 0.4rem;
     pointer-events: none;
 }
+
+
+/* scrollable table experiment */
+{
+    box-sizing: border-box;
+}
+body {
+    font: 14px/1 Arial, sans-serif;
+}
+table {
+    border-collapse: collapse;
+    background: white;
+    table-layout: fixed;
+    width: 100%;
+}
+th, td {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pane {
+    background: #eee;
+}
+.pane-hScroll {
+    overflow: auto;
+    width: 400px;
+    background: green;
+}
+.pane-vScroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 200px;
+    background: red;
+}
+
+.pane--table2 {
+    width: 400px;
+    overflow-x: scroll;
+}
+.pane--table2 th, .pane--table2 td {
+    width: auto;
+    min-width: 160px;
+}
+.pane--table2 tbody {
+    overflow-y: scroll;
+    overflow-x: hidden;
+    display: block;
+    height: 200px;
+}
+.pane--table2 thead {
+    display: table-row;
+}

@@ -246,4 +246,10 @@
 (defn fields-defs->data-grid-cols [fields-defs read-only?]
   (mapv (fn [field-def] {:key      (:name field-def)
                          :name     (:label field-def)
-                         :editable (not read-only?)}) fields-defs))
+                         :editable (not read-only?)})
+        fields-defs))
+
+(defn fields-defs->ag-grid-cols [fields-defs read-only?]
+  (mapv (fn [field-def] {:field      (:name field-def)
+                         :headerName (:label field-def)})
+        fields-defs))
