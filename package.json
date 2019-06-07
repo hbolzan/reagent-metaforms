@@ -6,13 +6,12 @@
         "test": "shadow-cljs test"
     },
     "dependencies": {
-        "ag-grid-community": "^21.0.0",
-        "ag-grid-react": "^21.0.0",
         "create-react-class": "^15.6.3",
         "react": "^16.6.3",
         "react-data-grid": "^6.1.0",
         "react-dom": "^16.6.3",
-        "react-input-mask": "^2.0.4"
+        "react-input-mask": "^2.0.4",
+        "react-sticky-table": "^3.0.1"
     },
     "devDependencies": {
         "shadow-cljs": "^2.7.8"
