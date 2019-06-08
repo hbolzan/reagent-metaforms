@@ -47,30 +47,31 @@
     (doseq [event (rest events)]
       (rf/dispatch-sync [event form-id]))))
 
-(defn button-props [form-id form-state enabled-states button-type button-types]
+(defn button-props [form-id form-state enabled-states button-type button-types on-click]
   (merge
    {:type      "button"
     :className "btn btn-primary btn-lg"
     :key       (name button-type)
-    :onClick #(button-click form-id (-> button-types button-type :form-event))}
+    :onClick #(on-click form-id (-> button-types button-type :form-event))}
    (cond (disabled? form-state enabled-states)
          {:disabled :disabled})))
 
 (defn toolset-button
-  [form-id form-state {:keys [button-type button-types]}]
+  [{:keys [form-id form-state button-type button-types on-click]}]
   (let [icon-class     (-> button-types button-type :icon)
         enabled-states (-> button-types button-type :enabled-states)]
-    [:button (button-props form-id form-state enabled-states button-type button-types)
+    [:button (button-props form-id form-state enabled-states button-type button-types on-click)
                 [:i {:className (str "fas fa-" icon-class)}]]))
 
 (defn btn-group
-  [form-id form-state buttons]
+  [form-id form-state buttons on-click]
   [:div
    {:className "btn-group mr-2" :role "group"}
-   (map (fn [button-type] (toolset-button form-id
-                                          form-state
-                                         {:button-type  button-type
-                                          :button-types buttons}))
+   (map (fn [button-type] (toolset-button {:form-id      form-id
+                                           :form-state   form-state
+                                           :button-type  button-type
+                                           :button-types buttons
+                                           :on-click     on-click}))
         (keys buttons))])
 
 (defn form-data+current-state->form-state
@@ -79,13 +80,26 @@
     :empty
     current-state))
 
+(defn toolbar [{form-id        :form-id
+                form-state     :form-state
+                action-buttons :action-buttons
+                nav-buttons    :nav-buttons
+                on-click       :on-click}]
+  [:div {:className "btn-toolbar" :role "toolbar"}
+   (btn-group form-id form-state action-buttons on-click)
+   (btn-group form-id form-state nav-buttons on-click)])
+
 (defn toolset
   ([form-id]
    (toolset form-id action-buttons nav-buttons))
   ([form-id action-btns nav-btns]
+   (toolset form-id action-btns nav-btns button-click))
+  ([form-id action-btns nav-btns btn-click]
    (let [form-data     @(rf/subscribe [:form-by-id-data form-id])
          current-state @(rf/subscribe [:form-by-id-state form-id])
          form-state    (form-data+current-state->form-state form-data current-state)]
-     [:div {:className "btn-toolbar" :role "toolbar"}
-      (btn-group form-id form-state action-btns)
-      (btn-group form-id form-state nav-btns)])))
+     (toolbar {:form-id        form-id
+               :form-state     form-state
+               :action-buttons action-btns
+               :nav-buttons    nav-btns
+               :on-click       btn-click}))))

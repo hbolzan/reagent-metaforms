@@ -1,13 +1,13 @@
 (ns metaforms.modules.complex-forms.events
   (:require [clojure.string :as str]
-            [re-frame.db :as rdb]
-            [re-frame.core :as rf]
             [metaforms.common.dictionary :refer [l error-result->error-message]]
             [metaforms.common.logic :as cl]
-            [metaforms.modules.complex-forms.constants :as cf.consts]
             [metaforms.modules.complex-forms.components.search :as search]
+            [metaforms.modules.complex-forms.constants :as cf.consts]
             [metaforms.modules.complex-forms.logic :as cf.logic]
-            [metaforms.modules.complex-forms.validation-logic :as vl]))
+            [metaforms.modules.complex-forms.validation-logic :as vl]
+            [re-frame.core :as rf]
+            [re-frame.db :as rdb]))
 
 (rf/reg-event-fx
  :set-form-definition
