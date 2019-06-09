@@ -10,4 +10,4 @@
       (cond-> v (assoc k v))))
 
 (defn dispatch-n [effects]
-  (doseq [fx effects] (rf/dispatch fx)))
+  (doseq [fx effects] (if fx (rf/dispatch fx))))

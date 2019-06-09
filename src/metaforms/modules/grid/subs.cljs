@@ -31,3 +31,8 @@
  :grid-pending?
  (fn [db [_ form-id]]
    (cf.logic/form-by-id-some-prop db form-id :pending?)))
+
+(rf/reg-sub
+ :deleted-rows
+ (fn [db [_ form-id]]
+   (cf.logic/form-by-id-some-prop db form-id :deleted-rows)))

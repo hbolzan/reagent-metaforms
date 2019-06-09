@@ -1,24 +1,20 @@
 (ns metaforms.modules.complex-forms.components.form
-  (:require [metaforms.common.logic :as cl]
-            [metaforms.common.helpers :as ch]
+  (:require [metaforms.common.helpers :as helpers]
+            [metaforms.common.logic :as cl]
             [metaforms.components.cards :as cards]
             [metaforms.modules.complex-forms.components.grid :as grid]
             [metaforms.modules.complex-forms.components.input :as input]
             [metaforms.modules.complex-forms.components.toolset :as toolset]
             [metaforms.modules.complex-forms.logic :as cf.logic]
             [metaforms.modules.complex-forms.view-logic :as view-logic]
+            [metaforms.modules.grid.logic :as grid.logic]
             [re-frame.core :as rf]
             [reagent.core :as r]))
 
-(defn grid-state [data diff pending?]
-  (if (empty? data)
-    :empty
-    (if (empty? diff) (if pending? :pending :view) :edit)))
-
-(defn data-append [fields-defs data-atom]
+(defn data-append! [fields-defs data-atom]
   (swap! data-atom conj (assoc (cf.logic/new-record fields-defs) :__uuid__ (random-uuid) :append? true)))
 
-(defn apply-diff-to-data-atom [child-id fields-defs data-diff state-atom data-atom]
+(defn apply-diff-to-data-atom! [child-id fields-defs data-diff state-atom data-atom]
   (when (not-empty data-diff)
     (reset! data-atom
             (mapv (fn [row]
@@ -26,15 +22,17 @@
                       (merge row diff {:update? true})
                       row))
                   @data-atom))
-    (ch/dispatch-n [[:grid-clear-data-diff child-id]
-                    [:grid-set-pending-flag child-id true]])))
+    (helpers/dispatch-n [[:grid-clear-data-diff child-id]
+                         [:grid-set-pending-flag child-id true]])))
 
-(defn delete-row [child-id data-atom row-index]
-  (reset! data-atom
-          (into [] (keep-indexed (fn [idx row] (if (not= idx row-index) row)) @data-atom)))
-  (rf/dispatch [:grid-set-pending-flag child-id true]))
+(defn delete-row! [child-id data-atom row-index]
+  (let [data @data-atom]
+    (reset! data-atom
+            (into [] (keep-indexed (fn [idx row] (if (not= idx row-index) row)) data)))
+    (helpers/dispatch-n [[:grid-add-deleted-row child-id (nth data row-index)]
+                         [:grid-set-pending-flag child-id true]])))
 
-(defn grid-nav [child-id data-atom state-atom nav-fn]
+(defn grid-nav! [child-id data-atom state-atom nav-fn]
   (let [selected-row (:selected-row @state-atom)
         max-row      (-> @data-atom count dec)
         new-row      (nav-fn (:selected-row @state-atom))]
@@ -42,65 +40,72 @@
       (swap! state-atom assoc :selected-row new-row)
       (rf/dispatch [:grid-set-selected-row child-id new-row]))))
 
-(defn handle-toolset-button [child-id
-                             fields-defs
-                             pk-fields
-                             data
-                             data-diff
-                             data-atom
-                             state-atom
-                             selected-row
-                             button-id]
+(defn handle-toolset-button! [child-id
+                              fields-defs
+                              pk-fields
+                              data
+                              data-diff
+                              data-atom
+                              state-atom
+                              selected-row
+                              deleted-rows
+                              button-id]
   (case button-id
-    :append    (data-append fields-defs data-atom)
-    :confirm   (apply-diff-to-data-atom child-id fields-defs data-diff state-atom data-atom)
+    :append    (data-append! fields-defs data-atom)
+    :confirm   (apply-diff-to-data-atom! child-id fields-defs data-diff state-atom data-atom)
     :refresh   (rf/dispatch [:child-reset-data-records child-id data]
                             [:grid-set-pending-flag child-id false])
     :discard   (rf/dispatch [:grid-soft-refresh-on child-id])
-    :delete    (delete-row child-id data-atom selected-row)
-    :nav-next  (grid-nav child-id data-atom state-atom inc)
-    :nav-prior (grid-nav child-id data-atom state-atom dec)
-    :nav-first (grid-nav child-id data-atom state-atom (constantly 0))
-    :nav-last  (grid-nav child-id data-atom state-atom (constantly (-> @data-atom count dec)))
+    :delete    (delete-row! child-id data-atom selected-row)
+    :nav-next  (grid-nav! child-id data-atom state-atom inc)
+    :nav-prior (grid-nav! child-id data-atom state-atom dec)
+    :nav-first (grid-nav! child-id data-atom state-atom (constantly 0))
+    :nav-last  (grid-nav! child-id data-atom state-atom (constantly (-> @data-atom count dec)))
+    :save      (js/console.log (grid.logic/prepare-to-save @data-atom deleted-rows))
     (js/console.log button-id)))
 
 (defn form-child [key parent-id child-id]
-  (let [child-form    @(rf/subscribe [:form-by-id child-id])
-        parent-data   @(rf/subscribe [:form-by-id-data parent-id])
+  (let [child-form  @(rf/subscribe [:form-by-id child-id])
+        parent-data @(rf/subscribe [:form-by-id-data parent-id])
+        request-id  @(rf/subscribe [:form-by-id-request-id child-id])
+        data        (:records @(rf/subscribe [:form-by-id-data child-id]))
+
+        ;; TODO: put all grid information in an only subscription
         soft-refresh? @(rf/subscribe [:grid-soft-refresh? child-id])
         pending?      @(rf/subscribe [:grid-pending? child-id])
-        selected-row  @(rf/subscribe [:grid-selected-row child-id])
-        request-id    @(rf/subscribe [:form-by-id-request-id child-id])
+        selected-row  (or @(rf/subscribe [:grid-selected-row child-id]) 0)
         data-diff     @(rf/subscribe [:grid-data-diff child-id])
         data-atom     @(rf/subscribe [:grid-data-atom child-id])
         state-atom    @(rf/subscribe [:grid-state-atom child-id])
-        data          (:records @(rf/subscribe [:form-by-id-data child-id]))
-        fields-defs   (-> child-form :definition :fields-defs)
-        pk-fields     (->> child-form :definition :pk-fields (mapv keyword))
-        column-model  (mapv (fn [d] {:key    (:name d)
-                                     :path   [:name]
-                                     :name   (-> d :name keyword)
-                                     :header (:label d)})
-                            fields-defs)]
-    (ch/dispatch-n [[:complex-table-parent-data-changed child-id]
-                    [:grid-soft-refresh-off child-id]])
+        deleted-rows  @(rf/subscribe [:deleted-rows child-id])
+
+        fields-defs  (-> child-form :definition :fields-defs)
+        pk-fields    (->> child-form :definition :pk-fields (mapv keyword))
+        column-model (mapv (fn [d] {:key    (:name d)
+                                    :path   [:name]
+                                    :name   (-> d :name keyword)
+                                    :header (:label d)})
+                           fields-defs)]
+    (helpers/dispatch-n [[:complex-table-parent-data-changed child-id]
+                         [:grid-soft-refresh-off child-id]])
     [cards/card
      ^{:key key}
      (-> child-form :definition :title)
      (toolset/toolbar {:form-id        child-id
-                       :form-state     (grid-state data data-diff pending?)
+                       :form-state     (grid.logic/grid-state data data-diff pending?)
                        :buttons-groups [(dissoc toolset/action-buttons :search :edit)
                                         toolset/nav-buttons
                                         toolset/extra-buttons]
-                       :on-click       (fn [form-id e] (handle-toolset-button child-id
-                                                                              fields-defs
-                                                                              pk-fields
-                                                                              data
-                                                                              data-diff
-                                                                              data-atom
-                                                                              state-atom
-                                                                              selected-row
-                                                                              e))})
+                       :on-click       (fn [form-id e] (handle-toolset-button! child-id
+                                                                               fields-defs
+                                                                               pk-fields
+                                                                               data
+                                                                               data-diff
+                                                                               data-atom
+                                                                               state-atom
+                                                                               selected-row
+                                                                               deleted-rows
+                                                                               e))})
      [:div {:style {:min-height "100%"}}
       [:div.row
        [:div.col-md-12

@@ -54,3 +54,14 @@
  :grid-set-pending-flag
  (fn [{db :db} [_ form-id pending?]]
    {:db (cf.logic/form-by-id-set-some-prop db form-id :pending? pending?)}))
+
+(rf/reg-event-fx
+ :grid-clear-deleted-rows
+ (fn [{db :db} [_ form-id]]
+   {:db (cf.logic/form-by-id-set-some-prop db form-id :deleted-rows [])}))
+
+(rf/reg-event-fx
+ :grid-add-deleted-row
+ (fn [{db :db} [_ form-id row]]
+   {:db (cf.logic/form-by-id-set-some-prop
+         db form-id :deleted-rows (into (cf.logic/form-by-id-some-prop db form-id :deleted-rows) [row]))}))
