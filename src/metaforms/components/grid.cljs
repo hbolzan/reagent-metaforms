@@ -265,7 +265,7 @@
         col-model  (:column-model  config)
         cell-fn    (:render-cell   config)]
     ^{:key (row-key-fn row row-num)}
-    [:tr
+    [:tr {:style (when (= row-num (:selected-row state)) {:background-color "yellow"})}
      (doall
        (map-indexed (fn [view-col _]
                       (let [model-col (column-index-to-model state-atom view-col)]
@@ -279,7 +279,7 @@
                     (or
                       col-model
                       row)))]))
-  
+
 (defn- rows-fn [rows state-atom config]
   (let [row-key-fn (:row-key config (fn [row row-num] row-num))]
   (doall (map-indexed
