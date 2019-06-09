@@ -59,6 +59,11 @@
    (cf.logic/form-by-id-data db form-id)))
 
 (rf/reg-sub
+ :form-by-id-request-id
+ (fn [db [_ form-id]]
+   (cf.logic/form-by-id-some-prop db form-id :request-id)))
+
+(rf/reg-sub
  :current-form-records
  (fn [db _]
    (cf.logic/current-records db)))

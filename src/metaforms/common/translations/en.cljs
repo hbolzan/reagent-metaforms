@@ -23,6 +23,8 @@
    :form/load-definition-failure "An error ocurred while trying do read the '{form-id}' complex table definition"
    :form/load-data-failure       "An error ocurred while trying to load '{form-id}' table data"
 
+   :grid/save-pending "SAVE PENDING"
+
    :bundle/load-definition-failure "An error ocurred while trying to load '{bundle-id}' bundle definition"
 
    :error/unknown "Unknown error"

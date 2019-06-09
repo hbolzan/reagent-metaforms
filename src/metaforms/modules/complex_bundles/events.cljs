@@ -69,8 +69,12 @@
            {:db       with-parent-data
             :dispatch [:http-get (cb.logic/child-url db table-id parent-data bundled-table)
                        [::child-load-data-success table-id]
-                       [::child-load-data-failure table-id]]
-            }))))))
+                       [::child-load-data-failure table-id]]}))))))
+
+(rf/reg-event-fx
+ :child-reset-data-records
+ (fn [{db :db} [_ complex-table-id records]]
+   {:dispatch [::child-load-data-success complex-table-id {:data records}] }))
 
 (rf/reg-event-fx
  ::child-load-data-success
@@ -78,7 +82,8 @@
    (let [records (-> response :data)]
      {:db (-> db
               (cf.logic/form-by-id-set-data complex-table-id {:records records})
-              (cf.logic/form-by-id-set-record-index complex-table-id (when (count records) 0)))})))
+              (cf.logic/form-by-id-set-record-index complex-table-id (when (count records) 0))
+              (cf.logic/form-by-id-set-some-prop complex-table-id :request-id (random-uuid)))})))
 
 (rf/reg-event-fx
  ::child-load-data-failure

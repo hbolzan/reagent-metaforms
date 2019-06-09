@@ -1,16 +1,18 @@
 (ns metaforms.core
-  (:require [reagent.core :as r]
-            [re-frame.core :as rf]
-            [day8.re-frame.http-fx]
+  (:require [day8.re-frame.http-fx]
+            [metaforms.components.main :as main]
             [metaforms.http.events]
-            [metaforms.routes :as routes]
-            [metaforms.modules.main.events]
             [metaforms.modules.complex-bundles.events]
             [metaforms.modules.complex-forms.events]
-            [metaforms.modules.main.subs]
             [metaforms.modules.complex-forms.subs]
-            [metaforms.components.main :as main]
-            [metaforms.modules.main.views :as main-views]))
+            [metaforms.modules.grid.events]
+            [metaforms.modules.grid.subs]
+            [metaforms.modules.main.events]
+            [metaforms.modules.main.subs]
+            [metaforms.modules.main.views :as main-views]
+            [metaforms.routes :as routes]
+            [re-frame.core :as rf]
+            [reagent.core :as r]))
 
 (def breadcrumb-items [{:label "Início"}
                        {:label "Cadastro" :link "#"}
