@@ -1,6 +1,8 @@
 (ns metaforms.modules.grid.events
-  (:require [re-frame.core :as rf]
-            [metaforms.modules.complex-forms.logic :as cf.logic]))
+  (:require [metaforms.common.logic :as cl]
+            [metaforms.modules.complex-forms.constants :as cf.consts]
+            [metaforms.modules.complex-forms.logic :as cf.logic]
+            [re-frame.core :as rf]))
 
 (rf/reg-event-fx
  :grid-clear-data-diff
@@ -65,3 +67,22 @@
  (fn [{db :db} [_ form-id row]]
    {:db (cf.logic/form-by-id-set-some-prop
          db form-id :deleted-rows (into (cf.logic/form-by-id-some-prop db form-id :deleted-rows) [row]))}))
+
+(rf/reg-event-fx
+ :grid-post-data
+ (fn [{db :db} [_ form-id data]]
+   {:dispatch [:http-post
+               (str (cl/replace-tag cf.consts/persistent-post-base-uri "complex-id" form-id) "batch/")
+               {:data data}
+               [::grid-post-data-success form-id]
+               [::grid-post-data-failure]]}))
+
+(rf/reg-event-fx
+ ::grid-post-data-success
+ (fn [{db :db} [_ form-id response]]
+   (js/console.log response)))
+
+(rf/reg-event-fx
+ ::grid-post-data-failure
+ (fn [{db :db} [_ result]]
+   (js/console.log "ERROR" result)))

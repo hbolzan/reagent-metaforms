@@ -2,6 +2,7 @@
   (:require [metaforms.common.helpers :as helpers]
             [metaforms.common.logic :as cl]
             [metaforms.components.cards :as cards]
+            [metaforms.modules.complex-bundles.logic :as bl]
             [metaforms.modules.complex-forms.components.grid :as grid]
             [metaforms.modules.complex-forms.components.input :as input]
             [metaforms.modules.complex-forms.components.toolset :as toolset]
@@ -9,6 +10,7 @@
             [metaforms.modules.complex-forms.view-logic :as view-logic]
             [metaforms.modules.grid.logic :as grid.logic]
             [re-frame.core :as rf]
+            [re-frame.db :as rdb]
             [reagent.core :as r]))
 
 (defn data-append! [fields-defs data-atom]
@@ -41,6 +43,7 @@
       (rf/dispatch [:grid-set-selected-row child-id new-row]))))
 
 (defn handle-toolset-button! [child-id
+                              child-form
                               fields-defs
                               pk-fields
                               data
@@ -61,7 +64,8 @@
     :nav-prior (grid-nav! child-id data-atom state-atom dec)
     :nav-first (grid-nav! child-id data-atom state-atom (constantly 0))
     :nav-last  (grid-nav! child-id data-atom state-atom (constantly (-> @data-atom count dec)))
-    :save      (js/console.log (grid.logic/prepare-to-save @data-atom deleted-rows))
+    :save      (rf/dispatch [:grid-post-data child-id
+                             (grid.logic/prepare-to-save child-form @data-atom deleted-rows)])
     (js/console.log button-id)))
 
 (defn form-child [key parent-id child-id]
@@ -97,6 +101,7 @@
                                         toolset/nav-buttons
                                         toolset/extra-buttons]
                        :on-click       (fn [form-id e] (handle-toolset-button! child-id
+                                                                               child-form
                                                                                fields-defs
                                                                                pk-fields
                                                                                data

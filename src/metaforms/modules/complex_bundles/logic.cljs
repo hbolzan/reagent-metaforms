@@ -27,7 +27,10 @@
     (reduce-kv (fn [new-db index bundled-table]
                  (load-definition-fn new-db
                                      (get bundled-forms-ids index)
-                                     (assoc (-> bundled-table :definition first) :bundle-id bundle-id)))
+                                     (assoc (-> bundled-table :definition first)
+                                            :bundle-id bundle-id
+                                            :master-fields (:master-fields bundled-table)
+                                            :related-fields (:related-fields bundled-table))))
                db
                tables)))
 
