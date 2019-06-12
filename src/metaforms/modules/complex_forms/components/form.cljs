@@ -69,6 +69,15 @@
                              (grid.logic/prepare-to-save child-form @data-atom deleted-rows)])
     (js/console.log button-id)))
 
+(defn read-only? [{{auto-pk? :auto-pk :keys [pk-fields related-fields] :as form-def} :definition}
+                  {:keys [name read-only] :as field-def}]
+  (let [in-list? #(= name %)]
+    (boolean (or
+              read-only
+              (and auto-pk? (some in-list? pk-fields))
+              (some in-list? related-fields)))))
+
+
 (defn form-child [key parent-id child-id]
   (let [child-form  @(rf/subscribe [:form-by-id child-id])
         parent-data @(rf/subscribe [:form-by-id-data parent-id])
@@ -86,10 +95,11 @@
 
         fields-defs  (-> child-form :definition :fields-defs)
         pk-fields    (->> child-form :definition :pk-fields (mapv keyword))
-        column-model (mapv (fn [d] {:key    (:name d)
-                                    :path   [:name]
-                                    :name   (-> d :name keyword)
-                                    :header (:label d)})
+        column-model (mapv (fn [d] {:key       (:name d)
+                                    :path      [:name]
+                                    :name      (-> d :name keyword)
+                                    :header    (:label d)
+                                    :field-def (assoc d :read-only (read-only? child-form d))})
                            fields-defs)]
     (helpers/dispatch-n [[:complex-table-parent-data-changed child-id]
                          [:grid-soft-refresh-off child-id]])

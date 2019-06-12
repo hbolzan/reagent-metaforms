@@ -43,17 +43,20 @@
   - row the current row
   - row-num the row number
   - col-num the column number in model coordinates"
-  [form-id state-atom render-info row row-num col-num]
-  (if (= (:name render-info) :__pointer__)
-    [:div {:style {:max-width "15px" :max-height "20px"}} ">"]
-    [:div.form-group
-     [:input.form-control {:type         "text"
-                           :on-focus     (fn [e]
-                                           (gobj/set e :initial-value (-> e .-target .-value))
-                                           (swap! state-atom assoc :selected-row row-num)
-                                           (rf/dispatch [:grid-set-selected-row form-id row-num]))
-                           :on-blur      #(cell-blur form-id render-info row %)
-                           :defaultValue (cell-data row render-info)}]]))
+  [form-id
+   state-atom {{read-only? :read-only default :default :as field-def} :field-def :as render-info}
+   row
+   row-num
+   col-num]
+  [:div.form-group
+   [:input.form-control {:type         "text"
+                         :readOnly     read-only?
+                         :on-focus     (fn [e]
+                                         (gobj/set e :initial-value (-> e .-target .-value))
+                                         (swap! state-atom assoc :selected-row row-num)
+                                         (rf/dispatch [:grid-set-selected-row form-id row-num]))
+                         :on-blur      #(cell-blur form-id render-info row %)
+                         :defaultValue (or (cell-data row render-info) default)}]])
 
 (defn date?
   "Returns true if the argument is a date, false otherwise."
