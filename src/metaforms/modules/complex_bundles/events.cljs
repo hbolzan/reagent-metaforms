@@ -55,7 +55,7 @@
 
 (rf/reg-event-fx
  :complex-table-parent-data-changed
- (fn [{db :db} [_ table-id]]
+ (fn [{db :db} [_ table-id force?]]
    (let [bundle          (->> db :current-bundle (cb.logic/get-bundle db))
          bundled-table   (first (filter #(= (:definition-id %) (name table-id)) (:bundled-tables bundle)))
          parent-data     (or (cf.logic/current-form-editing-data db) (cf.logic/current-data-record db))
@@ -63,7 +63,7 @@
          master-fields   (:master-fields bundled-table)
          related-fields  (:related-fields bundled-table)]
      (let [with-parent-data (cf.logic/form-by-id-set-some-prop db table-id :parent-data parent-data)]
-       (when (cb.logic/parent-data-changed? old-parent-data parent-data master-fields)
+       (when (or force? (cb.logic/parent-data-changed? old-parent-data parent-data master-fields))
          (if (cb.logic/empty-parent-data? parent-data master-fields)
            {:db (cf.logic/form-by-id-set-data with-parent-data table-id {:records []})}
            {:db       with-parent-data
@@ -88,5 +88,6 @@
 (rf/reg-event-fx
  ::child-load-data-failure
  (fn [{db :db} [_ complex-table-id result]]
-   (str (l :form/load-data-failure {:form-id complex-table-id}) ". "
-        (error-result->error-message result (l :error/unknown)))))
+   {:dispatch [:show-modal-alert
+               (str (l :form/load-data-failure {:form-id complex-table-id}) ". "
+                    (error-result->error-message result (l :error/unknown)))]}))

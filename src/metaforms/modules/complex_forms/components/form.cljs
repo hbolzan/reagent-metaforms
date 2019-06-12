@@ -56,15 +56,16 @@
   (case button-id
     :append    (data-append! fields-defs data-atom)
     :confirm   (apply-diff-to-data-atom! child-id fields-defs data-diff state-atom data-atom)
-    :refresh   (rf/dispatch [:child-reset-data-records child-id data]
-                            [:grid-set-pending-flag child-id false])
+    :refresh   (helpers/dispatch-n [[:child-reset-data-records child-id data]
+                                    [:grid-set-pending-flag child-id false]])
     :discard   (rf/dispatch [:grid-soft-refresh-on child-id])
     :delete    (delete-row! child-id data-atom selected-row)
     :nav-next  (grid-nav! child-id data-atom state-atom inc)
     :nav-prior (grid-nav! child-id data-atom state-atom dec)
     :nav-first (grid-nav! child-id data-atom state-atom (constantly 0))
     :nav-last  (grid-nav! child-id data-atom state-atom (constantly (-> @data-atom count dec)))
-    :save      (rf/dispatch [:grid-post-data child-id
+    :save      (rf/dispatch [:grid-post-data
+                             child-id
                              (grid.logic/prepare-to-save child-form @data-atom deleted-rows)])
     (js/console.log button-id)))
 

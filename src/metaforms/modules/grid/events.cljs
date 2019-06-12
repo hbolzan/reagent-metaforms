@@ -1,5 +1,6 @@
 (ns metaforms.modules.grid.events
-  (:require [metaforms.common.logic :as cl]
+  (:require [metaforms.common.dictionary :refer [l error-result->error-message]]
+            [metaforms.common.logic :as cl]
             [metaforms.modules.complex-forms.constants :as cf.consts]
             [metaforms.modules.complex-forms.logic :as cf.logic]
             [re-frame.core :as rf]))
@@ -71,18 +72,21 @@
 (rf/reg-event-fx
  :grid-post-data
  (fn [{db :db} [_ form-id data]]
+   (js/console.log form-id)
    {:dispatch [:http-post
-               (str (cl/replace-tag cf.consts/persistent-post-base-uri "complex-id" form-id) "batch/")
+               (cl/log (str (cf.logic/form-by-id-data-url db form-id cf.consts/persistent-post-base-uri) "batch/"))
                {:data data}
                [::grid-post-data-success form-id]
-               [::grid-post-data-failure]]}))
+               [::grid-post-data-failure form-id]]}))
 
 (rf/reg-event-fx
  ::grid-post-data-success
  (fn [{db :db} [_ form-id response]]
-   (js/console.log response)))
+   {:dispatch [:complex-table-parent-data-changed form-id true]}))
 
 (rf/reg-event-fx
  ::grid-post-data-failure
- (fn [{db :db} [_ result]]
-   (js/console.log "ERROR" result)))
+ (fn [{db :db} [_ form-id result]]
+   {:dispatch [:show-modal-alert
+               (str (l :form/load-data-failure {:form-id form-id}) ". "
+                    (error-result->error-message result (l :error/unknown)))]}))

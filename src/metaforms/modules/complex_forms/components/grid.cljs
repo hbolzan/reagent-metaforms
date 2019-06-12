@@ -55,19 +55,6 @@
                            :on-blur      #(cell-blur form-id render-info row %)
                            :defaultValue (cell-data row render-info)}]]))
 
-(comment
-  (def a-test (atom {}))
-  (keyword (str 1))
-  (get-in ["a" "b"] {"a" {"b" 2}})
-  (swap! a-test #(assoc-in % [:a :b] 6))
-  (swap! a-test #(assoc-in % [:a :c] 4))
-  (swap! a-test #(assoc-in % [:x :y] 10))
-  (let [v :y]
-    (swap! a-test #(assoc-in % [:x v] 100)))
-  )
-
-(assoc-in {:a {:c "y"}} [:a :b] "x")
-
 (defn date?
   "Returns true if the argument is a date, false otherwise."
   [d]
