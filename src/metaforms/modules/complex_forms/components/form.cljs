@@ -82,9 +82,10 @@
   (let [child-form  @(rf/subscribe [:form-by-id child-id])
         parent-data @(rf/subscribe [:form-by-id-data parent-id])
         request-id  @(rf/subscribe [:form-by-id-request-id child-id])
+        parent-new? @(rf/subscribe [:current-form-new-record?])
         data        (:records @(rf/subscribe [:form-by-id-data child-id]))
 
-        ;; TODO: put all grid information in an only subscription
+        ;; TODO: put all grid information in one only subscription
         soft-refresh? @(rf/subscribe [:grid-soft-refresh? child-id])
         pending?      @(rf/subscribe [:grid-pending? child-id])
         selected-row  (or @(rf/subscribe [:grid-selected-row child-id]) 0)
@@ -107,7 +108,7 @@
      ^{:key key}
      (-> child-form :definition :title)
      (toolset/toolbar {:form-id        child-id
-                       :form-state     (grid.logic/grid-state data data-diff pending?)
+                       :form-state     (when-not parent-new? (grid.logic/grid-state data data-diff pending?))
                        :buttons-groups [(dissoc toolset/action-buttons :search :edit)
                                         toolset/nav-buttons
                                         toolset/extra-buttons]
@@ -128,9 +129,9 @@
         [grid/child-grid {:form-id         child-id
                           :form-def        child-form
                           :column-model    column-model
-                          :data            (if soft-refresh? @data-atom  data)
+                          :data            (if parent-new? [] (if soft-refresh? @data-atom  data))
                           :soft-refresh?   soft-refresh?
-                          :request-id      request-id
+                          :request-id      (if parent-new? (random-uuid) request-id)
                           :on-request-data (fn [data data-diff] (js/console.log data) (js/console.log data-diff))}]]]]]
 
 

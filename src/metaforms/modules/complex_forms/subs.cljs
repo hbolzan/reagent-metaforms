@@ -24,6 +24,11 @@
    (cf.logic/current-form-state db)))
 
 (rf/reg-sub
+ :current-form-new-record?
+ (fn [db _]
+   (cf.logic/new-record? db)))
+
+(rf/reg-sub
  :form-by-id-state
  (fn [db [_ form-id]]
    (cf.logic/form-by-id-state db form-id)))
