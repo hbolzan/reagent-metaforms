@@ -20,27 +20,27 @@
   (is (= (vl/no-arguments-defined? {:single-argument nil :named-arguments {:k "v"}}) false)))
 
 (deftest single-argument-test
-  (with-redefs [cf.logic/current-form-field-value (fn [m k] (get m k))]
+  (with-redefs [cf.logic/form-by-id-field-value (fn [m id k] (get m k))]
     (let [db {:a "A" :b "B"}]
-      (is (= (vl/single-argument db {} "X") "X"))
-      (is (= (vl/single-argument db {:single-argument "a"} "X") "A"))
-      (is (= (vl/single-argument db {:named-arguments {:k "b"}} "X") nil)))))
+      (is (= (vl/single-argument db :form-id {} "X") "X"))
+      (is (= (vl/single-argument db :form-id {:single-argument "a"} "X") "A"))
+      (is (= (vl/single-argument db :form-id {:named-arguments {:k "b"}} "X") nil)))))
 
 (deftest with-single-argument-test
-  (with-redefs [cf.logic/current-form-field-value (fn [m k] (get m k))]
+  (with-redefs [cf.logic/form-by-id-field-value (fn [m id k] (get m k))]
     (let [db {:a "A" :b "B"}
           url "http://service/method/"]
-      (is (= (vl/with-single-argument url db {} "X") "http://service/method/X/"))
-      (is (= (vl/with-single-argument url db {:single-argument "a"} "X") "http://service/method/A/"))
-      (is (= (vl/with-single-argument url db {:named-arguments {:k "b"}} "X") url)))))
+      (is (= (vl/with-single-argument url db :form-id {} "X") "http://service/method/X/"))
+      (is (= (vl/with-single-argument url db :form-id {:single-argument "a"} "X") "http://service/method/A/"))
+      (is (= (vl/with-single-argument url db :form-id {:named-arguments {:k "b"}} "X") url)))))
 
 (deftest with-named-arguments-test
-  (with-redefs [cf.logic/current-form-field-value (fn [m k] (get m k))]
+  (with-redefs [cf.logic/form-by-id-field-value (fn [m id k] (get m k))]
     (let [db {:a "A" :b "B"}
           url "http://service/method/X/"]
-      (is (= (vl/with-named-arguments url db {}) url))
-      (is (= (vl/with-named-arguments url db {:named-arguments {:k "b"}}) "http://service/method/X/?k=B"))
-      (is (= (vl/with-named-arguments url db {:named-arguments {:k "b" :y "a"}})
+      (is (= (vl/with-named-arguments url db :form-id {}) url))
+      (is (= (vl/with-named-arguments url db :form-id {:named-arguments {:k "B"}}) "http://service/method/X/?k=B"))
+      (is (= (vl/with-named-arguments url db :form-id {:named-arguments {:k "B" :y "A"}})
              "http://service/method/X/?k=B&y=A")))))
 
 (deftest get-in-path-test []

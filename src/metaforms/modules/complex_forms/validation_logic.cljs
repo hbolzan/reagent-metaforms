@@ -26,38 +26,43 @@
     arg
     (apply-before-validate arg actions)))
 
-(defn single-argument [db validation field-value]
+(defn single-argument [db form-id validation field-value]
   (if (no-arguments-defined? validation)
     field-value
-    (cf.logic/current-form-field-value db (-> validation :single-argument keyword))))
+    (cf.logic/form-by-id-field-value db form-id (-> validation :single-argument keyword))))
 
-(defn with-single-argument [url db validation field-value]
-  (if-let [single-argument (single-argument db validation field-value)]
+(defn with-single-argument [url db form-id validation field-value]
+  "If single argument is present, appends the argument segment to the URL"
+  (if-let [single-argument (single-argument db form-id validation field-value)]
     (str url (before-validate single-argument validation) "/")
     url))
 
-(defn named-argument [db field-name]
-  (if-let [field-value (cf.logic/current-form-field-value db (keyword field-name))]
+(defn named-argument [db form-id field-name]
+  (if-let [field-value (cf.logic/form-by-id-field-value db form-id (keyword field-name))]
     field-value
     field-name))
 
-(defn named-arguments->url-params [db named-arguments]
-  (str/join "&" (map #(str (name (first %)) "=" (named-argument db (last %)))
+(defn named-arguments->url-params [db form-id named-arguments]
+  (str/join "&" (map #(str (name (first %)) "=" (named-argument form-id db (last %)))
                      named-arguments)))
 
-(defn with-named-arguments [url db validation]
+(defn with-named-arguments [url db form-id validation]
+  "If there are named arguments, append them as url params (i.e. ?param_1=value_1&param_2=value2 ...)"
   (if (no-named-arguments? validation)
     url
-    (str url "?" (named-arguments->url-params db (:named-arguments validation)))))
+    (str url "?" (named-arguments->url-params db form-id (:named-arguments validation)))))
 
-(defn build-validation-url [db base-url validation field-value]
-  (-> base-url
-      (with-single-argument db validation field-value)
-      (replace-url-tags validation)
-      (with-named-arguments db validation)))
+(defn build-validation-url
+  ([db base-url validation field-value]
+   (build-validation-url db (:current-form db) base-url validation field-value))
+  ([db form-id base-url validation field-value]
+   (-> base-url
+       (with-single-argument db form-id validation field-value)
+       (replace-url-tags validation)
+       (with-named-arguments db form-id validation))))
 
 (defn get-in-path [path m]
-  "returns value from map following path"
+  "returns value from map following dots path (i.e: path.to.some.key)"
   (get-in m (map keyword (str/split path "."))))
 
 (defn expected-result-value [result-path response]

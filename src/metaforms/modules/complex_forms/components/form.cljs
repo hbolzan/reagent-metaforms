@@ -66,8 +66,7 @@
     :nav-last  (grid-nav! child-id data-atom state-atom (constantly (-> @data-atom count dec)))
     :save      (rf/dispatch [:grid-post-data
                              child-id
-                             (grid.logic/prepare-to-save child-form @data-atom deleted-rows)])
-    (js/console.log button-id)))
+                             (grid.logic/prepare-to-save child-form @data-atom deleted-rows)])))
 
 (defn read-only? [{{auto-pk? :auto-pk :keys [pk-fields related-fields] :as form-def} :definition}
                   {:keys [name read-only] :as field-def}]
@@ -96,11 +95,14 @@
 
         fields-defs  (-> child-form :definition :fields-defs)
         pk-fields    (->> child-form :definition :pk-fields (mapv keyword))
-        column-model (mapv (fn [d] {:key       (:name d)
-                                    :path      [:name]
-                                    :name      (-> d :name keyword)
-                                    :header    (:label d)
-                                    :field-def (assoc d :read-only (read-only? child-form d))})
+        column-model (mapv (fn [d] {:key         (:name d)
+                                    :path        [:name]
+                                    :name        (-> d :name keyword)
+                                    :header      (:label d)
+                                    :lookup-info {:lookup-key    (:lookup-key d)
+                                                  :lookup-result (:lookup-result d)
+                                                  :options       (:options d)}
+                                    :field-def   (assoc d :read-only (read-only? child-form d))})
                            fields-defs)]
     (helpers/dispatch-n [[:complex-table-parent-data-changed child-id]
                          [:grid-soft-refresh-off child-id]])

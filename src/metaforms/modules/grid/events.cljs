@@ -3,6 +3,8 @@
             [metaforms.common.logic :as cl]
             [metaforms.modules.complex-forms.constants :as cf.consts]
             [metaforms.modules.complex-forms.logic :as cf.logic]
+            [metaforms.modules.grid.logic :as grid.logic]
+            [metaforms.modules.complex-forms.validation-logic :as vl]
             [re-frame.core :as rf]))
 
 (rf/reg-event-fx
@@ -29,14 +31,19 @@
 
 (rf/reg-event-fx
  :grid-set-data-diff
- (fn [{db :db} [_ form-id row-id column-id value]]
-   {:db (cf.logic/form-by-id-set-some-prop
-         db
-         form-id
-         :data-diff
-         (assoc-in (cf.logic/form-by-id-some-prop db form-id :data-diff)
-                   [row-id column-id]
-                   value))}))
+ (fn [{db :db} [_ form-id row-id column-id value validation-params]]
+   (let [data-atom (cf.logic/form-by-id-some-prop db form-id :data-atom)
+         new-diff (assoc-in (cf.logic/form-by-id-some-prop db form-id :data-diff)
+                             [row-id column-id]
+                             value)]
+     (merge
+      {:db (cf.logic/form-by-id-set-some-prop db form-id :data-diff new-diff)}
+      (when (not-empty value)
+        {:dispatch [:grid-validate-field
+                    (grid.logic/row-with-diff @data-atom new-diff row-id)
+                    validation-params]})))))
+
+(first (cl/filter-index #(= (:a %) 10) [{:a 1 :b 2}{:a 5 :b 20}{:a 10 :b 200}]))
 
 (rf/reg-event-fx
  :grid-set-data-atom
@@ -72,7 +79,6 @@
 (rf/reg-event-fx
  :grid-post-data
  (fn [{db :db} [_ form-id data]]
-   (js/console.log form-id)
    {:dispatch [:http-post
                (cl/log (str (cf.logic/form-by-id-data-url db form-id cf.consts/persistent-post-base-uri) "batch/"))
                {:data data}
@@ -90,3 +96,28 @@
    {:dispatch [:show-modal-alert
                (str (l :form/load-data-failure {:form-id form-id}) ". "
                     (error-result->error-message result (l :error/unknown)))]}))
+
+(rf/reg-event-fx
+ :grid-validate-field
+ (fn [{db :db} [_ row {:keys [validation on-success on-failure]}]]
+   (js/console.log row)))
+
+#_(rf/reg-event-fx
+ :grid-validate-field
+ (fn [{db :db} [_ validation success-fn failure-fn]]
+   ;; sends http request
+   (let [url (vl/build-validation-url (db-on-blur db field-name new-value)
+                                      cf.consts/validation-base-url
+                                      validation
+                                      new-value)]
+     {:dispatch [:http-get
+                 url
+                 [::grid-validate-field-on-response success-fn]
+                 [::grid-validate-field-on-response failure-fn]]
+      :db       (cl/set-spinner db true)})))
+
+(rf/reg-event-fx
+ ::grid-validate-field-on-response
+ (fn [{db :db} [_  response-fn response]]
+   (if response-fn (response-fn response))
+   {:db (cl/set-spinner db false)}))

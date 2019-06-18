@@ -66,6 +66,9 @@
 (defn safe-trim [s]
   (if (nil? s) "" (str/trim s)))
 
+(defn filter-index [pred coll]
+  (keep-indexed #(when (pred %2) %1) coll))
+
 (defn log [x]
   (js/console.log x)
   x)

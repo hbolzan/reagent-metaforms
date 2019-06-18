@@ -8,6 +8,7 @@
             [metaforms.components.cards :as cards]
             [metaforms.components.grid :as rt]
             [metaforms.modules.complex-forms.components.toolset :as toolset]
+            [metaforms.modules.complex-forms.components.dropdown :as dropdown]
             [re-frame.core :as rf]
             [reagent.core :as r :refer [atom]])
   (:import
@@ -31,32 +32,80 @@
     (-> render-info :name row)
     (catch js/Object e (js/console.log e))))
 
-(defn- cell-blur
-  [form-id render-info row e]
+(defn- cell-value-changed [e]
   (let [final-value (-> e .-target .-value)]
     (when (not= final-value (gobj/get e :initial-value))
-      (rf/dispatch [:grid-set-data-diff form-id (:__uuid__ row) (:name render-info) final-value]))))
+      final-value)))
 
-(defn- cell-fn
-  "Return the cell hiccup form for rendering.
-  - render-info the specific column from :column-model
-  - row the current row
-  - row-num the row number
-  - col-num the column number in model coordinates"
+(defn- cell-blur
+  [form-id {{validation :validation} :field-def name :name :as render-info} row e]
+  (when-let [final-value (cell-value-changed e)]
+    (rf/dispatch [:grid-set-data-diff
+                  form-id
+                  (:__uuid__ row)
+                  name
+                  final-value
+                  {:validation validation
+                   :on-success nil
+                   :on-failure nil}])))
+
+(defn render-info->common-props
   [form-id
-   state-atom {{read-only? :read-only default :default :as field-def} :field-def :as render-info}
+   state-atom
+   {{read-only? :read-only default :default validation :validation :as field-def} :field-def :as render-info}
+   row
+   row-num]
+  (-> {:id           (str "id-" (:name field-def))
+       :onFocus      (fn [e]
+                       (gobj/set e :initial-value (-> e .-target .-value))
+                       (swap! state-atom assoc :selected-row row-num)
+                       (rf/dispatch [:grid-set-selected-row form-id row-num]))
+       :onBlur       #(cell-blur form-id render-info row %)
+       :defaultValue (or (cell-data row render-info) default)
+       :readOnly     read-only?}))
+
+(defmulti cell-input
+  (fn [form-id state-atom {field-def :field-def} row row-num col-num]
+    (if (-> field-def :mask empty?)
+      (case (keyword (-> field-def :field-kind) (-> field-def :data-type))
+        :lookup/integer :dropdown
+        :lookup/char    :dropdown
+        :yes-no/char    :checkbox
+        :data/char      :text
+        :data/integer   :number
+        :data/memo      :memo)
+      :masked-input)))
+
+(defmethod cell-input :memo [form-id state-atom render-info row row-num col-num]
+  [:div.form-group
+   [:textarea.form-control
+    (assoc (render-info->common-props form-id state-atom render-info row row-num) :rows 4)]])
+
+(defmethod cell-input :dropdown
+  [form-id
+   state-atom
+   {{:keys [lookup-key lookup-result options]} :lookup-info label :header :as render-info}
    row
    row-num
    col-num]
   [:div.form-group
-   [:input.form-control {:type         "text"
-                         :readOnly     read-only?
-                         :on-focus     (fn [e]
-                                         (gobj/set e :initial-value (-> e .-target .-value))
-                                         (swap! state-atom assoc :selected-row row-num)
-                                         (rf/dispatch [:grid-set-selected-row form-id row-num]))
-                         :on-blur      #(cell-blur form-id render-info row %)
-                         :defaultValue (or (cell-data row render-info) default)}]])
+   [:select.form-control
+    (render-info->common-props form-id state-atom render-info row row-num)
+    (dropdown/dropdown-options options label lookup-key lookup-result)]])
+
+(defmethod cell-input :default [form-id state-atom render-info row row-num col-num]
+  [:div.form-group
+   [:input.form-control
+    (assoc (render-info->common-props form-id state-atom render-info row row-num) :type "text")]])
+
+(defn- cell-fn
+  [form-id
+   state-atom
+   {{read-only? :read-only default :default :as field-def} :field-def :as render-info}
+   row
+   row-num
+   col-num]
+  (cell-input form-id state-atom render-info row row-num col-num))
 
 (defn date?
   "Returns true if the argument is a date, false otherwise."
@@ -128,7 +177,8 @@
     (r/create-class
      {:display-name            "child-grid"
       :should-component-update (fn [this old-argv new-argv]
-                                 (not= (-> old-argv last :request-id) (-> new-argv last :request-id)))
+                                 (or (-> old-argv last :soft-refresh?)
+                                     (not= (-> old-argv last :request-id) (-> new-argv last :request-id))))
       :reagent-render
       (fn [{form-id         :form-id
             form-def        :form-def

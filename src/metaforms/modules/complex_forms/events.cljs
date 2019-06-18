@@ -314,7 +314,8 @@
    ;; sends http request
    (let [url (vl/build-validation-url (db-on-blur db field-name new-value)
                                       cf.consts/validation-base-url
-                                      validation new-value)]
+                                      validation
+                                      new-value)]
      {:dispatch [:http-get url
                  [::validate-field-success validation field-name new-value]
                  [::validate-field-error validation field-name]]

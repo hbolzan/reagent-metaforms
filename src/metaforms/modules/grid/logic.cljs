@@ -1,5 +1,6 @@
 (ns metaforms.modules.grid.logic
-  (:require [metaforms.modules.complex-forms.logic :as cf.logic]))
+  (:require [metaforms.common.logic :as cl]
+            [metaforms.modules.complex-forms.logic :as cf.logic]))
 
 (defn grid-state [data diff pending?]
   (if (empty? data)
@@ -33,6 +34,10 @@
       (clear-data-pk-fields auto-pk? pk-fields)
       (fill-related-fields parent-data related-fields master-fields)))
 
+(defn row-with-diff [data diff row-id]
+  (let [row-index (first (cl/filter-index #(= (:__uuid__ %) row-id) data))]
+    (merge (nth data row-index) (get diff row-id))))
+
 (defn prepare-to-save [{:keys [definition parent-data] :as child-form} data deleted-rows]
   "Returns a map with rows to append, delete and update"
   (let [fields-defs (:fields-defs definition)
@@ -46,3 +51,5 @@
                                                 parent-data
                                                 (filterv #(and (:append? %) (:update? %)) data)))
      :update (data->typed (filterv #(and (:update? %) (-> % :append? not)) data))}))
+
+(defn build-validation-url [base-url editing-row])
