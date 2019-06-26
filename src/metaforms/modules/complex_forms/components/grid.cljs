@@ -49,13 +49,17 @@
                    :on-success nil
                    :on-failure nil}])))
 
+(defn row-input-elements [column-model row-num]
+  (map #(js/document.getElementById (str "id-" (-> % :name name) "-" row-num)) column-model))
+
 (defn render-info->common-props
   [form-id
+   column-model
    state-atom
    {{read-only? :read-only default :default validation :validation :as field-def} :field-def :as render-info}
    row
    row-num]
-  (-> {:id           (str "id-" (:name field-def))
+  (-> {:id           (str "id-" (:name field-def) "-" row-num)
        :onFocus      (fn [e]
                        (gobj/set e :initial-value (-> e .-target .-value))
                        (swap! state-atom assoc :selected-row row-num)
@@ -65,7 +69,7 @@
        :readOnly     read-only?}))
 
 (defmulti cell-input
-  (fn [form-id state-atom {field-def :field-def} row row-num col-num]
+  (fn [form-id column-model state-atom {field-def :field-def} row row-num col-num]
     (if (-> field-def :mask empty?)
       (case (keyword (-> field-def :field-kind) (-> field-def :data-type))
         :lookup/integer :dropdown
@@ -76,13 +80,14 @@
         :data/memo      :memo)
       :masked-input)))
 
-(defmethod cell-input :memo [form-id state-atom render-info row row-num col-num]
+(defmethod cell-input :memo [form-id column-model state-atom render-info row row-num col-num]
   [:div.form-group
    [:textarea.form-control
-    (assoc (render-info->common-props form-id state-atom render-info row row-num) :rows 4)]])
+    (assoc (render-info->common-props form-id column-model state-atom render-info row row-num) :rows 4)]])
 
 (defmethod cell-input :dropdown
   [form-id
+   column-model
    state-atom
    {{:keys [lookup-key lookup-result options]} :lookup-info label :header :as render-info}
    row
@@ -90,22 +95,23 @@
    col-num]
   [:div.form-group
    [:select.form-control
-    (render-info->common-props form-id state-atom render-info row row-num)
+    (render-info->common-props form-id column-model state-atom render-info row row-num)
     (dropdown/dropdown-options options label lookup-key lookup-result)]])
 
-(defmethod cell-input :default [form-id state-atom render-info row row-num col-num]
+(defmethod cell-input :default [form-id column-model state-atom render-info row row-num col-num]
   [:div.form-group
    [:input.form-control
-    (assoc (render-info->common-props form-id state-atom render-info row row-num) :type "text")]])
+    (assoc (render-info->common-props form-id column-model state-atom render-info row row-num) :type "text")]])
 
 (defn- cell-fn
   [form-id
+   column-model
    state-atom
    {{read-only? :read-only default :default :as field-def} :field-def :as render-info}
    row
    row-num
    col-num]
-  (cell-input form-id state-atom render-info row row-num col-num))
+  (cell-input form-id column-model state-atom render-info row row-num col-num))
 
 (defn date?
   "Returns true if the argument is a date, false otherwise."
@@ -207,7 +213,7 @@
                                         :key-scroll      {" " nil}
                                         :column-model    column-model
                                         :row-key         row-key-fn
-                                        :render-cell     (partial cell-fn form-id table-state)
+                                        :render-cell     (partial cell-fn form-id column-model table-state)
                                         :sort            sort-fn
                                         ;; :column-selection {:ul {:li {:class "btn"}}}
                                         }]))})))
