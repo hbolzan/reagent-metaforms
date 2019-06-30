@@ -22,15 +22,16 @@
 (defmethod route :default [_ content]
   content)
 
-(defn main [sidebar-items body-content]
+(defn main [sidebar-items]
   (let [sidebar-visible? @(rf/subscribe [:sidebar-visible?])
         breadcrumb-items @(rf/subscribe [:breadcrumb-items])
+        menu-items       @(rf/subscribe [:menu-items])
         view             @(rf/subscribe [:current-view])]
     [:section.app.header-fixed.sidebar-fixed.aside-menu-fixed.pace-done
      (when sidebar-visible? {:class "sidebar-lg-show"})
      [main/main-header nil]
      [main/main-body
-      sidebar-items
+      {:menu-items menu-items}
       breadcrumb-items
       (route view (common.views/not-found))]
      [main/main-footer nil]

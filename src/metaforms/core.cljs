@@ -18,11 +18,8 @@
                        {:label "Cadastro" :link "#"}
                        {:label "Clientes" :active? true}])
 
-(def body-content [:div.col-md-12
-                   "Olá Mundo!!!"])
-
 (defn app []
-  (main-views/main nil body-content))
+  (main-views/main nil))
 
 (defn stop []
   (js/console.log "Stopping..."))

@@ -1,15 +1,37 @@
 (ns metaforms.modules.main.events
-  (:require [re-frame.core :as rf]
-            [metaforms.common.dictionary :refer [l]]
-            [metaforms.common.logic :as cl]))
+  (:require [metaforms.common.dictionary :refer [l error-result->error-message]]
+            [metaforms.common.logic :as cl]
+            [metaforms.modules.complex-forms.constants :as cf.consts]
+            [re-frame.core :as rf]))
 
-(rf/reg-event-db
+(rf/reg-event-fx
  :initialize
- (fn [__]
-   {:current-view :home
-    :main         {:sidebar-visible? true
-                   :sidebar-items    nil
-                   :breadcrumb-items [{:label "Início"}]}}))
+ (fn [{db :db} _]
+   {:db       {:current-view :home
+               :main         {:sidebar-visible? true
+                              :sidebar-items    nil
+                              :breadcrumb-items [{:label "Início"}]}}
+    :dispatch [:load-system-menus]}))
+
+(rf/reg-event-fx
+ :load-system-menus
+ (fn [{db :db} _]
+   {:dispatch [:http-get
+               cf.consts/system-menus-url
+               [::load-system-menus-success]
+               [::load-system-menus-failure]]}))
+
+(rf/reg-event-fx
+ ::load-system-menus-success
+ (fn [{db :db} [_ response]]
+   {:db (assoc-in db [:main :menu-items] (-> response :data))}))
+
+(rf/reg-event-fx
+ ::load-system-menus-failure
+ (fn [{db :db} [_ result]]
+   {:dispatch [:show-modal-alert
+               (l :common/error)
+               (error-result->error-message result (l :error/unknown))]}))
 
 (rf/reg-event-db
  :toggle-sidebar

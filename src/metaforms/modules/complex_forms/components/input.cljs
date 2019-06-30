@@ -101,27 +101,33 @@
                    :format-chars format-chars})))
 
 (defn field-def->input-params
-  [{:keys [id name label read-only] :as field-def} local-state form-state]
+  [{:keys [id name read-only] :as field-def} local-state form-state]
   (let [viewing? (not= form-state :edit)]
     {:type      "text"
      :className "form-control"
      :name      name
      :id        id
      :value     (:value @local-state)
-     :readOnly  (or read-only viewing?)}))
+     ;; :readOnly  (or read-only viewing?)
+     }))
+
+(defmethod field-def->input :data/memo [{:keys [id name] :as field-def} local-state* form-state]
+  [:textarea.form-control (merge
+                           {:id id :name name :rows 5 :value (:value @local-state*)}
+                           (field-def->common-props field-def local-state* form-state))])
 
 
-(defmethod field-def->input :masked-input [field-def local-state form-state]
+(defmethod field-def->input :masked-input [field-def local-state* form-state]
   [:> InputElement (with-mask
                      (merge
-                      (field-def->input-params field-def local-state form-state)
-                      (field-def->common-props field-def local-state form-state))
+                      (field-def->input-params field-def local-state* form-state)
+                      (field-def->common-props field-def local-state* form-state))
                      field-def)])
 
-(defmethod field-def->input :default [field-def local-state form-state]
+(defmethod field-def->input :default [field-def local-state* form-state]
   [:input (merge
-           (field-def->input-params field-def local-state form-state)
-           (field-def->common-props field-def local-state form-state))])
+           (field-def->input-params field-def local-state* form-state)
+           (field-def->common-props field-def local-state* form-state))])
 
 (defn filter-source-field [field-def]
   (let [lookup-filter (-> field-def :lookup-filter cl/safe-trim)

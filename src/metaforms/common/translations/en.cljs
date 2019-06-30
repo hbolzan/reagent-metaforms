@@ -19,6 +19,7 @@
    :form/confirm-edit?           "Confirm changes on current record?"
    :form/confirm-append?         "Confirm new record?"
    :form/search-failure          "An error ocurred while trying to open the search window"
+   :form/confirm-failure         "An error ocurred while trying to append/update the current record"
    :form/delete-failure          "An error ocurred while trying to delete current record"
    :form/load-definition-failure "An error ocurred while trying do read the '{form-id}' complex table definition"
    :form/load-data-failure       "An error ocurred while trying to load '{form-id}' table data"

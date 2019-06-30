@@ -7,6 +7,11 @@
    (-> db :main :sidebar-visible?)))
 
 (rf/reg-sub
+ :menu-items
+ (fn [db _]
+   (-> db :main :menu-items)))
+
+(rf/reg-sub
  :breadcrumb-items
  (fn [db _]
    (-> db :main :breadcrumb-items)))

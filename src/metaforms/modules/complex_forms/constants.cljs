@@ -3,6 +3,8 @@
 ;; release build must be served through the same domain and port
 (def api-host (if goog.DEBUG  "http://localhost:8000/api/" "/api/"))
 
+(def system-menus-url (str api-host "menus/system/"))
+
 (def persistent-path "query/persistent/")
 (def base-uri (str api-host persistent-path "complex-tables/?id={id}&middleware=complex_forms&depth=1"))
 (def persistent-get-base-uri (str api-host persistent-path ":complex-id/"))

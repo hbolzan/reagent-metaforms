@@ -21,8 +21,8 @@
      (header-logo "img/logo_horizontal_320x132.png")]
     (header-sider-toggler-button)]])
 
-(defn main-sidebar [content]
-  [sidebar/main])
+(defn main-sidebar [sidebar-content]
+  [sidebar/main sidebar-content])
 
 (defn breadcrumb-item [index item]
   (let [link    (:link item)
@@ -38,9 +38,9 @@
 (defn sidebar-items->content [items]
   (some->> items (mapv identity)))
 
-(defn main-body [sidebar-items breadcrumb-items main-content]
+(defn main-body [sidebar-content breadcrumb-items main-content]
   [:div.app-body
-   (main-sidebar (sidebar-items->content sidebar-items))
+   (main-sidebar sidebar-content)
    [:main.main
     (breadcrumbs breadcrumb-items)
     [:div.container-fluid

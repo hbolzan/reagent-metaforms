@@ -240,7 +240,9 @@
 (rf/reg-event-fx
  ::form-confirm-failure
  (fn [{db :db} [_ result]]
-   (js/console.log "ERROR" result)))
+   {:dispatch [:show-modal-alert
+               (str (l :form/load-data-failure) ". "
+                    (error-result->error-message result (l :error/unknown)))]}))
 
 (rf/reg-event-fx
  :do-form-delete
