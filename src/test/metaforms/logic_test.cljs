@@ -57,16 +57,16 @@
 
 (deftest data-record->typed-data-test
   (let [data-record {:a "123" :b "abc" :c "1.23"}
-        fields-defs [{:name "a" :data-type "integer"}
-                     {:name "b" :data-type "char"}
-                     {:name "c" :data-type "float"}]]
+        fields-defs [{:name "a" :data-type "integer" :persistent? true}
+                     {:name "b" :data-type "char" :persistent? true}
+                     {:name "c" :data-type "float" :persistent? true}]]
     (is (= (cf-logic/data-record->typed-data data-record fields-defs)
            {"a" 123 "b" "abc" "c" 1.23})))
 
   (let [data-record {:id "" :a "123" :b "abc" :c "1.23"}
-        fields-defs [{:name "id" :data-type "integer"}
-                     {:name "a" :data-type "integer"}
-                     {:name "b" :data-type "char"}
-                     {:name "c" :data-type "float"}]]
+        fields-defs [{:name "id" :data-type "integer" :persistent? true}
+                     {:name "a" :data-type "integer" :persistent? true}
+                     {:name "b" :data-type "char" :persistent? false}
+                     {:name "c" :data-type "float" :persistent? true}]]
     (is (= (cf-logic/data-record->typed-data data-record fields-defs)
-           {"id" nil "a" 123 "b" "abc" "c" 1.23}))))
+           {"id" nil "a" 123 "c" 1.23}))))
