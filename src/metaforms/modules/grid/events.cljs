@@ -102,7 +102,7 @@
 (rf/reg-event-fx
  :grid-validate-field
  (fn [{db :db} [_ row {:keys [validation on-success on-failure]}]]
-   (js/console.log row)))
+   #_(js/console.log row)))
 
 #_(rf/reg-event-fx
  :grid-validate-field
