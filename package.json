@@ -11,6 +11,7 @@
         "react-data-grid": "^6.1.0",
         "react-dom": "^16.6.3",
         "react-input-mask": "^2.0.4",
+        "react-number-format": "^4.0.8",
         "react-sticky-table": "^3.0.1"
     },
     "devDependencies": {

@@ -34,6 +34,16 @@
                (error-result->error-message result (l :error/unknown))]}))
 
 (rf/reg-event-db
+ :togle-menu-group
+ (fn [db [_ group-id]]
+   (assoc-in db [:main :menu-state group-id] (-> db :main :menu-state group-id boolean not))))
+
+(rf/reg-event-db
+ :set-menu-group-visible
+ (fn [db [_ group-id]]
+   (assoc-in db [:main :menu-state :visible-group] group-id)))
+
+(rf/reg-event-db
  :toggle-sidebar
  (fn [db _]
    (assoc-in db [:main :sidebar-visible?] (-> db :main :sidebar-visible? not))))

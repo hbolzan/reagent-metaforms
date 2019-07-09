@@ -49,7 +49,9 @@
                           (-> field-def :data-type keyword))}))
 
 (defn data-record->typed-data [data-record fields-defs]
-  (reduce (fn [result field-def] (merge result (field-typecast data-record field-def)))
+  (reduce (fn [result field-def] (if (:persistent? field-def)
+                                   (merge result (field-typecast data-record field-def))
+                                   result))
           {}
           fields-defs))
 

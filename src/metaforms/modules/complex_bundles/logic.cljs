@@ -62,6 +62,8 @@
 
 (defn empty-parent-data? [parent-data master-fields]
   (or (empty? parent-data)
-      (reduce (fn [is-empty? field] (or is-empty? (-> field keyword parent-data empty?)))
+      (reduce (fn [is-empty? field]
+                (let [field-value (-> field keyword parent-data)]
+                  (or is-empty? (str/blank? field-value) (= field-value 0))))
               false
               master-fields)))

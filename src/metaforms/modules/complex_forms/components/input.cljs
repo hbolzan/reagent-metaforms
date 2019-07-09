@@ -1,11 +1,12 @@
 (ns metaforms.modules.complex-forms.components.input
   (:require [clojure.string :as str]
-            [reagent.core :as r]
+            [metaforms.common.logic :as cl]
+            [metaforms.modules.complex-forms.components.checkbox :as checkbox]
+            [metaforms.modules.complex-forms.components.dropdown :as dropdown]
             [re-frame.core :as rf]
             [react-input-mask :as InputElement]
-            [metaforms.common.logic :as cl]
-            [metaforms.modules.complex-forms.components.dropdown :as dropdown]
-            [metaforms.modules.complex-forms.components.checkbox :as checkbox]))
+            [react-number-format :as NumberFormat]
+            [reagent.core :as r]))
 
 (defn apply-outer-value? [outer-value local-state form-state]
   "May update value if value changed AND
@@ -75,22 +76,23 @@
                                            (-> e .-target .-value)))
         ;; :onBlur   (fn [e] (rf/dispatch [:input-blur name (-> e .-target .-value)]))
         :onBlur   (fn [e] (common-on-blur local-state* name validation e))
-        :readOnly (or read-only (not= form-state :edit))}
+        :readOnly (or read-only (not= form-state :edit))
+        :style (when read-only {:background-color "#f7ebe7"})}
        (merge-common-change name local-state* common-onchange?))))
 
 (defmulti field-def->input
-  (fn [field-def local-state* form-state]
-    (if (-> field-def :mask empty?)
-      (keyword (-> field-def :field-kind name) (-> field-def :data-type name))
-      :masked-input)))
+  (fn [{mask :mask :as field-def} local-state* form-state]
+    (let [field-kind (-> field-def :field-kind keyword)
+          data-type  (-> field-def :data-type keyword)]
+      (cond
+        (field-kind #{:lookup :yes-no})      field-kind
+        (data-type #{:integer :float :memo}) data-type
+        mask                                 :masked-input))))
 
-(defmethod field-def->input :yes-no/char [field-def local-state* form-state]
+(defmethod field-def->input :yes-no [field-def local-state* form-state]
   (checkbox/yes-no field-def (field-def->common-props field-def local-state* form-state false) local-state*))
 
-(defmethod field-def->input :lookup/char [field-def local-state* form-state]
-  [dropdown/dropdown field-def (field-def->common-props field-def local-state* form-state) local-state*])
-
-(defmethod field-def->input :lookup/integer [field-def local-state* form-state]
+(defmethod field-def->input :lookup [field-def local-state* form-state]
   [dropdown/dropdown field-def (field-def->common-props field-def local-state* form-state) local-state*])
 
 (defn with-mask [params {mask :mask mask-char :mask-char format-chars :format-chars}]
@@ -107,15 +109,12 @@
      :className "form-control"
      :name      name
      :id        id
-     :value     (:value @local-state)
-     ;; :readOnly  (or read-only viewing?)
-     }))
+     :value     (:value @local-state)}))
 
-(defmethod field-def->input :data/memo [{:keys [id name] :as field-def} local-state* form-state]
+(defmethod field-def->input :memo [{:keys [id name] :as field-def} local-state* form-state]
   [:textarea.form-control (merge
                            {:id id :name name :rows 5 :value (:value @local-state*)}
                            (field-def->common-props field-def local-state* form-state))])
-
 
 (defmethod field-def->input :masked-input [field-def local-state* form-state]
   [:> InputElement (with-mask
@@ -123,6 +122,15 @@
                       (field-def->input-params field-def local-state* form-state)
                       (field-def->common-props field-def local-state* form-state))
                      field-def)])
+
+(defmethod field-def->input :float [{mask :mask :as field-def} local-state* form-state]
+  [:> NumberFormat (merge (field-def->input-params field-def local-state* form-state)
+                          (field-def->common-props field-def local-state* form-state)
+                          {:thousandSeparator "."
+                           :decimalSeparator  ","
+                           ;; :suffix            "%"
+                           :decimalScale      (-> mask (str/split #"\.") second count)
+                           :mask              "_"})])
 
 (defmethod field-def->input :default [field-def local-state* form-state]
   [:input (merge

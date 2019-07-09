@@ -12,6 +12,11 @@
    (-> db :main :menu-items)))
 
 (rf/reg-sub
+ :menu-group-visible?
+ (fn [db [_ group-id]]
+   (= (-> db :main :menu-state :visible-group) group-id)))
+
+(rf/reg-sub
  :breadcrumb-items
  (fn [db _]
    (-> db :main :breadcrumb-items)))

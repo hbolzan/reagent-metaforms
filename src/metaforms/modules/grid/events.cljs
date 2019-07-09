@@ -94,8 +94,10 @@
  ::grid-post-data-failure
  (fn [{db :db} [_ form-id result]]
    {:dispatch [:show-modal-alert
-               (str (l :form/load-data-failure {:form-id form-id}) ". "
-                    (error-result->error-message result (l :error/unknown)))]}))
+               (l :common/error)
+               [:div.card
+                [:div.card-header (l :grid/save-failure {:form-id form-id})]
+                [:div.card-body (error-result->error-message result (l :error/unknown))]]]}))
 
 (rf/reg-event-fx
  :grid-validate-field

@@ -27,8 +27,3 @@
 (defn error-result->error-message [result default-message]
   (or (get (-> result :response :data :messages) (current-language))
       default-message))
-
-(comment
-  (l :form/load-definition-failure {:form-id "XYZ"})
-  (l :teste)
-  (l :modal/close))

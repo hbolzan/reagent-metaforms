@@ -25,6 +25,7 @@
    :form/load-data-failure       "Ocorreu um erro ao tentar consultar os dados da tabela '{form-id}'"
 
    :grid/save-pending "GRAVAR ALTERAÇÕES"
+   :grid/save-failure "Ocorreu um erro ao tentar gravar os dados da tabela '{form-id}'"
 
    :bundle/load-definition-failure "Ocorreu um erro ao tentar ler a definição do conjunto '{bundle-id}'"
 
