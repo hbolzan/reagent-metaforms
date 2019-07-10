@@ -85,9 +85,9 @@
     (let [field-kind (-> field-def :field-kind keyword)
           data-type  (-> field-def :data-type keyword)]
       (cond
-        (field-kind #{:lookup :yes-no})      field-kind
-        (data-type #{:integer :float :memo}) data-type
-        mask                                 :masked-input))))
+        (field-kind #{:lookup :yes-no})            field-kind
+        (data-type #{:integer :float :memo :date}) data-type
+        mask                                       :masked-input))))
 
 (defmethod field-def->input :yes-no [field-def local-state* form-state]
   (checkbox/yes-no field-def (field-def->common-props field-def local-state* form-state false) local-state*))
@@ -131,6 +131,15 @@
                            ;; :suffix            "%"
                            :decimalScale      (-> mask (str/split #"\.") second count)
                            :mask              "_"})])
+
+(first (str/split "123456" "T"))
+
+(defmethod field-def->input :date [field-def local-state* form-state]
+  [:input (merge
+           (field-def->input-params field-def local-state* form-state)
+           (field-def->common-props field-def local-state* form-state)
+           {:type  "date"
+            :value (-> @local-state* :value (str/split "T") first)})])
 
 (defmethod field-def->input :default [field-def local-state* form-state]
   [:input (merge

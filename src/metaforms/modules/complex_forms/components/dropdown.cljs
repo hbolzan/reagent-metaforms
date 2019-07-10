@@ -13,7 +13,7 @@
 (defn render-dropdown-options [options lookup-key lookup-result]
   (map
    (fn [option] [:option {:value (lookup-key option)
-                         :key   (or (lookup-key option) 0)} (lookup-result option)])
+                         :key   (or (lookup-key option) "no-option")} (lookup-result option)])
    options))
 
 (defn review-lookup-result-name [lookup-key-name lookup-result-name]
