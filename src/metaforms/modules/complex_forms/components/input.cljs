@@ -132,8 +132,6 @@
                            :decimalScale      (-> mask (str/split #"\.") second count)
                            :mask              "_"})])
 
-(first (str/split "123456" "T"))
-
 (defmethod field-def->input :date [field-def local-state* form-state]
   [:input (merge
            (field-def->input-params field-def local-state* form-state)
