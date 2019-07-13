@@ -5,10 +5,13 @@
             [metaforms.modules.complex-forms.components.dropdown :as dropdown]
             [moment :as moment]
             [re-frame.core :as rf]
+            ["date-fns/locale/pt-BR" :as pt-BR]
             [react-datepicker :default DatePicker :refer [registerLocale]]
             [react-input-mask :as InputElement]
             [react-number-format :as NumberFormat]
             [reagent.core :as r]))
+
+(registerLocale "pt-BR" pt-BR)
 
 (defn apply-outer-value? [outer-value local-state form-state]
   "May update value if value changed AND
@@ -133,18 +136,23 @@
                            :decimalScale      (-> mask (str/split #"\.") second count)
                            :mask              "_"})])
 
-(defmethod field-def->input :date [{:keys [id name] :as field-def} local-state* form-state]
-  (let [m            (-> @local-state* :value moment)
-        current-date (when (.isValid m) (new js/Date m))]
-    [:> DatePicker (merge
-                    {:className  "form-control"
-                     :name       name
-                     :id         id
-                     :dateFormat "dd/MM/yyyy"
-                     :selected   current-date
-                     :onChange   (fn [date]
-                                   (update-value! date local-state*))}
-                    (field-def->common-props field-def local-state* form-state false))]))
+(defmethod field-def->input :date [field-def local-state* form-state]
+  (fn [{:keys [id name read-only] :as field-def} local-state* form-state]
+    (let [m            (-> @local-state* :value moment)
+          current-date (when (.isValid m) (new js/Date m))]
+      [:> DatePicker (merge
+                      {:className    "form-control"
+                       :name         name
+                       :id           id
+                       :autoComplete "off"
+                       :locale       "pt-BR"
+                       :disabled     (or read-only (not= form-state :edit)) 
+                       :dateFormat   "dd/MM/yyyy"
+                       :selected     current-date
+                       :startDate    current-date
+                       :onChange     (fn [date]
+                                       (update-value! date local-state*))}
+                      (field-def->common-props field-def local-state* form-state false))])))
 
 (defmethod field-def->input :default [field-def local-state* form-state]
   [:input (merge
@@ -181,4 +189,4 @@
                                                           form-state
                                                           @local-state*)]
         (do-update-state! outer-value local-state* form-state last-modified-field outer-source-value)
-        (field-def->input (assoc field-def :filter-source-value outer-source-value) local-state* form-state)))))
+        [field-def->input (assoc field-def :filter-source-value outer-source-value) local-state* form-state]))))
