@@ -3,7 +3,9 @@
             [metaforms.common.logic :as cl]
             [metaforms.modules.complex-forms.components.checkbox :as checkbox]
             [metaforms.modules.complex-forms.components.dropdown :as dropdown]
+            [moment :as moment]
             [re-frame.core :as rf]
+            [react-datepicker :default DatePicker :refer [registerLocale]]
             [react-input-mask :as InputElement]
             [react-number-format :as NumberFormat]
             [reagent.core :as r]))
@@ -104,12 +106,11 @@
 
 (defn field-def->input-params
   [{:keys [id name read-only] :as field-def} local-state form-state]
-  (let [viewing? (not= form-state :edit)]
-    {:type      "text"
-     :className "form-control"
-     :name      name
-     :id        id
-     :value     (:value @local-state)}))
+  {:type      "text"
+   :className "form-control"
+   :name      name
+   :id        id
+   :value     (:value @local-state)})
 
 (defmethod field-def->input :memo [{:keys [id name] :as field-def} local-state* form-state]
   [:textarea.form-control (merge
@@ -132,12 +133,18 @@
                            :decimalScale      (-> mask (str/split #"\.") second count)
                            :mask              "_"})])
 
-(defmethod field-def->input :date [field-def local-state* form-state]
-  [:input (merge
-           (field-def->input-params field-def local-state* form-state)
-           (field-def->common-props field-def local-state* form-state)
-           {:type  "date"
-            :value (-> @local-state* :value (str/split "T") first)})])
+(defmethod field-def->input :date [{:keys [id name] :as field-def} local-state* form-state]
+  (let [m            (-> @local-state* :value moment)
+        current-date (when (.isValid m) (new js/Date m))]
+    [:> DatePicker (merge
+                    {:className  "form-control"
+                     :name       name
+                     :id         id
+                     :dateFormat "dd/MM/yyyy"
+                     :selected   current-date
+                     :onChange   (fn [date]
+                                   (update-value! date local-state*))}
+                    (field-def->common-props field-def local-state* form-state false))]))
 
 (defmethod field-def->input :default [field-def local-state* form-state]
   [:input (merge
