@@ -55,10 +55,24 @@
           {}
           fields-defs))
 
+(defn distinct-pages [fields-defs]
+  (into [] (distinct (mapv :page fields-defs))))
+
+(defn assoc-page-info [{{page :page} :additional-params :as field-def}]
+  (let [page-parts (str/split page ":")]
+    (if-let [page-title (-> page-parts second)]
+      (assoc field-def :page {:index (-> page-parts first int) :title page-title})
+      field-def)))
+
+(defn process-pages-info [{fields-defs :fields-defs :as form-definition}]
+  (let [with-page-info (mapv assoc-page-info fields-defs)]
+    (merge form-definition {:fields-defs with-page-info
+                            :pages-info  (distinct-pages with-page-info)})))
+
 (defn load-form-definition [db form-id form-definition]
   (assoc-in db
             [:complex-forms form-id]
-            {:definition form-definition
+            {:definition (process-pages-info form-definition)
              :state      :view
              :data       {:records        []
                           :current-record nil

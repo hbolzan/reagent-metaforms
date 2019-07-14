@@ -12,7 +12,7 @@
     (complex.form/form
      (merge form-definition
             {:fields-defs fields-defs
-             :rows-defs   (view-logic/distribute-fields fields-defs view-logic/bootstrap-md-width)}))))
+             :rows-defs   (view-logic/distribute-fields-by-page fields-defs view-logic/bootstrap-md-width)}))))
 
 (defn generic-view []
   (let [current-form @(rf/subscribe [:current-form])

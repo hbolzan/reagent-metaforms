@@ -16,18 +16,19 @@
   (merge row {:width  (+ (:width row) width)
               :widths (conj (:widths row) width)}))
 
-(defn add-to-row? [row width container-width]
-  (boolean (and (< (count (:widths row)) bootstrap-grid-cols)
+(defn add-to-row? [row {:keys [width line-break?] :as field-def} container-width]
+  (boolean (and (not line-break?)
+                (< (count (:widths row)) bootstrap-grid-cols)
                 (<= (+ (:width row) width) container-width))))
 
-(defn row-reducer [container-width rows width]
+(defn row-reducer [container-width rows {width :width :as field-def}]
   (let [current-row (last rows)]
-    (if (add-to-row? current-row width container-width)
+    (if (add-to-row? current-row field-def container-width)
       (set-last rows (add-width-to-row current-row width))
       (conj rows {:width width :widths [width]}))))
 
-(defn distribute-widths [widths container-width]
-  (reduce (partial row-reducer container-width) [empty-row] widths))
+(defn distribute-widths [fields-defs container-width]
+  (reduce (partial row-reducer container-width) [empty-row] fields-defs))
 
 (defn review-grid-widths [widths grid-size]
   (let [total-width (cl/sum widths)]
@@ -56,10 +57,18 @@
     (-> row-def (dissoc :defs) (assoc :fields names))))
 
 (defn distribute-fields [fields-defs container-width]
-  (let [distributed-rows      (distribute-widths (mapv :width fields-defs) (/ container-width field-width-multiplier))
+  (let [distributed-rows      (distribute-widths fields-defs (/ container-width field-width-multiplier))
         bootstrap-widths-rows (mapv (partial row-widths->grid-widths bootstrap-grid-cols) distributed-rows)
         final-rows            (mapv assoc-bootstrap-widths distributed-rows bootstrap-widths-rows)]
     (mapv row-def-defs->fields (:output (final-rows->final-defs final-rows fields-defs)))))
+
+(defn distribute-fields-by-page [fields-defs container-width]
+  (let [fields-groups (group-by #(get-in % [:page :index]) fields-defs)]
+    (reduce
+     (fn [pages group-index]
+       (assoc pages (or group-index 0) (distribute-fields (get fields-groups group-index) container-width)))
+     {}
+     (keys fields-groups))))
 
 (def empty-by-type {:char    ""
                     :integer 0
@@ -71,3 +80,22 @@
 (defn row-fields [row-def fields-defs]
   (let [field-by-name (fn [name] (first (filter #(= (:name %) name) fields-defs)))]
     (mapv field-by-name (:fields row-def))))
+
+(comment
+  (let [defs [{:name "A" :page {:index 0 :title "page-a"}}
+              {:name "B" :page {:index 0 :title "page-a"}}
+              {:name "C" :page {:index 0 :title "page-a"}}
+              {:name "D" :page {:index 1 :title "page-b"}}
+              {:name "E" :page {:index 1 :title "page-b"}}]
+        groups (group-by #(get-in % [:page :index]) defs)]
+    (mapv #(get groups %) (keys groups )))
+
+  (let [defs [{:name "A" }
+              {:name "B" }
+              {:name "C" }
+              {:name "D" }
+              {:name "E" }]
+        groups
+        (group-by #(get-in % [:page :index]) defs)]
+    (mapv #(get groups %) (keys groups ))
+    ))

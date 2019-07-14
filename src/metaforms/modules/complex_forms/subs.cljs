@@ -39,6 +39,11 @@
    (cf.logic/current-record-index db)))
 
 (rf/reg-sub
+ :form-by-id-active-page
+ (fn [db [_ form-id]]
+   (or (cf.logic/form-by-id-some-prop db form-id :active-page) 0)))
+
+(rf/reg-sub
  :form-by-id-record-index
  (fn [db [_ form-id]]
    (cf.logic/form-by-id-current-record-index db form-id)))

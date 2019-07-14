@@ -154,12 +154,36 @@
          (view-logic/row-fields row-def fields-defs)
          (:bootstrap-widths row-def)))])
 
+(defn render-tabs [form-id pages-info active-page]
+  (when (first pages-info)
+    [:ul.nav.nav-tabs
+     (doall
+      (map
+       (fn [page-info]
+         (let [page-index (:index page-info)]
+           [:li.nav-item {:key page-index}
+            [:div {:class    (str "nav-link" (when (= active-page page-index) " active"))
+                   :on-click #(rf/dispatch [:form-set-active-page form-id page-index])}
+             (:title page-info)]]))
+       pages-info))]))
+
+(defn render-form [content form-id {pages-info :pages-info} active-page]
+  (if-let [tabs (render-tabs form-id pages-info active-page)]
+    [:div tabs
+     [:div.card.border-top-0 content]]
+    [:div content]))
+
 (defn form [{:keys [id title rows-defs fields-defs children] :as form-definition}]
-  (let [form-state @(rf/subscribe [:current-form-state])
-        form-id @(rf/subscribe [:current-form-id])]
+  (let [form-state  @(rf/subscribe [:current-form-state])
+        form-id     @(rf/subscribe [:current-form-id])
+        active-page @(rf/subscribe [:form-by-id-active-page form-id])]
     [cards/card
      title
      (toolset/toolset form-id)
-     [:div
-      (doall (map-indexed (fn [index row-def] (form-row id index row-def fields-defs form-state)) rows-defs))
-      (when children (map-indexed (fn [i child] [form-child {:key i} form-id child]) children))]]))
+     (render-form
+      [:div.card-body
+       (doall (map-indexed (fn [index row-def] (form-row id index row-def fields-defs form-state)) (get rows-defs active-page)))
+       (when children (map-indexed (fn [i child] [form-child {:key i} form-id child]) children))]
+      form-id
+      form-definition
+      active-page)]))

@@ -146,7 +146,7 @@
                        :id           id
                        :autoComplete "off"
                        :locale       "pt-BR"
-                       :disabled     (or read-only (not= form-state :edit)) 
+                       :disabled     (or read-only (not= form-state :edit))
                        :dateFormat   "dd/MM/yyyy"
                        :selected     current-date
                        :startDate    current-date

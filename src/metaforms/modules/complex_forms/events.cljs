@@ -61,6 +61,11 @@
                (str (l :form/load-data-failure {:form-id form-id}) ". "
                     (error-result->error-message result (l :error/unknown)))]}))
 
+(rf/reg-event-db
+ :form-set-active-page
+ (fn [db [_ form-id page-index]]
+   (cf.logic/form-by-id-set-some-prop db form-id :active-page page-index)))
+
 (rf/reg-event-fx
  :current-form-current-record-changed
  (fn [{db :db} _]
