@@ -143,7 +143,7 @@
   [{:keys [id label] :as field} additional-group-class form-state all-defs]
   [:div {:key id :class (str "form-group" (some->> additional-group-class (str " ")))}
    [:label {:html-for id} label]
-   [input/input field form-state all-defs]])
+   [input/input field form-state]])
 
 (defn form-row
   [form-id row-index row-def fields-defs form-state]

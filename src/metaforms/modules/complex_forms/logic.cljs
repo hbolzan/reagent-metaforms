@@ -157,6 +157,12 @@
 (defn form-by-id-set-data [db form-id data]
   (assoc-in db [:complex-forms form-id :data] (merge (form-by-id-data db form-id) data)))
 
+(defn form-by-id-save-input-value [db form-id field-id value]
+  (assoc-in db [:complex-forms form-id :input-values field-id] value))
+
+(defn current-form-save-input-value [db field-id value]
+  (form-by-id-save-input-value db (:current-form db) field-id value))
+
 (defn current-form-set-data [db new-form-data]
   (form-by-id-set-data db (:current-form db) new-form-data))
 

@@ -1,11 +1,13 @@
 (ns metaforms.modules.complex-forms.components.input
-  (:require [clojure.string :as str]
+  (:require ["date-fns/locale/pt-BR" :as pt-BR]
+            [clojure.string :as str]
             [metaforms.common.logic :as cl]
             [metaforms.modules.complex-forms.components.checkbox :as checkbox]
             [metaforms.modules.complex-forms.components.dropdown :as dropdown]
+            [metaforms.modules.complex-forms.logic :as cf.logic]
             [moment :as moment]
             [re-frame.core :as rf]
-            ["date-fns/locale/pt-BR" :as pt-BR]
+            [re-frame.db :as db]
             [react-datepicker :default DatePicker :refer [registerLocale]]
             [react-input-mask :as InputElement]
             [react-number-format :as NumberFormat]
@@ -177,16 +179,35 @@
         #_(assoc last-modified-field :value outer-source-value))
       last-modified-field)))
 
-(defn input [field-def form-state all-defs]
+(defn saved-value [db {field-name :name field-id :field-id}]
+  (or
+   (get-in db [:complex-forms (:current-form db) :input-values field-id])
+   ((keyword field-name) (cf.logic/current-form-editing-data db))))
+
+(defn input
+  [field-def form-state]
   (let [local-state* (r/atom {:value "" :state form-state :last-modified-field nil})]
-    (fn [field-def form-state]
-      (let [outer-value         @(rf/subscribe [:field-value (:name field-def)])
-            filter-source-field (filter-source-field field-def)
-            outer-source-value (when filter-source-field @(rf/subscribe [:field-value filter-source-field]))
-            last-modified-field (calc-last-modified-field @(rf/subscribe [:last-modified-field])
-                                                          filter-source-field
-                                                          outer-source-value
-                                                          form-state
-                                                          @local-state*)]
-        (do-update-state! outer-value local-state* form-state last-modified-field outer-source-value)
-        [field-def->input (assoc field-def :filter-source-value outer-source-value) local-state* form-state]))))
+    (r/create-class
+     {:display-name           "generic-input"
+      :component-will-mount    (fn [this]
+                                 (when (= :edit form-state)
+                                   (reset! local-state* {:value (saved-value @db/app-db field-def)
+                                                         :state :edit})))
+      :component-will-unmount (fn [this]
+                                (let [local-state @local-state*]
+                                  (when (= (:state local-state) :edit)
+                                    (rf/dispatch [:form-save-input-local-value
+                                                  (:id field-def)
+                                                  (:value local-state)]))))
+      :reagent-render
+      (fn [field-def form-state]
+        (let [outer-value         @(rf/subscribe [:field-value (:name field-def)])
+              filter-source-field (filter-source-field field-def)
+              outer-source-value  (when filter-source-field @(rf/subscribe [:field-value filter-source-field]))
+              last-modified-field (calc-last-modified-field @(rf/subscribe [:last-modified-field])
+                                                            filter-source-field
+                                                            outer-source-value
+                                                            form-state
+                                                            @local-state*)]
+          (do-update-state! outer-value local-state* form-state last-modified-field outer-source-value)
+          [field-def->input (assoc field-def :filter-source-value outer-source-value) local-state* form-state]))})))

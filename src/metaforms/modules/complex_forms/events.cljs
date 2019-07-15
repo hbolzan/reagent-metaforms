@@ -66,6 +66,11 @@
  (fn [db [_ form-id page-index]]
    (cf.logic/form-by-id-set-some-prop db form-id :active-page page-index)))
 
+(rf/reg-event-db
+ :form-save-input-local-value
+ (fn [db [_ field-id input-value]]
+   (cf.logic/current-form-save-input-value db field-id input-value)))
+
 (rf/reg-event-fx
  :current-form-current-record-changed
  (fn [{db :db} _]
