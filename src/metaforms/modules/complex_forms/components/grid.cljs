@@ -46,8 +46,9 @@
                   name
                   final-value
                   {:validation validation
-                   :on-success nil
-                   :on-failure nil}])))
+                   :field-name name
+                   :on-success #(js/console.log %2)
+                   :on-failure #(js/console.log %2)}])))
 
 (defn row-input-elements [column-model row-num]
   (map #(js/document.getElementById (str "id-" (-> % :name name) "-" row-num)) column-model))

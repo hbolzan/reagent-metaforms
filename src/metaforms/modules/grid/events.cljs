@@ -5,6 +5,7 @@
             [metaforms.modules.complex-forms.logic :as cf.logic]
             [metaforms.modules.grid.logic :as grid.logic]
             [metaforms.modules.complex-forms.validation-logic :as vl]
+            [metaforms.modules.grid.validation-logic :as grid.vl]
             [re-frame.core :as rf]))
 
 (rf/reg-event-fx
@@ -38,7 +39,7 @@
                              value)]
      (merge
       {:db (cf.logic/form-by-id-set-some-prop db form-id :data-diff new-diff)}
-      (when (not-empty value)
+      (when (and (not-empty value) (:validation validation-params))
         {:dispatch [:grid-validate-field
                     (grid.logic/row-with-diff @data-atom new-diff row-id)
                     validation-params]})))))
@@ -101,25 +102,16 @@
 
 (rf/reg-event-fx
  :grid-validate-field
- (fn [{db :db} [_ row {:keys [validation on-success on-failure]}]]
-   #_(js/console.log row)))
-
-#_(rf/reg-event-fx
- :grid-validate-field
- (fn [{db :db} [_ validation success-fn failure-fn]]
-   ;; sends http request
-   (let [url (vl/build-validation-url (db-on-blur db field-name new-value)
-                                      cf.consts/validation-base-url
-                                      validation
-                                      new-value)]
+ (fn [{db :db} [_ row {:keys [validation field-name on-success on-failure]}]]
+   (let [url (grid.vl/build-validation-url db cf.consts/validation-base-url row validation (field-name row))]
      {:dispatch [:http-get
                  url
-                 [::grid-validate-field-on-response success-fn]
-                 [::grid-validate-field-on-response failure-fn]]
+                 [::grid-validate-field-on-response on-success]
+                 [::grid-validate-field-on-response on-failure]]
       :db       (cl/set-spinner db true)})))
 
 (rf/reg-event-fx
  ::grid-validate-field-on-response
- (fn [{db :db} [_  response-fn response]]
-   (if response-fn (response-fn response))
+ (fn [{db :db} [_  response-fn db response]]
+   (if response-fn (response-fn db response))
    {:db (cl/set-spinner db false)}))

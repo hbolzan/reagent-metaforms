@@ -12,11 +12,12 @@
 
 (rf/reg-event-fx
  :set-complex-bundle-definition
- (fn [{db :db} [_ bundle-id]]
-   (if-let [bundle (cb.logic/get-bundle db bundle-id)]
-     {:dispatch [:set-current-bundle (keyword bundle-id)]}
-     {:dispatch
-      [:load-complex-bundle-definition (keyword bundle-id)]})))
+ (fn [{db :db} [_ bundle-name]]
+   (let [bundle-id (keyword bundle-name)]
+     (if-let [bundle (cb.logic/get-bundle db bundle-id)]
+       {:dispatch [:set-current-bundle bundle-id]}
+       {:dispatch
+        [:load-complex-bundle-definition bundle-id]}))))
 
 (rf/reg-event-fx
  :load-complex-bundle-definition
@@ -29,12 +30,12 @@
 (rf/reg-event-fx
  ::load-complex-bundle-success
  (fn [{db :db} [_ bundle-id response]]
-   (let [bundle (-> response :data) db-with-bundles
-         (cb.logic/load-bundle-definition-success db bundle-id bundle)]
-     {:db (cb.logic/load-bundled-forms db-with-bundles
-                                       bundle-id
-                                       (:bundled-tables bundle)
-                                       cf.logic/load-form-definition)
+   (let [bundle          (-> response :data)
+         db-with-bundles (cb.logic/load-bundle-definition-success db bundle-id bundle)]
+     {:db       (cb.logic/load-bundled-forms db-with-bundles
+                                             bundle-id
+                                             (:bundled-tables bundle)
+                                             cf.logic/load-form-definition)
       :dispatch [:set-current-bundle bundle-id]})))
 
 (rf/reg-event-fx

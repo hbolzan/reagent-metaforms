@@ -80,22 +80,3 @@
 (defn row-fields [row-def fields-defs]
   (let [field-by-name (fn [name] (first (filter #(= (:name %) name) fields-defs)))]
     (mapv field-by-name (:fields row-def))))
-
-(comment
-  (let [defs [{:name "A" :page {:index 0 :title "page-a"}}
-              {:name "B" :page {:index 0 :title "page-a"}}
-              {:name "C" :page {:index 0 :title "page-a"}}
-              {:name "D" :page {:index 1 :title "page-b"}}
-              {:name "E" :page {:index 1 :title "page-b"}}]
-        groups (group-by #(get-in % [:page :index]) defs)]
-    (mapv #(get groups %) (keys groups )))
-
-  (let [defs [{:name "A" }
-              {:name "B" }
-              {:name "C" }
-              {:name "D" }
-              {:name "E" }]
-        groups
-        (group-by #(get-in % [:page :index]) defs)]
-    (mapv #(get groups %) (keys groups ))
-    ))
