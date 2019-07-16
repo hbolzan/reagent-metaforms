@@ -106,12 +106,21 @@
    (let [url (grid.vl/build-validation-url db cf.consts/validation-base-url row validation (field-name row))]
      {:dispatch [:http-get
                  url
-                 [::grid-validate-field-on-response on-success]
-                 [::grid-validate-field-on-response on-failure]]
+                 [::grid-validate-field-success on-success]
+                 [::grid-validate-field-error on-failure validation field-name]]
       :db       (cl/set-spinner db true)})))
 
 (rf/reg-event-fx
- ::grid-validate-field-on-response
- (fn [{db :db} [_  response-fn db response]]
+ ::grid-validate-field-success
+ (fn [{db :db} [_ response-fn response]]
    (if response-fn (response-fn db response))
    {:db (cl/set-spinner db false)}))
+
+(rf/reg-event-fx
+ ::grid-validate-field-error
+ (fn [{db :db} [_ on-failure validation field-name result]]
+   (if on-failure (on-failure db result))
+   (merge
+    {:db (cl/set-spinner db false)}
+    (when (:show-message-on-error validation)
+      {:dispatch [:show-modal-alert (l :common/warning) (-> result :response :data :messages :pt-br)]}))))

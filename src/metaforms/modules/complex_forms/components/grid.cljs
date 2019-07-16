@@ -9,6 +9,7 @@
             [metaforms.components.grid :as rt]
             [metaforms.modules.complex-forms.components.toolset :as toolset]
             [metaforms.modules.complex-forms.components.dropdown :as dropdown]
+            [metaforms.modules.complex-forms.validation-logic :as vl]
             [re-frame.core :as rf]
             [reagent.core :as r :refer [atom]])
   (:import
@@ -37,8 +38,20 @@
     (when (not= final-value (gobj/get e :initial-value))
       final-value)))
 
+(defn row-input-elements [column-model row-num]
+  (reduce (fn [elements col-def]
+            (assoc elements (-> col-def :name keyword)
+                   (js/document.getElementById (str "id-" (-> col-def :name name) "-" row-num))))
+          {}
+          column-model))
+
+(defn apply-row-values [row-values input-elements]
+  (doseq [[field value] row-values]
+    (let [el (get input-elements field)]
+      (set! (.-value el) (first value)))))
+
 (defn- cell-blur
-  [form-id {{validation :validation} :field-def name :name :as render-info} row e]
+  [form-id column-model {{validation :validation} :field-def name :name :as render-info} row row-num e]
   (when-let [final-value (cell-value-changed e)]
     (rf/dispatch [:grid-set-data-diff
                   form-id
@@ -47,11 +60,11 @@
                   final-value
                   {:validation validation
                    :field-name name
-                   :on-success #(js/console.log %2)
+                   :on-success (fn [db response]
+                                 (apply-row-values
+                                  (vl/expected-results->fields validation response)
+                                  (row-input-elements column-model row-num)))
                    :on-failure #(js/console.log %2)}])))
-
-(defn row-input-elements [column-model row-num]
-  (map #(js/document.getElementById (str "id-" (-> % :name name) "-" row-num)) column-model))
 
 (defn render-info->common-props
   [form-id
@@ -65,7 +78,7 @@
                        (gobj/set e :initial-value (-> e .-target .-value))
                        (swap! state-atom assoc :selected-row row-num)
                        (rf/dispatch [:grid-set-selected-row form-id row-num]))
-       :onBlur       #(cell-blur form-id render-info row %)
+       :onBlur       #(cell-blur form-id column-model render-info row row-num %)
        :defaultValue (or (cell-data row render-info) default)
        :readOnly     read-only?}))
 
