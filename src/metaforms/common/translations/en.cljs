@@ -6,6 +6,7 @@
    :common/no      "No"
    :common/warning "WARNING"
    :common/error   "ERROR"
+   :common/search  "Search"
 
    :modal/close   "Close"
    :modal/dismiss "Dismiss"

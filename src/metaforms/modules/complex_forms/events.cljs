@@ -99,7 +99,7 @@
  :do-form-search
  (fn [{db :db} [_ form-id]]
    {:dispatch [:show-modal-window
-               "Search" ;; TODO: get title from dictionary
+               (l :common/search)
                [search/data-grid
                 (cf.logic/fields-defs db)
                 (fn [search-value] (rf/dispatch [:search-button-click form-id search-value]))

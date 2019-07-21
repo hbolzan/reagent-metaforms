@@ -6,6 +6,7 @@
    :common/no      "Não"
    :common/warning "ATENÇÃO"
    :common/error   "ERRO"
+   :common/search  "Buscar"
 
    :modal/close   "Fechar"
    :modal/dismiss "Desistir"
