@@ -100,15 +100,18 @@
  (fn [{db :db} [_ form-id]]
    {:dispatch [:show-modal-window
                (l :common/search)
-               [search/data-grid
+               [search/search-grid
                 (cf.logic/fields-defs db)
+                (cf.logic/form-by-id-current-record-index db form-id)
+                (random-uuid)
                 (fn [search-value] (rf/dispatch [:search-button-click form-id search-value]))
                 (fn [row-index selected-object] (rf/dispatch [:form-search-select-record form-id row-index]))
-                (fn [selected-cell] (rf/dispatch [:search-grid-select-cell form-id selected-cell]))]
+                (fn [row-index row-data] (rf/dispatch [:search-grid-select-row form-id row-index]))]
                #(rf/dispatch
                  [:form-search-select-record
                   form-id
-                  (get-in (cf.logic/form-by-id-data @rdb/app-db form-id) [:search :selected-cell :rowIdx])])]}))
+                  (get-in (cf.logic/form-by-id-data @rdb/app-db form-id)
+                          [:search :selected-row])])]}))
 
 (rf/reg-event-fx
  :search-button-click
@@ -122,6 +125,11 @@
  :search-grid-select-cell
  (fn [{db :db} [_ form-id selected-cell]]
    {:db (cf.logic/form-by-id-set-data db form-id {:search {:selected-cell (cl/js-map->clj-map selected-cell)}})}))
+
+(rf/reg-event-fx
+ :search-grid-select-row
+ (fn [{db :db} [_ form-id row-index]]
+   {:db (cf.logic/form-by-id-set-data db form-id {:search {:selected-row row-index}})}))
 
 (rf/reg-event-fx
  :form-search-select-record
