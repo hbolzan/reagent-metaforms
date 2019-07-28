@@ -98,20 +98,7 @@
 (rf/reg-event-fx
  :do-form-search
  (fn [{db :db} [_ form-id]]
-   {:dispatch [:show-modal-window
-               (l :common/search)
-               [search/search-grid
-                (cf.logic/fields-defs db)
-                (cf.logic/form-by-id-current-record-index db form-id)
-                (random-uuid)
-                (fn [search-value] (rf/dispatch [:search-button-click form-id search-value]))
-                (fn [row-index selected-object] (rf/dispatch [:form-search-select-record form-id row-index]))
-                (fn [row-index row-data] (rf/dispatch [:search-grid-select-row form-id row-index]))]
-               #(rf/dispatch
-                 [:form-search-select-record
-                  form-id
-                  (get-in (cf.logic/form-by-id-data @rdb/app-db form-id)
-                          [:search :selected-row])])]}))
+   (search/start db form-id)))
 
 (rf/reg-event-fx
  :search-button-click
