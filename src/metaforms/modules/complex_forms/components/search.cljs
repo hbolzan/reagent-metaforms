@@ -103,9 +103,11 @@
       (if (or (< index 0) (> index (-> data count dec))) current-index index))
     0))
 
-(defn set-row-index!! [grid-state* set-fn]
-  (let [data  @(rf/subscribe [:current-form-records])]
-    (set-row-index! grid-state* (set-row-index @grid-state* data set-fn) nil)))
+(defn set-row-index!! [grid-state* on-row-selected set-fn]
+  (let [data      @(rf/subscribe [:current-form-records])
+        row-index (set-row-index @grid-state* data set-fn)]
+    (set-row-index! grid-state* row-index nil)
+    (when (fn? on-row-selected) (on-row-selected row-index (get data row-index)))))
 
 (defn grid-body [grid-state* form-id fields-defs on-row-selected on-row-double-click data]
   (let [selected-index (:selected-row-index @grid-state*)
@@ -121,17 +123,17 @@
                             (= i selected-index) i row))
        data))]))
 
-(defn set-keybindings [grid-state*]
+(defn set-keybindings [grid-state* on-row-selected]
   [:<>
    [kb/kb-action "esc" (fn [] (rf/dispatch [:modal-close]))]
-   [kb/kb-action "up" (fn [] (set-row-index!! grid-state* dec))]
-   [kb/kb-action "down" (fn [] (set-row-index!! grid-state* inc))]])
+   [kb/kb-action "up" (fn [] (set-row-index!! grid-state* on-row-selected dec))]
+   [kb/kb-action "down" (fn [] (set-row-index!! grid-state* on-row-selected inc))]])
 
 (defn grid-render
   [grid-state* form-id fields-defs on-search-button-click on-row-double-click on-row-selected]
   (let [data @(rf/subscribe [:current-form-records])]
     [:div {:style {:min-height "100%"}}
-     (set-keybindings grid-state*)
+     (set-keybindings grid-state* on-row-selected)
      [:div.row
       [:div.col-md-12
        (search-header on-search-button-click)]]
