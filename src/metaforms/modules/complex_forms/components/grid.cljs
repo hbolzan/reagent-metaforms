@@ -220,8 +220,8 @@
         (let [pk-fields (->> form-def :definition :pk-fields (mapv keyword))]
           [rt/reagent-table table-data {:table           {:class "table table-hover table-striped table-bordered table-transition"
                                                           :style {:border-spacing 0}}
-                                        :table-container {:style {:border "1px solid green"}}
-                                        :th              {:style {:border           "1px solid white"
+                                        :table-container {:style {:border "1px solid gray"}}
+                                        :th              {:style {:border           "1px solid #f2f2f2"
                                                                   :background-color "silver"}}
                                         :table-state     table-state
                                         :scroll-height   "350px"

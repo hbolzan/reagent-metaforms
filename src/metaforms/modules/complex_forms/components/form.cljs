@@ -11,6 +11,7 @@
             [metaforms.modules.grid.logic :as grid.logic]
             [re-frame.core :as rf]
             [re-frame.db :as rdb]
+            [reagent-keybindings.keyboard :as kb]
             [reagent.core :as r]))
 
 (defn data-append! [fields-defs data-atom]
@@ -182,6 +183,7 @@
      (toolset/toolset form-id)
      (render-form
       [:div.card-body
+       [kb/kb-action "ctrl-f" #(rf/dispatch-sync [:do-form-action :search form-id])]
        (doall (map-indexed (fn [index row-def] (form-row id index row-def fields-defs form-state)) (get rows-defs active-page)))
        (when children (map-indexed (fn [i child] [form-child {:key i} form-id child]) children))]
       form-id
