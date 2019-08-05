@@ -68,12 +68,12 @@
        (< el-rect-top (+ container-rect-top container-rect-height))))
 
 (defn scroll-to-visible! [container {:keys [container-rect-top container-scroll-top el-rect-top]}]
-  (set! (.-scrollTop container) (+ container-scroll-top el-rect-top -240)))
+  (dom.helpers/set-scroll-top container (+ container-scroll-top el-rect-top -240)))
 
 (defn grid-tr-ref [selected? el]
   (when (and el selected?)
-    (let [thead     (.getElementById js/document "search-thead-id")
-          container (-> (.getElementsByClassName js/document "tableFixHead") array-seq first)
+    (let [thead     (dom.helpers/element-by-id "search-thead-id")
+          container (dom.helpers/first-element-by-class-name "tableFixHead")
           boundings (bounding-info el thead container)]
       (when-not (row-visible? boundings)
         (scroll-to-visible! container boundings)))))
