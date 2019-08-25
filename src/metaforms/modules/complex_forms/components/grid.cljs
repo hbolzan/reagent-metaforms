@@ -218,17 +218,20 @@
                                                            [:grid-clear-deleted-rows form-id]
                                                            [:grid-set-selected-row form-id 0]])))
         (let [pk-fields (->> form-def :definition :pk-fields (mapv keyword))]
-          [rt/reagent-table table-data {:table           {:class "table table-hover table-striped table-bordered table-transition"
-                                                          :style {:border-spacing 0}}
-                                        :table-container {:style {:border "1px solid gray"}}
-                                        :th              {:style {:border           "1px solid #f2f2f2"
-                                                                  :background-color "silver"}}
-                                        :table-state     table-state
-                                        :scroll-height   "350px"
-                                        :key-scroll      {" " nil}
-                                        :column-model    column-model
-                                        :row-key         row-key-fn
-                                        :render-cell     (partial cell-fn form-id column-model table-state)
-                                        :sort            sort-fn
-                                        ;; :column-selection {:ul {:li {:class "btn"}}}
-                                        }]))})))
+          [rt/reagent-table
+           table-data
+           form-id
+           {:table           {:class "table table-hover table-striped table-bordered table-transition"
+                              :style {:border-spacing 0}}
+            :table-container {:style {:border "1px solid gray"}}
+            :th              {:style {:border           "1px solid #f2f2f2"
+                                      :background-color "silver"}}
+            :table-state     table-state
+            :scroll-height   "350px"
+            :key-scroll      {" " nil}
+            :column-model    column-model
+            :row-key         row-key-fn
+            :render-cell     (partial cell-fn form-id column-model table-state)
+            :sort            sort-fn
+            ;; :column-selection {:ul {:li {:class "btn"}}}
+            }]))})))

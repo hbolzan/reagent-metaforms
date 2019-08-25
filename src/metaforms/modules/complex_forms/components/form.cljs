@@ -177,7 +177,9 @@
 (defn form [{:keys [id title rows-defs fields-defs children] :as form-definition}]
   (let [form-state  @(rf/subscribe [:current-form-state])
         form-id     @(rf/subscribe [:current-form-id])
-        active-page @(rf/subscribe [:form-by-id-active-page form-id])]
+        active-page @(rf/subscribe [:form-by-id-active-page form-id])
+        outer-data  @(rf/subscribe [:grid-rendered-rows form-id])]
+    (js/console.log outer-data)
     [cards/card
      title
      (toolset/toolset form-id)

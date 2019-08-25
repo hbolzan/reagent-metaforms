@@ -62,6 +62,15 @@
    {:db (cf.logic/form-by-id-set-some-prop db form-id :selected-row row-index)}))
 
 (rf/reg-event-fx
+ :grid-rendered-selected-row
+ (fn [{db :db} [_ form-id row]]
+   {:db (assoc-in db
+                  [:rendered-rows
+                   (-> form-id namespace keyword)
+                   (-> form-id name keyword)]
+                  row)}))
+
+(rf/reg-event-fx
  :grid-set-pending-flag
  (fn [{db :db} [_ form-id pending?]]
    {:db (cf.logic/form-by-id-set-some-prop db form-id :pending? pending?)}))

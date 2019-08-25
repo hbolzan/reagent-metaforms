@@ -28,6 +28,11 @@
    (cf.logic/form-by-id-some-prop db form-id :selected-row)))
 
 (rf/reg-sub
+ :grid-rendered-rows
+ (fn [db [_ form-id]]
+   (get-in db [:rendered-rows (-> form-id namespace keyword)])))
+
+(rf/reg-sub
  :grid-pending?
  (fn [db [_ form-id]]
    (cf.logic/form-by-id-some-prop db form-id :pending?)))
