@@ -67,12 +67,14 @@
 (defn value-changed? [local-state* new-value]
   (not= (local-state-get! local-state* :initial-value) new-value))
 
+(defn validate-input [local-state* field-name validation new-value]
+  ;; TODO: abort event bubbling if not valid
+  (if (and validation (not-empty new-value) (value-changed? local-state* new-value))
+    (rf/dispatch [:validate-field validation field-name new-value])
+    (rf/dispatch [:input-blur field-name new-value])))
+
 (defn common-on-blur [local-state* field-name validation event]
-  (let [new-value (-> event .-target .-value)]
-    ;; TODO: abort event bubbling if not valid
-    (if (and validation (not-empty new-value) (value-changed? local-state* new-value))
-      (rf/dispatch [:validate-field validation field-name new-value])
-      (rf/dispatch [:input-blur field-name new-value]))))
+  (validate-input local-state* field-name validation (-> event .-target .-value)))
 
 (defn field-def->common-props
   ([field-def local-state* form-state]
@@ -153,7 +155,8 @@
                        :selected     current-date
                        :startDate    current-date
                        :onChange     (fn [date]
-                                       (update-value! date local-state*))}
+                                       (update-value! date local-state*)
+                                       (validate-input local-state* name (:validation field-def) date))}
                       (field-def->common-props field-def local-state* form-state false))])))
 
 (defmethod field-def->input :default [field-def local-state* form-state]
@@ -167,15 +170,15 @@
     (first filter-args)))
 
 (defn calc-last-modified-field
-  [last-modified-field filter-source-field outer-source-value form-state local-state]
-  (if (not filter-source-field)
+  [last-modified-field source-field outer-source-value form-state local-state]
+  (if (not source-field)
     last-modified-field
     (if (= form-state :view)
       (if (or
-           (not= (:name last-modified-field) filter-source-field)
+           (not= (:name last-modified-field) source-field)
            (= (:value last-modified-field) outer-source-value))
         last-modified-field
-        {:name filter-source-field :value outer-source-value}
+        {:name source-field :value outer-source-value}
         #_(assoc last-modified-field :value outer-source-value))
       last-modified-field)))
 
@@ -185,14 +188,14 @@
    ((keyword field-name) (cf.logic/current-form-editing-data db))))
 
 (defn input
-  [field-def form-state]
+  [form-id field-def form-state]
   (let [local-state* (r/atom {:value "" :state form-state :last-modified-field nil})]
     (r/create-class
      {:display-name           "generic-input"
-      :component-will-mount    (fn [this]
-                                 (when (= :edit form-state)
-                                   (reset! local-state* {:value (saved-value @db/app-db field-def)
-                                                         :state :edit})))
+      :component-will-mount   (fn [this]
+                                (when (= :edit form-state)
+                                  (reset! local-state* {:value (saved-value @db/app-db field-def)
+                                                        :state :edit})))
       :component-will-unmount (fn [this]
                                 (let [local-state @local-state*]
                                   (when (= (:state local-state) :edit)
@@ -200,12 +203,14 @@
                                                   (:id field-def)
                                                   (:value local-state)]))))
       :reagent-render
-      (fn [field-def form-state]
-        (let [outer-value         @(rf/subscribe [:field-value (:name field-def)])
-              filter-source-field (filter-source-field field-def)
-              outer-source-value  (when filter-source-field @(rf/subscribe [:field-value filter-source-field]))
+      (fn [form-id field-def form-state]
+        (let [outer-value         (if (:source field-def)
+                                    [@(rf/subscribe [:grid-rendered-field form-id field-def])]
+                                    @(rf/subscribe [:field-value (:name field-def)]))
+              source-field        (filter-source-field field-def)
+              outer-source-value  (when source-field @(rf/subscribe [:field-value source-field]))
               last-modified-field (calc-last-modified-field @(rf/subscribe [:last-modified-field])
-                                                            filter-source-field
+                                                            source-field
                                                             outer-source-value
                                                             form-state
                                                             @local-state*)]

@@ -35,7 +35,6 @@
 
 (defn typecast [value data-type]
   (let [result (cond
-                 (date-or-time? data-type) (if (empty? value) nil value)
                  (= data-type :integer)    (js/parseInt value)
                  (= data-type :float)      (js/parseFloat value)
                  :else                     value)]
@@ -48,8 +47,13 @@
     {field-name (typecast (get data-record (keyword field-name))
                           (-> field-def :data-type keyword))}))
 
+(defn send-field? [field-def]
+  (and
+   (-> field-def :source not)
+   (:persistent? field-def)))
+
 (defn data-record->typed-data [data-record fields-defs]
-  (reduce (fn [result field-def] (if (:persistent? field-def)
+  (reduce (fn [result field-def] (if (send-field? field-def)
                                    (merge result (field-typecast data-record field-def))
                                    result))
           {}
