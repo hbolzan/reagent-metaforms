@@ -260,28 +260,29 @@
 
 
 (defn- row-fn [row row-num row-key-fn state-atom config]
-  (let [state      @state-atom
-        col-hidden (:col-hidden state)
-        col-key-fn (:col-key       config (fn [row row-num col-num] col-num))
-        col-model  (:column-model  config)
-        cell-fn    (:render-cell   config)
-        selected?  (= row-num (:selected-row state))]
-    (when selected? (rf/dispatch [:grid-rendered-selected-row (:complex-form-id state) row]))
+  (let [state        @state-atom
+        col-hidden   (:col-hidden state)
+        col-key-fn   (:col-key       config (fn [row row-num col-num] col-num))
+        col-model    (:column-model  config)
+        cell-fn      (:render-cell   config)
+        selected?    (= row-num (:selected-row state))
+        row-elements (doall
+                      (map-indexed (fn [view-col _]
+                                     (let [model-col (column-index-to-model state-atom view-col)]
+                                       ^{:key (col-key-fn row row-num model-col)}
+                                       [:td
+                                        {:style {:border-right (when (and (:col-reordering state)
+                                                                          (= view-col (:col-hover state)))
+                                                                 "2px solid #3366CC")
+                                                 :display      (when (get col-hidden model-col) "none")}}
+                                        (cell-fn (col-model model-col) row row-num model-col)]))
+                                   (or
+                                    col-model
+                                    row)))]
+    (when selected? (rf/dispatch [:grid-rendered-selected-row (:complex-form-id state) row row-elements]))
     ^{:key (row-key-fn row row-num)}
     [:tr {:style (when selected? {:background-color "yellow"})}
-     (doall
-       (map-indexed (fn [view-col _]
-                      (let [model-col (column-index-to-model state-atom view-col)]
-                        ^{:key (col-key-fn row row-num model-col)}
-                        [:td
-                         {:style {:border-right (when (and (:col-reordering state)
-                                                           (= view-col (:col-hover state)))
-                                                  "2px solid #3366CC")
-                                  :display      (when (get col-hidden model-col) "none")}}
-                         (cell-fn (col-model model-col) row row-num model-col)]))
-                    (or
-                      col-model
-                      row)))]))
+     row-elements]))
 
 (defn- rows-fn [rows state-atom config]
   (let [row-key-fn (:row-key config (fn [row row-num] row-num))]

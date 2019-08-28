@@ -39,7 +39,16 @@
  (fn [db [_ form-id field-def]]
    (let [source-id (-> (:source field-def) name keyword)
          field-key (-> (:name field-def) (str/split ".") last keyword)]
-     (get-in db [:rendered-rows (-> form-id namespace keyword) source-id field-key]))))
+     (get-in db [:rendered-rows (-> form-id namespace keyword) source-id :row field-key]))))
+
+(rf/reg-sub
+ :grid-rendered-element
+ (fn [db [_ form-id field-def]]
+   (let [source-id (-> (:source field-def) name keyword)
+         field-key (-> (:name field-def) (str/split ".") last keyword)]
+     (first (filter
+             (fn [el] (= (:data-field-key el) field-key))
+             (get-in db [:rendered-rows (-> form-id namespace keyword) source-id :elements]))))))
 
 (rf/reg-sub
  :grid-pending?
