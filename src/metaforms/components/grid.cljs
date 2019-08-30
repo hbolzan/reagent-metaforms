@@ -1,7 +1,8 @@
 (ns metaforms.components.grid
-    (:require [reagent.core :as r]
+    (:require [goog.events :as events]
               [metaforms.common.logic :as cl]
-              [goog.events :as events])
+              [re-frame.core :as rf]
+              [reagent.core :as r])
     (:import [goog.events EventType]))
 
 ;;; Is the code horrible? Yup! (contributor: not that bad)
@@ -259,26 +260,29 @@
 
 
 (defn- row-fn [row row-num row-key-fn state-atom config]
-  (let [state @state-atom
-        col-hidden (:col-hidden state)
-        col-key-fn (:col-key       config (fn [row row-num col-num] col-num))
-        col-model  (:column-model  config)
-        cell-fn    (:render-cell   config)]
+  (let [state        @state-atom
+        col-hidden   (:col-hidden state)
+        col-key-fn   (:col-key       config (fn [row row-num col-num] col-num))
+        col-model    (:column-model  config)
+        cell-fn      (:render-cell   config)
+        selected?    (= row-num (:selected-row state))
+        row-elements (doall
+                      (map-indexed (fn [view-col _]
+                                     (let [model-col (column-index-to-model state-atom view-col)]
+                                       ^{:key (col-key-fn row row-num model-col)}
+                                       [:td
+                                        {:style {:border-right (when (and (:col-reordering state)
+                                                                          (= view-col (:col-hover state)))
+                                                                 "2px solid #3366CC")
+                                                 :display      (when (get col-hidden model-col) "none")}}
+                                        (cell-fn (col-model model-col) row row-num model-col)]))
+                                   (or
+                                    col-model
+                                    row)))]
+    (when selected? (rf/dispatch [:grid-rendered-selected-row (:complex-form-id state) row row-elements]))
     ^{:key (row-key-fn row row-num)}
-    [:tr {:style (when (= row-num (:selected-row state)) {:background-color "yellow"})}
-     (doall
-       (map-indexed (fn [view-col _]
-                      (let [model-col (column-index-to-model state-atom view-col)]
-                        ^{:key (col-key-fn row row-num model-col)}
-                        [:td
-                         {:style  {:border-right (when (and (:col-reordering state)
-                                                            (= view-col (:col-hover state)))
-                                                             "2px solid #3366CC")
-                                   :display      (when (get col-hidden model-col) "none")}}
-                         (cell-fn (col-model model-col) row row-num model-col)]))
-                    (or
-                      col-model
-                      row)))]))
+    [:tr {:style (when selected? {:background-color "yellow"})}
+     row-elements]))
 
 (defn- rows-fn [rows state-atom config]
   (let [row-key-fn (:row-key config (fn [row row-num] row-num))]
@@ -390,13 +394,14 @@
   :column-selection optional attributes to display visibly column toggles
   for example {:ul {:li {:class \"btn\"}}}
   "
-  [data-atom config]
-  (let [config (recursive-merge default-config config)
-        state-atom (or (:table-state config) (r/atom {})) ;; a place for the table local state
+  [data-atom form-id config]
+  (let [config                             (recursive-merge default-config config)
+        state-atom                         (or (:table-state config) (r/atom {})) ;; a place for the table local state
         {:keys [render-cell column-model]} config]
     (assert (and render-cell column-model)
             "Must provide :column-model and :render-cell in table config")
-    (swap! state-atom assoc :col-index-to-model (init-column-index column-model))
+    (swap! state-atom merge {:col-index-to-model (init-column-index column-model)
+                             :complex-form-id    form-id})
     (fn []
         [:div
          [:style (str ".reagent-table * table {table-layout:fixed;}"

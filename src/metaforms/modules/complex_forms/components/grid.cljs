@@ -7,7 +7,6 @@
             [metaforms.common.logic :as cl]
             [metaforms.components.cards :as cards]
             [metaforms.components.grid :as rt]
-            [metaforms.modules.complex-forms.components.toolset :as toolset]
             [metaforms.modules.complex-forms.components.dropdown :as dropdown]
             [metaforms.modules.complex-forms.validation-logic :as vl]
             [re-frame.core :as rf]
@@ -52,7 +51,7 @@
 
 (defn- cell-blur
   [form-id column-model {{validation :validation} :field-def name :name :as render-info} row row-num e]
-  (when-let [final-value (cell-value-changed e)]
+  (when-let [final-value (if (:outer? e) (:value e) (cell-value-changed e))]
     (rf/dispatch [:grid-set-data-diff
                   form-id
                   (:__uuid__ row)
@@ -73,14 +72,15 @@
    {{read-only? :read-only default :default validation :validation :as field-def} :field-def :as render-info}
    row
    row-num]
-  (-> {:id           (str "id-" (:name field-def) "-" row-num)
-       :onFocus      (fn [e]
-                       (gobj/set e :initial-value (-> e .-target .-value))
-                       (swap! state-atom assoc :selected-row row-num)
-                       (rf/dispatch [:grid-set-selected-row form-id row-num]))
-       :onBlur       #(cell-blur form-id column-model render-info row row-num %)
-       :defaultValue (or (cell-data row render-info) default)
-       :readOnly     read-only?}))
+  (-> {:id             (str "id-" (:name field-def) "-" row-num)
+       :data-field-key (-> field-def :name keyword)
+       :onFocus        (fn [e]
+                         (gobj/set e :initial-value (-> e .-target .-value))
+                         (swap! state-atom assoc :selected-row row-num)
+                         (rf/dispatch [:grid-set-selected-row form-id row-num]))
+       :onBlur         #(cell-blur form-id column-model render-info row row-num %)
+       :defaultValue   (or (cell-data row render-info) default)
+       :readOnly       read-only?}))
 
 (defmulti cell-input
   (fn [form-id column-model state-atom {field-def :field-def} row row-num col-num]
@@ -218,17 +218,20 @@
                                                            [:grid-clear-deleted-rows form-id]
                                                            [:grid-set-selected-row form-id 0]])))
         (let [pk-fields (->> form-def :definition :pk-fields (mapv keyword))]
-          [rt/reagent-table table-data {:table           {:class "table table-hover table-striped table-bordered table-transition"
-                                                          :style {:border-spacing 0}}
-                                        :table-container {:style {:border "1px solid gray"}}
-                                        :th              {:style {:border           "1px solid #f2f2f2"
-                                                                  :background-color "silver"}}
-                                        :table-state     table-state
-                                        :scroll-height   "350px"
-                                        :key-scroll      {" " nil}
-                                        :column-model    column-model
-                                        :row-key         row-key-fn
-                                        :render-cell     (partial cell-fn form-id column-model table-state)
-                                        :sort            sort-fn
-                                        ;; :column-selection {:ul {:li {:class "btn"}}}
-                                        }]))})))
+          [rt/reagent-table
+           table-data
+           form-id
+           {:table           {:class "table table-hover table-striped table-bordered table-transition"
+                              :style {:border-spacing 0}}
+            :table-container {:style {:border "1px solid gray"}}
+            :th              {:style {:border           "1px solid #f2f2f2"
+                                      :background-color "silver"}}
+            :table-state     table-state
+            :scroll-height   "350px"
+            :key-scroll      {" " nil}
+            :column-model    column-model
+            :row-key         row-key-fn
+            :render-cell     (partial cell-fn form-id column-model table-state)
+            :sort            sort-fn
+            ;; :column-selection {:ul {:li {:class "btn"}}}
+            }]))})))

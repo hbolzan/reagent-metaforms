@@ -35,7 +35,6 @@
 
 (defn typecast [value data-type]
   (let [result (cond
-                 (date-or-time? data-type) (if (empty? value) nil value)
                  (= data-type :integer)    (js/parseInt value)
                  (= data-type :float)      (js/parseFloat value)
                  :else                     value)]
@@ -48,8 +47,13 @@
     {field-name (typecast (get data-record (keyword field-name))
                           (-> field-def :data-type keyword))}))
 
+(defn send-field? [field-def]
+  (and
+   (-> field-def :source not)
+   (:persistent? field-def)))
+
 (defn data-record->typed-data [data-record fields-defs]
-  (reduce (fn [result field-def] (if (:persistent? field-def)
+  (reduce (fn [result field-def] (if (send-field? field-def)
                                    (merge result (field-typecast data-record field-def))
                                    result))
           {}
@@ -57,6 +61,11 @@
 
 (defn distinct-pages [fields-defs]
   (into [] (distinct (mapv :page fields-defs))))
+
+(defn distinct-sources [fields-defs]
+  (into [] (filter #(-> % nil? not) (distinct (mapv :source fields-defs)))))
+
+(filter #(-> % nil? not) [1 nil 2 3 nil 4])
 
 (defn assoc-page-info [{{page :page} :additional-params :as field-def}]
   (let [page-parts (str/split page ":")]
@@ -69,10 +78,20 @@
     (merge form-definition {:fields-defs with-page-info
                             :pages-info  (distinct-pages with-page-info)})))
 
+(defn assoc-source-info [form-id {{source :source} :additional-params :as field-def}]
+  (if source
+    (assoc field-def :source (keyword (namespace form-id) source))
+    field-def))
+
+(defn process-sources-info [form-id {fields-defs :fields-defs :as form-definition}]
+  (let [with-source-info (mapv #(assoc-source-info form-id %) fields-defs)]
+    (merge form-definition {:fields-defs with-source-info
+                            :sources-info  (distinct-sources with-source-info)})))
+
 (defn load-form-definition [db form-id form-definition]
   (assoc-in db
             [:complex-forms form-id]
-            {:definition (process-pages-info form-definition)
+            {:definition (->> form-definition process-pages-info (process-sources-info form-id))
              :state      :view
              :data       {:records        []
                           :current-record nil

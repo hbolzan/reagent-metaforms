@@ -34,7 +34,7 @@
  :grid-set-data-diff
  (fn [{db :db} [_ form-id row-id column-id value validation-params]]
    (let [data-atom (cf.logic/form-by-id-some-prop db form-id :data-atom)
-         new-diff (assoc-in (cf.logic/form-by-id-some-prop db form-id :data-diff)
+         new-diff  (assoc-in (cf.logic/form-by-id-some-prop db form-id :data-diff)
                              [row-id column-id]
                              value)]
      (merge
@@ -60,6 +60,16 @@
  :grid-set-selected-row
  (fn [{db :db} [_ form-id row-index]]
    {:db (cf.logic/form-by-id-set-some-prop db form-id :selected-row row-index)}))
+
+(rf/reg-event-fx
+ :grid-rendered-selected-row
+ (fn [{db :db} [_ form-id row row-elements]]
+   {:db (assoc-in db
+                  [:rendered-rows
+                   (-> form-id namespace keyword)
+                   (-> form-id name keyword)]
+                  {:row      row
+                   :elements (map #(-> % last last last) row-elements)})}))
 
 (rf/reg-event-fx
  :grid-set-pending-flag

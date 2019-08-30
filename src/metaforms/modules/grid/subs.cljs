@@ -1,6 +1,8 @@
 (ns metaforms.modules.grid.subs
   (:require [metaforms.modules.complex-forms.logic :as cf.logic]
-            [re-frame.core :as rf]))
+            [metaforms.common.logic :as cl]
+            [re-frame.core :as rf]
+            [clojure.string :as str]))
 
 (rf/reg-sub
  :grid-data-diff
@@ -26,6 +28,27 @@
  :grid-selected-row
  (fn [db [_ form-id]]
    (cf.logic/form-by-id-some-prop db form-id :selected-row)))
+
+(rf/reg-sub
+ :grid-rendered-rows
+ (fn [db [_ form-id]]
+   (get-in db [:rendered-rows (-> form-id namespace keyword)])))
+
+(rf/reg-sub
+ :grid-rendered-field
+ (fn [db [_ form-id field-def]]
+   (let [source-id (-> (:source field-def) name keyword)
+         field-key (-> (:name field-def) (str/split ".") last keyword)]
+     (get-in db [:rendered-rows (-> form-id namespace keyword) source-id :row field-key]))))
+
+(rf/reg-sub
+ :grid-rendered-element
+ (fn [db [_ form-id field-def]]
+   (let [source-id (-> (:source field-def) name keyword)
+         field-key (-> (:name field-def) (str/split ".") last keyword)]
+     (first (filter
+             (fn [el] (= (:data-field-key el) field-key))
+             (get-in db [:rendered-rows (-> form-id namespace keyword) source-id :elements]))))))
 
 (rf/reg-sub
  :grid-pending?

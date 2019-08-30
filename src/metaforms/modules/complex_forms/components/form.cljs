@@ -141,21 +141,22 @@
     ))
 
 (defn form-field
-  [{:keys [id label] :as field} additional-group-class form-state all-defs]
+  [form-id {:keys [id label] :as field} additional-group-class form-state all-defs]
   [:div {:key id :class (str "form-group" (some->> additional-group-class (str " ")))}
    [:label {:html-for id} label]
-   [input/input field form-state]])
+   [input/input form-id field form-state]])
 
 (defn form-row
   [form-id row-index row-def fields-defs form-state]
   [:div.form-row {:key (str "row-" row-index)}
    (doall
     (map (fn [field bootstrap-width]
-           (form-field field (view-logic/width->col-md-class bootstrap-width) form-state fields-defs))
+           (form-field form-id field (view-logic/width->col-md-class bootstrap-width) form-state fields-defs))
          (view-logic/row-fields row-def fields-defs)
          (:bootstrap-widths row-def)))])
 
-(defn render-tabs [form-id pages-info active-page]
+(defn render-tabs
+  [form-id pages-info active-page]
   (when (first pages-info)
     [:ul.nav.nav-tabs
      (doall
@@ -177,14 +178,15 @@
 (defn form [{:keys [id title rows-defs fields-defs children] :as form-definition}]
   (let [form-state  @(rf/subscribe [:current-form-state])
         form-id     @(rf/subscribe [:current-form-id])
-        active-page @(rf/subscribe [:form-by-id-active-page form-id])]
+        active-page @(rf/subscribe [:form-by-id-active-page form-id])
+        outer-data  @(rf/subscribe [:grid-rendered-rows form-id])]
     [cards/card
      title
      (toolset/toolset form-id)
      (render-form
       [:div.card-body
        [kb/kb-action "ctrl-f" #(rf/dispatch-sync [:do-form-action :search form-id])]
-       (doall (map-indexed (fn [index row-def] (form-row id index row-def fields-defs form-state)) (get rows-defs active-page)))
+       (doall (map-indexed (fn [index row-def] (form-row form-id index row-def fields-defs form-state)) (get rows-defs active-page)))
        (when children (map-indexed (fn [i child] [form-child {:key i} form-id child]) children))]
       form-id
       form-definition
