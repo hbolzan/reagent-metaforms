@@ -128,7 +128,8 @@
                                   "PageUp"    {:direction -1 :page true}
                                   "PageDown"  {:direction 1  :page true}
                                   " "         {:direction 1  :page false}}
-                     :table      {:style {:width nil}}})
+                     :table      {:style {:width nil}}
+                     :column-selection false})
 
 (defn- resize-widget [cell-container]
   [:span {:style {:display "inline-block"
@@ -293,21 +294,21 @@
 
 (defn- column-selector [state-atom selector-config column-model]
   (let [hidden-cols (r/cursor state-atom [:col-hidden])
-        li-config (get-in selector-config [:ul :li])]
-    [:ul ;(:ul selector-config)
+        li-config   (get-in selector-config [:ul :li])]
+    [:ul
      (doall
-       (map-indexed (fn [view-col _]
-                      (let [model-col (column-index-to-model state-atom view-col)
-                            render-info (column-model model-col)
-                            hidden-a (r/cursor hidden-cols [model-col])]
-                        ^{:key (or (:key render-info) model-col)}
-                        [:li (recursive-merge
-                               {:style {:margin 8
-                                        :cursor "pointer"}
-                                :on-click #(do (swap! hidden-a not) nil)}
-                               li-config)
-                         (:header render-info) " "(if @hidden-a "☐" "☑")]))
-                    column-model))]))
+      (map-indexed (fn [view-col _]
+                     (let [model-col   (column-index-to-model state-atom view-col)
+                           render-info (column-model model-col)
+                           hidden-a    (r/cursor hidden-cols [model-col])]
+                       ^{:key (or (:key render-info) model-col)}
+                       [:li (recursive-merge
+                             {:style    {:margin 8
+                                         :cursor "pointer"}
+                              :on-click #(do (swap! hidden-a not) nil)}
+                             li-config)
+                        (:header render-info) " "(if @hidden-a "☐" "☑")]))
+                   column-model))]))
 
 (defn- init-column-index
   "Set up in the initial column-index-to-model numbers"
@@ -403,10 +404,10 @@
     (swap! state-atom merge {:col-index-to-model (init-column-index column-model)
                              :complex-form-id    form-id})
     (fn []
-        [:div
-         [:style (str ".reagent-table * table {table-layout:fixed;}"
-                      ".reagent-table * td { max-width: 3px;"
-                      "overflow: hidden;text-overflow: ellipsis;white-space: nowrap;}")]
-         (when-let [selector-config (:column-selection config)]
-           [column-selector state-atom selector-config column-model])
-         [the-table config column-model data-atom state-atom]])))
+      [:div
+       [:style (str ".reagent-table * table {table-layout:fixed;}"
+                    ".reagent-table * td { max-width: 3px;"
+                    "overflow: hidden;text-overflow: ellipsis;white-space: nowrap;}")]
+       (when-let [selector-config (:column-selection config)]
+         [column-selector state-atom selector-config column-model])
+       [the-table config column-model data-atom state-atom]])))

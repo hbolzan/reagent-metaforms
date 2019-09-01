@@ -103,7 +103,8 @@
                                     :lookup-info {:lookup-key    (:lookup-key d)
                                                   :lookup-result (:lookup-result d)
                                                   :options       (:options d)}
-                                    :field-def   (assoc d :read-only (read-only? child-form d))})
+                                    :field-def   (assoc d :read-only (read-only? child-form d))
+                                    :col-hidden  (-> d :visible not)})
                            fields-defs)]
     (helpers/dispatch-n [[:complex-table-parent-data-changed child-id]
                          [:grid-soft-refresh-off child-id]])

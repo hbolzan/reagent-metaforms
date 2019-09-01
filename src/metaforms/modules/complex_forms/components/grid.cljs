@@ -191,10 +191,14 @@
             sorting))
         rows))
 
+(defn form-def->col-hidden [{{fields-defs :fields-defs} :definition}]
+  (mapv #(-> % :visible not) fields-defs))
+
 (defn child-grid [grid-params]
   (let [table-data  (r/atom [])
         table-state (atom {:draggable    true
-                           :selected-row 0})]
+                           :selected-row 0
+                           :col-hidden []})]
     (r/create-class
      {:display-name            "child-grid"
       :should-component-update (fn [this old-argv new-argv]
@@ -208,9 +212,10 @@
             request-id      :request-id
             on-request-data :on-request-data
             soft-refresh?   :soft-refresh?}]
+        (form-def->col-hidden form-def)
         (when-not soft-refresh?
           (reset! table-data (mapv #(assoc % :__uuid__ (random-uuid)) data))
-          (swap! table-state assoc :selected-row 0))
+          (swap! table-state assoc :selected-row 0 :col-hidden (form-def->col-hidden form-def)))
         (helpers/dispatch-n (into [[:grid-clear-data-diff form-id]
                                    [:grid-set-data-atom form-id table-data]
                                    [:grid-set-state-atom form-id table-state]]
@@ -235,3 +240,4 @@
             :sort            sort-fn
             ;; :column-selection {:ul {:li {:class "btn"}}}
             }]))})))
+
