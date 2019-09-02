@@ -81,20 +81,26 @@
                                            :on-click    on-click}))
         (keys buttons))])
 
+(defn bundle-action-btn [form-id {:keys [type action caption]}]
+  [:button {:type      "button"
+            :className (str "btn btn-lg btn-" type)
+            :key       action
+            :onClick   #(rf/dispatch [:call-bundle-action form-id])}
+   caption])
+
+(defn toolbar
+  [{:keys [form-id form-state buttons-groups on-click bundle-actions]}]
+  [:div {:className "btn-toolbar" :role "toolbar"}
+   (doall (map-indexed (fn [idx group]
+                         (btn-group (str "btn-grp-" idx) form-id form-state group on-click))
+                       buttons-groups))
+   (doall (map #(bundle-action-btn form-id %) bundle-actions))])
+
 (defn form-data+current-state->form-state
   [form-data current-state]
   (if (and (= current-state :view) (-> form-data :current-record nil?))
     :empty
     current-state))
-
-(defn toolbar [{form-id        :form-id
-                form-state     :form-state
-                buttons-groups :buttons-groups
-                on-click       :on-click}]
-  [:div {:className "btn-toolbar" :role "toolbar"}
-   (doall (map-indexed (fn [idx group]
-                         (btn-group (str "btn-grp-" idx) form-id form-state group on-click))
-                       buttons-groups))])
 
 (defn toolset
   ([form-id]
@@ -102,10 +108,12 @@
   ([form-id action-btns nav-btns]
    (toolset form-id action-btns nav-btns button-click))
   ([form-id action-btns nav-btns btn-click]
-   (let [form-data     @(rf/subscribe [:form-by-id-data form-id])
-         current-state @(rf/subscribe [:form-by-id-state form-id])
-         form-state    (form-data+current-state->form-state form-data current-state)]
+   (let [form-data       @(rf/subscribe [:form-by-id-data form-id])
+         form-definition @(rf/subscribe [:form-by-id-definition form-id])
+         current-state   @(rf/subscribe [:form-by-id-state form-id])
+         form-state      (form-data+current-state->form-state form-data current-state)]
      (toolbar {:form-id        form-id
                :form-state     form-state
                :buttons-groups [action-btns nav-btns]
-               :on-click       btn-click}))))
+               :on-click       btn-click
+               :bundle-actions (:bundle-actions form-definition)}))))

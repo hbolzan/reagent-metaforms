@@ -2,7 +2,6 @@
   (:require [metaforms.common.helpers :as helpers]
             [metaforms.common.logic :as cl]
             [metaforms.components.cards :as cards]
-            [metaforms.modules.complex-bundles.logic :as bl]
             [metaforms.modules.complex-forms.components.grid :as grid]
             [metaforms.modules.complex-forms.components.input :as input]
             [metaforms.modules.complex-forms.components.toolset :as toolset]

@@ -30,6 +30,7 @@
                                      (assoc (-> bundled-table :definition first)
                                             :bundle-id bundle-id
                                             :master-fields (:master-fields bundled-table)
+                                            :bundle-actions (:bundle-actions bundled-table)
                                             :related-fields (:related-fields bundled-table))))
                db
                tables)))

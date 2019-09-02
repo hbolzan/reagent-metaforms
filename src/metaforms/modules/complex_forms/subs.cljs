@@ -19,6 +19,11 @@
    (cf.logic/get-form db form-id)))
 
 (rf/reg-sub
+ :form-by-id-definition
+ (fn [db [_ form-id]]
+   (cf.logic/form-by-id-definition db form-id)))
+
+(rf/reg-sub
  :current-form-state
  (fn [db _]
    (cf.logic/current-form-state db)))
