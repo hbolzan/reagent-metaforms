@@ -91,6 +91,7 @@
         :yes-no/char    :checkbox
         :data/char      :text
         :data/integer   :number
+        :data/float     :number
         :data/date      :date
         :data/memo      :memo)
       :masked-input)))

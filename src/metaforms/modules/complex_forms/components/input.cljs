@@ -76,16 +76,16 @@
 
 (defn validate-input [local-state* field-name validation new-value]
   ;; TODO: abort event bubbling if not valid
-  (if (and validation (not-empty new-value) (value-changed? local-state* new-value))
-    (helpers/dispatch-n
-     [[:validate-field validation field-name new-value]
-      [:input-blur field-name new-value]])))
+  (if (and validation (not-empty new-value))
+    (rf/dispatch [:validate-field validation field-name new-value])))
 
 (defn common-on-blur
   [local-state* {field-name :name outer-element :outer-element :as field-def} validation event]
   (let [value (-> event .-target .-value)]
-    (validate-input local-state* field-name validation value)
-    (when outer-element (set-outer-element! field-def value))))
+    (when value-changed? value
+          (validate-input local-state* field-name validation value)
+          (rf/dispatch [:input-blur field-name value])
+          (when outer-element (set-outer-element! field-def value)))))
 
 (defn field-def->common-props
   ([field-def local-state* form-state]
@@ -107,6 +107,7 @@
       (cond
         (field-kind #{:lookup :yes-no})            field-kind
         (data-type #{:integer :float :memo :date}) data-type
+        (= data-type :data/float)                  :float
         mask                                       :masked-input))))
 
 (defmethod field-def->input :yes-no [field-def local-state* form-state]

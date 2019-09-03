@@ -85,7 +85,7 @@
   [:button {:type      "button"
             :className (str "btn btn-lg btn-" type)
             :key       action
-            :onClick   #(rf/dispatch [:call-bundle-action form-id])}
+            :onClick   #(rf/dispatch [:call-bundle-action form-id action])}
    caption])
 
 (defn toolbar

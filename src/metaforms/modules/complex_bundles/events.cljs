@@ -92,3 +92,30 @@
    {:dispatch [:show-modal-alert
                (str (l :form/load-data-failure {:form-id complex-table-id}) ". "
                     (error-result->error-message result (l :error/unknown)))]}))
+
+(defn grid? [form-state]
+  (-> form-state :selected-row boolean))
+
+(defn form-data [[form-id form-state]]
+  {:id   form-id
+   :data (if (grid? form-state)
+           (-> form-state :data :records)
+           (let [current-record (-> form-state :data :current-record)]
+             (-> form-state :data :records (nth current-record))))})
+
+(rf/reg-event-fx
+ :call-bundle-action
+ (fn [{db :db} [_ complex-table-id action]]
+   (let [bundle-id      (:current-bundle db)
+         bundled-tables (-> db :complex-bundles bundle-id :bundled-tables)
+         forms-ids      (mapv #(keyword bundle-id (:definition-id %)) bundled-tables)
+         forms-states   (reduce
+                         (fn [all-data form-id] (assoc all-data form-id (-> db :complex-forms form-id)))
+                         {}
+                         forms-ids)]
+     (js/console.log {:current-bundle-id bundle-id
+                      :forms-data        (mapv form-data forms-states)
+                      :forms-states      forms-states
+                      :rendered-rows     (:rendered-rows db)
+                      }))
+   ))

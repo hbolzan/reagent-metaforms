@@ -170,13 +170,22 @@
    (let [record-count (count (cf.logic/current-records db))]
      {:db (cf.logic/form-by-id-set-record-index db form-id (when (> record-count 0) (dec record-count)))})))
 
+(defn concat-prefix [prefix row]
+  (into {} (map (fn [[k v]] [(keyword (str (name prefix) "." (name k))) v]) row)))
+
+(defn all-rendered-rows [db form-id]
+  (reduce (fn [m [child-id data]] (merge m (concat-prefix child-id (:row data))))
+          {}
+          (get-in db [:rendered-rows (-> form-id namespace keyword)])))
+
 ;; CRUD ACTIONS
 (rf/reg-event-fx
  :do-form-edit
  (fn [{db :db} [_ form-id]]
    (if-let [current-record (cf.logic/form-by-id-current-data-record db form-id)]
      {:db       (cf.logic/form-by-id-set-data db form-id {:new-record?  false
-                                                          :editing-data (cf.logic/current-data-record db)})
+                                                          :editing-data (merge (cf.logic/current-data-record db)
+                                                                               (all-rendered-rows db form-id))})
       :dispatch [:set-current-form-state form-id :edit]}
      {:dispatch [:do-form-append form-id]})))
 
