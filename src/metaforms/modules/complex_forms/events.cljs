@@ -174,6 +174,7 @@
   (into {} (map (fn [[k v]] [(keyword (str (name prefix) "." (name k))) v]) row)))
 
 (defn all-rendered-rows [db form-id]
+  "Retrieves the rendered row for each child grid"
   (reduce (fn [m [child-id data]] (merge m (concat-prefix child-id (:row data))))
           {}
           (get-in db [:rendered-rows (-> form-id namespace keyword)])))
