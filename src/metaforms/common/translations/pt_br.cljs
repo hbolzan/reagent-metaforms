@@ -6,6 +6,7 @@
    :common/no      "Não"
    :common/warning "ATENÇÃO"
    :common/error   "ERRO"
+   :common/success "SUCESSO"
    :common/search  "Buscar"
 
    :modal/close   "Fechar"
@@ -29,6 +30,7 @@
    :grid/save-failure "Ocorreu um erro ao tentar gravar os dados da tabela '{form-id}'"
 
    :bundle/load-definition-failure "Ocorreu um erro ao tentar ler a definição do conjunto '{bundle-id}'"
+   :bundle/grids-pending-changes   "Existem alterações pendentes. Grave as alterações de todos os grids antes de continuar."
 
    :error/unknown "Erro desconhencido"
    })

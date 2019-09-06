@@ -6,6 +6,7 @@
    :common/no      "No"
    :common/warning "WARNING"
    :common/error   "ERROR"
+   :common/success "SUCCESS"
    :common/search  "Search"
 
    :modal/close   "Close"
@@ -29,6 +30,7 @@
    :grid/save-failure "An error ocurred while trying to save '{form-id}' table data"
 
    :bundle/load-definition-failure "An error ocurred while trying to load '{bundle-id}' bundle definition"
+   :bundle/grids-pending-changes   "There are pending updates. Save all grids changes and try again."
 
    :error/unknown "Unknown error"
    })

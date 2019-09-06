@@ -61,6 +61,11 @@
        (replace-url-tags validation)
        (with-named-arguments db form-id validation))))
 
+(defn build-service-action-url
+  [base-url action]
+  (let [[service-name service-method] (str/split action ".")]
+    (replace-url-tags base-url {:service service-name :method service-method})))
+
 (defn get-in-path [path m]
   "returns value from map following dots path (i.e: path.to.some.key)"
   (get-in m (map keyword (str/split path "."))))

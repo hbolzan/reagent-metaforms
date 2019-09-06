@@ -333,7 +333,8 @@
                                       cf.consts/validation-base-url
                                       validation
                                       new-value)]
-     {:dispatch [:http-get url
+     {:dispatch [:http-get
+                 url
                  [::validate-field-success validation field-name new-value]
                  [::validate-field-error validation field-name]]
       :db       (cl/set-spinner db true)})))

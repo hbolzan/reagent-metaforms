@@ -103,19 +103,41 @@
            (let [current-record (-> form-state :data :current-record)]
              (-> form-state :data :records (nth current-record))))})
 
+(defn some-diff? [db forms-ids]
+  (reduce (fn [result form-id]
+            (or result (not-empty (cf.logic/form-by-id-some-prop db form-id :data-diff))))
+          false
+          forms-ids))
+
 (rf/reg-event-fx
  :call-bundle-action
- (fn [{db :db} [_ complex-table-id action]]
-   (let [bundle-id      (:current-bundle db)
-         bundled-tables (-> db :complex-bundles bundle-id :bundled-tables)
+ (fn [{{bundle-id :current-bundle :as db} :db} [_ complex-table-id action]]
+   (let [bundled-tables (-> db :complex-bundles bundle-id :bundled-tables)
          forms-ids      (mapv #(keyword bundle-id (:definition-id %)) bundled-tables)
          forms-states   (reduce
                          (fn [all-data form-id] (assoc all-data form-id (-> db :complex-forms form-id)))
                          {}
                          forms-ids)]
-     (js/console.log {:current-bundle-id bundle-id
-                      :forms-data        (mapv form-data forms-states)
-                      :forms-states      forms-states
-                      :rendered-rows     (:rendered-rows db)
-                      }))
+     {:dispatch
+      (if (some-diff? db forms-ids)
+        [:show-modal-alert (l :common/warning) (l :bundle/grids-pending-changes)]
+        [:http-post
+         (vl/build-service-action-url cf.consts/services-base-url action)
+         {:current-bundle-id bundle-id
+          :forms-data        (mapv form-data forms-states)}
+         [::call-bundle-action-success bundle-id complex-table-id action]
+         [::call-bundle-action-failure bundle-id complex-table-id action]])}
+     )
    ))
+
+(rf/reg-event-fx
+ ::call-bundle-action-success
+ (fn [{db :db} [_ bundle-id complex-table-id action response]]
+   (js/console.log response)))
+
+(rf/reg-event-fx
+ ::call-bundle-action-failure
+ (fn [{db :db} [_ bundle-id complex-table-id action response]]
+   {:dispatch [:show-modal-alert
+               (l :common/error)
+               (error-result->error-message response (l :error/unknown))]}))

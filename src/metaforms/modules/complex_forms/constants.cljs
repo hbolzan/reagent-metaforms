@@ -14,5 +14,7 @@
 
 (def complex-bundles-base-uri (str api-host persistent-path "complex-bundles/?id={bundle-id}&middleware=complex_bundles_parse&depth=1"))
 
-(def validations-path "service/get/{service}/{method}/")
+(def validations-path "service/{service}/{method}/")
 (def validation-base-url (str api-host validations-path))
+(def services-path "service/{service}/{method}/")
+(def services-base-url(str api-host services-path))
