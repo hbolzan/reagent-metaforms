@@ -37,6 +37,7 @@
   (let [result (cond
                  (= data-type :integer)    (js/parseInt value)
                  (= data-type :float)      (js/parseFloat value)
+                 (date-or-time? data-type) (when-not (empty? value) value)
                  :else                     value)]
     (if (empty-number? result data-type)
       nil
@@ -133,9 +134,6 @@
 (defn current-form-field-value [db field-name]
   (-> db current-form-data :editing-data (get (keyword field-name))))
 
-(defn form-by-id-field-value [db form-id field-name]
-  (-> db (form-by-id-data form-id) :editing-data (get (keyword field-name))))
-
 (defn current-form-definition [db] (current-form-some-prop db :definition))
 (defn form-by-id-definition [db form-id] (form-by-id-some-prop db form-id :definition))
 
@@ -169,6 +167,10 @@
 (def form-by-id-editing-data #(-> %1 (form-by-id-data %2) :editing-data))
 (def new-record? #(-> % current-form-data :new-record?))
 (def form-by-id-new-record? #(-> %1 (form-by-id-data %2) :new-record?))
+
+(defn form-by-id-field-editing-value [db form-id field-name]
+  (let [field-key (keyword field-name)]
+    (-> (form-by-id-editing-data db form-id) (get (keyword field-name)))))
 
 (defn form-by-id-set-some-prop [db form-id prop value]
   (assoc-in db [:complex-forms form-id prop] value))
