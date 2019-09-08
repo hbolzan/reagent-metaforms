@@ -4,7 +4,6 @@
             [metaforms.common.helpers :as helpers]
             [metaforms.common.logic :as cl]))
 
-
 (def date-formatter (tf/formatter "yyyy-MM-dd"))
 (def date-time-formatter (tf/formatter "yyyy-MM-dd'T'HH':'mm':'ssZ"))
 
@@ -33,10 +32,15 @@
 (defn date-or-time? [data-type]
   (some #{data-type} [:date :time :timestamp]))
 
+(defn parse-float [s]
+  (if (string? s)
+    (js/parseFloat (-> s (str/replace "." "") (str/replace "," ".")))
+    s))
+
 (defn typecast [value data-type]
   (let [result (cond
                  (= data-type :integer)    (js/parseInt value)
-                 (= data-type :float)      (js/parseFloat value)
+                 (= data-type :float)      (parse-float value)
                  (date-or-time? data-type) (when-not (empty? value) value)
                  :else                     value)]
     (if (empty-number? result data-type)
@@ -149,15 +153,22 @@
 (defn current-form-data-url [db url] (replace-complex-id url (current-form-dataset-name db)))
 (defn form-by-id-data-url [db form-id url] (replace-complex-id url (form-by-id-dataset-name db form-id)))
 
-(defn fields-defs [db]
-  (-> db current-form-definition :fields-defs))
+(defn fields-defs
+  ([db]
+   (fields-defs db (:current-form db)))
+  ([db form-id]
+   (-> (form-by-id-definition db form-id) :fields-defs)))
 
-(defn form-by-id-fields-defs [db form-id]
-  (-> db (form-by-id-definition form-id) :fields-defs))
+(defn one-field-def
+  ([db field-name]
+   (one-field-def db field-name (:current-form db)))
+  ([db field-name form-id]
+   (->
+    (filterv (fn [field-def] (= (:name field-def) field-name)) (fields-defs db form-id))
+    first)))
 
-(defn one-field-def [db field-name]
-  (filter (fn [field-def] (= (:name field-def) field-name))
-          (fields-defs db)))
+(defn field-type-by-name [db form-id field-name]
+  (-> (one-field-def db field-name form-id) :data-type keyword))
 
 (def current-record-index #(-> % current-form-data :current-record))
 (def form-by-id-current-record-index #(-> %1 (form-by-id-data %2) :current-record))
@@ -165,8 +176,10 @@
 (def form-by-id-current-records #(-> %1 (form-by-id-data %2) :records))
 (def current-form-editing-data #(-> % current-form-data :editing-data))
 (def form-by-id-editing-data #(-> %1 (form-by-id-data %2) :editing-data))
+(def form-by-id-validation-fx #(-> %1 (form-by-id-data %2) :validation-fx))
 (def new-record? #(-> % current-form-data :new-record?))
 (def form-by-id-new-record? #(-> %1 (form-by-id-data %2) :new-record?))
+(def form-by-id-validation-fx-field-by-name #((keyword %3) (form-by-id-validation-fx %1 %2)))
 
 (defn form-by-id-field-editing-value [db form-id field-name]
   (let [field-key (keyword field-name)]

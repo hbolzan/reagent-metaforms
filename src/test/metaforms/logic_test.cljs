@@ -70,3 +70,5 @@
                      {:name "c" :data-type "float" :persistent? true}]]
     (is (= (cf-logic/data-record->typed-data data-record fields-defs)
            {"id" nil "a" 123 "c" 1.23}))))
+
+;; (deftest fiel)

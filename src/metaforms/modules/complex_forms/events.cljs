@@ -196,7 +196,7 @@
    {:db       (cf.logic/form-by-id-set-data db
                                             form-id
                                             {:new-record?  true
-                                             :editing-data (cf.logic/new-record (cf.logic/form-by-id-fields-defs db form-id))})
+                                             :editing-data (cf.logic/new-record (cf.logic/fields-defs db form-id))})
     :dispatch [:set-current-form-state form-id :edit]}))
 
 (rf/reg-event-fx
@@ -329,10 +329,12 @@
  :validate-field
  (fn [{db :db} [_ validation field-name new-value]]
    ;; sends http request
-   (let [url (vl/build-validation-url (db-on-blur db field-name new-value)
-                                      cf.consts/validation-base-url
-                                      validation
-                                      new-value)]
+   (let [value (cf.logic/typecast new-value
+                                  (cf.logic/field-type-by-name db (:current-form db) field-name))
+         url   (vl/build-validation-url (db-on-blur db field-name value)
+                                        cf.consts/validation-base-url
+                                        validation
+                                        value)]
      {:dispatch [:http-get
                  url
                  [::validate-field-success validation field-name new-value]
@@ -342,11 +344,17 @@
 (rf/reg-event-fx
  ::validate-field-success
  (fn [{db :db} [_ validation field-name new-value response]]
-   {:db       (cf.logic/current-form-set-data
-               (cl/set-spinner db false)
-               {:editing      nil
-                :editing-data (cf.logic/set-current-form-editing-data db (vl/expected-results->fields validation response))})
-    :dispatch [:input-blur field-name new-value]}))
+   (let [validation-fx (vl/expected-results->fields validation response)]
+     {:db (cf.logic/current-form-set-data
+           (cl/set-spinner db false)
+           {:editing       nil
+            :editing-data  (cf.logic/set-current-form-editing-data
+                            db
+                            (into {} (map (fn [x] [(first x) (-> x last first)]) validation-fx)))
+            :validation-fx validation-fx})})))
+
+
+
 
 (rf/reg-event-fx
  ::validate-field-error
@@ -355,3 +363,12 @@
     {:db (cl/set-spinner db false)}
     (when (:show-message-on-error validation)
       {:dispatch [:show-modal-alert (l :common/warning) (-> result :response :data :messages :pt-br)]}))))
+
+(rf/reg-event-fx
+ :clear-validation-fx-field
+ (fn [{db :db} [_ form-id {field-name :name}]]
+   (let [validation-fx (cf.logic/form-by-id-validation-fx db form-id)]
+     {:db (cf.logic/form-by-id-set-data
+           db
+           form-id
+           {:validation-fx (dissoc validation-fx (keyword field-name))})})))

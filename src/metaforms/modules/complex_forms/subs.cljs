@@ -64,6 +64,11 @@
    (cf.logic/current-form-editing-data db)))
 
 (rf/reg-sub
+ :form-by-id-validation-fx
+ (fn [db [_ form-id {field-name :name}]]
+   (cf.logic/form-by-id-validation-fx-field-by-name db form-id field-name)))
+
+(rf/reg-sub
  :current-form-data
  (fn [db _]
    (cf.logic/current-form-data db)))

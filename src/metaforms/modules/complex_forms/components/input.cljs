@@ -76,16 +76,16 @@
 
 (defn validate-input [local-state* field-name validation new-value]
   ;; TODO: abort event bubbling if not valid
-  (if (and validation (not-empty new-value))
+  (when (and validation (= (:state @local-state*) :edit) (not-empty new-value))
     (rf/dispatch [:validate-field validation field-name new-value])))
 
 (defn common-on-blur
   [local-state* {field-name :name outer-element :outer-element :as field-def} validation event]
   (let [value (-> event .-target .-value)]
-    (when value-changed? value
-          (validate-input local-state* field-name validation value)
-          (rf/dispatch [:input-blur field-name value])
-          (when outer-element (set-outer-element! field-def value)))))
+    (when (value-changed? local-state* value)
+      (rf/dispatch [:input-blur field-name value])
+      (validate-input local-state* field-name validation value)
+      (when outer-element (set-outer-element! field-def value)))))
 
 (defn field-def->common-props
   ([field-def local-state* form-state]
@@ -94,7 +94,6 @@
    (-> {:onFocus  (fn [e] (local-state-set! local-state*
                                            :initial-value
                                            (-> e .-target .-value)))
-        ;; :onBlur   (fn [e] (rf/dispatch [:input-blur name (-> e .-target .-value)]))
         :onBlur   (fn [e] (common-on-blur local-state* field-def validation e))
         :readOnly (or read-only (not= form-state :edit))
         :style (when read-only {:background-color "#f7ebe7"})}
@@ -149,7 +148,8 @@
                           {:thousandSeparator "."
                            :decimalSeparator  ","
                            ;; :suffix            "%"
-                           :decimalScale      (-> mask (str/split #"\.") second count)
+                           :decimalScale      (when mask (-> mask (str/split #"\.") second count))
+                           :fixedDecimalScale (boolean mask)
                            :mask              "_"})])
 
 (defmethod field-def->input :date [field-def local-state* form-state]
@@ -226,6 +226,7 @@
                                     @(rf/subscribe [:field-value (:name field-def)]))
               outer-element       (when outer-source
                                     @(rf/subscribe [:grid-rendered-element form-id field-def']))
+              validation-fx-value @(rf/subscribe [:form-by-id-validation-fx form-id field-def'])
               source-field        (filter-source-field field-def')
               outer-source-value  (when source-field @(rf/subscribe [:field-value source-field]))
               field-def           (assoc field-def'
@@ -236,5 +237,10 @@
                                                             outer-source-value
                                                             form-state
                                                             @local-state*)]
-          (do-update-state! outer-value local-state* form-state last-modified-field outer-source-value)
+          (do-update-state! (or validation-fx-value outer-value)
+                            local-state*
+                            form-state
+                            last-modified-field
+                            outer-source-value)
+          (when validation-fx-value (rf/dispatch [:clear-validation-fx-field form-id field-def]))
           [field-def->input field-def local-state* form-state]))})))
