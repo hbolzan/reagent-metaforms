@@ -126,9 +126,7 @@
          {:current-bundle-id bundle-id
           :forms-data        (mapv form-data forms-states)}
          [::call-bundle-action-success bundle-id complex-table-id action]
-         [::call-bundle-action-failure bundle-id complex-table-id action]])}
-     )
-   ))
+         [::call-bundle-action-failure bundle-id complex-table-id action]])})))
 
 (rf/reg-event-fx
  ::call-bundle-action-success
