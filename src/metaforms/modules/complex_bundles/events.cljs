@@ -77,14 +77,16 @@
  (fn [{db :db} [_ complex-table-id records]]
    {:dispatch [::child-load-data-success complex-table-id {:data records}] }))
 
+(defn set-grid-data [db form-id data]
+  (-> db
+      (cf.logic/form-by-id-set-data form-id {:records data})
+      (cf.logic/form-by-id-set-record-index form-id (when (count data) 0))
+      (cf.logic/form-by-id-set-some-prop form-id :request-id (random-uuid))))
+
 (rf/reg-event-fx
  ::child-load-data-success
  (fn [{db :db} [_ complex-table-id response]]
-   (let [records (-> response :data)]
-     {:db (-> db
-              (cf.logic/form-by-id-set-data complex-table-id {:records records})
-              (cf.logic/form-by-id-set-record-index complex-table-id (when (count records) 0))
-              (cf.logic/form-by-id-set-some-prop complex-table-id :request-id (random-uuid)))})))
+   {:db (set-grid-data db complex-table-id (-> response :data))}))
 
 (rf/reg-event-fx
  ::child-load-data-failure
@@ -125,17 +127,34 @@
          (vl/build-service-action-url cf.consts/services-base-url action)
          {:current-bundle-id bundle-id
           :forms-data        (mapv form-data forms-states)}
-         [::call-bundle-action-success bundle-id complex-table-id action]
-         [::call-bundle-action-failure bundle-id complex-table-id action]])})))
+         [::call-bundle-action-success bundle-id action]
+         [::call-bundle-action-failure bundle-id action]])})))
+
+(defn set-form-data [db form-id data]
+  (cf.logic/form-by-id-set-data db
+                                form-id
+                                {:records (cf.logic/form-by-id-records<-new-data db form-id data)}))
+
+(defn set-bundle-data [db form-id data]
+  (if (vector? data)
+    (set-grid-data db form-id data)
+    (set-form-data db form-id data)))
+
+(defn handle-bundle-data [bundle-id db form-id data]
+  (set-bundle-data db (keyword bundle-id form-id) data))
+
+(defn handle-bundle-action-response [db bundle-id response]
+  (let [additional-information (-> response :data :additional_information)]
+    (reduce-kv (partial handle-bundle-data bundle-id) db additional-information)))
 
 (rf/reg-event-fx
  ::call-bundle-action-success
- (fn [{db :db} [_ bundle-id complex-table-id action response]]
-   (js/console.log response)))
+ (fn [{db :db} [_ bundle-id action response]]
+   {:db (handle-bundle-action-response db bundle-id response)}))
 
 (rf/reg-event-fx
  ::call-bundle-action-failure
- (fn [{db :db} [_ bundle-id complex-table-id action response]]
+ (fn [{db :db} [_ bundle-id action response]]
    {:dispatch [:show-modal-alert
                (l :common/error)
                (error-result->error-message response (l :error/unknown))]}))
