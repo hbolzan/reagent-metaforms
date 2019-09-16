@@ -135,13 +135,16 @@
                                 form-id
                                 {:records (cf.logic/form-by-id-records<-new-data db form-id data)}))
 
-(defn set-bundle-data [db form-id data]
-  (if (vector? data)
-    (set-grid-data db form-id data)
-    (set-form-data db form-id data)))
+(defn set-bundle-data [db bundle-id form-id data]
+  (js/console.log form-id)
+  (let [ns-form-id (keyword bundle-id form-id)]
+    (cond
+      (= form-id :bundle-data) (cb.logic/set-bundle-data db bundle-id data)
+      (vector? data)           (set-grid-data db ns-form-id data)
+      :else                    (set-form-data db ns-form-id data))))
 
 (defn handle-bundle-data [bundle-id db form-id data]
-  (set-bundle-data db (keyword bundle-id form-id) data))
+  (set-bundle-data db bundle-id form-id data))
 
 (defn handle-bundle-action-response [db bundle-id response]
   (let [additional-information (-> response :data :additional_information)]
@@ -150,7 +153,11 @@
 (rf/reg-event-fx
  ::call-bundle-action-success
  (fn [{db :db} [_ bundle-id action response]]
-   {:db (handle-bundle-action-response db bundle-id response)}))
+   (let [new-db (handle-bundle-action-response db bundle-id response)]
+     (js/console.log new-db)
+     (cb.logic/parse-view-data
+      (-> new-db :complex-bundles bundle-id :bundle-data :view))
+     {:db new-db})))
 
 (rf/reg-event-fx
  ::call-bundle-action-failure

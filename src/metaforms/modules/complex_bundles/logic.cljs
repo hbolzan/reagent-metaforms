@@ -8,6 +8,13 @@
 (defn get-bundle [db bundle-id]
   (get-in db [:complex-bundles bundle-id]))
 
+(def bundle-data (comp :bundle-data get-bundle))
+
+(defn set-bundle-data [db bundle-id data]
+  (assoc-in db
+            [:complex-bundles bundle-id :bundle-data]
+            (merge (bundle-data db bundle-id) data)))
+
 (defn dissoc-definitions [bundled-tables]
   (mapv #(dissoc (assoc % :definition-id (-> % :definition first :id)) :definition) bundled-tables))
 
@@ -68,3 +75,18 @@
                   (or is-empty? (str/blank? field-value) (= field-value 0))))
               false
               master-fields)))
+
+(defn parse-element [el]
+  (if (string? el) (cljs.reader/read-string el) el))
+
+(defn parse-branch [data]
+  (print data)
+  (if (empty? data)
+    data
+    (let [to-parse (first data)
+          parsed   (parse-element (first data))]
+      (into [parsed] (parse-branch (rest data))))))
+
+(defn parse-view-data [view-data]
+  (js/console.log view-data)
+  )
