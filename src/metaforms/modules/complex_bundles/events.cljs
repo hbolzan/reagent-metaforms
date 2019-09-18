@@ -154,10 +154,12 @@
  ::call-bundle-action-success
  (fn [{db :db} [_ bundle-id action response]]
    (let [new-db (handle-bundle-action-response db bundle-id response)]
-     (js/console.log new-db)
-     (cb.logic/parse-view-data
-      (-> new-db :complex-bundles bundle-id :bundle-data :view))
-     {:db new-db})))
+     {:db       new-db
+      :dispatch [:show-modal-window
+                 "Resultado"
+                 (cb.logic/parse-view-data
+                  (-> new-db :complex-bundles bundle-id :bundle-data :view))
+                 nil]})))
 
 (rf/reg-event-fx
  ::call-bundle-action-failure

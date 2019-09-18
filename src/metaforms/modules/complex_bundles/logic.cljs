@@ -79,14 +79,18 @@
 (defn parse-element [el]
   (if (string? el) (cljs.reader/read-string el) el))
 
+(def not-vector? #(not (vector? %)))
+(def restv (comp (partial into []) rest))
+
 (defn parse-branch [data]
-  (print data)
   (if (empty? data)
     data
-    (let [to-parse (first data)
-          parsed   (parse-element (first data))]
-      (into [parsed] (parse-branch (rest data))))))
+    (let [f           (first data)
+          first-data  (if (vector? f) (parse-branch f) f)
+          middle-data (into [] (take-while not-vector? (restv data)))
+          rest-data   (into [] (drop-while not-vector? (restv data)))]
+      (into [(parse-element first-data)]
+            (concat middle-data (parse-branch rest-data))))))
 
 (defn parse-view-data [view-data]
-  (js/console.log view-data)
-  )
+  (parse-branch view-data))

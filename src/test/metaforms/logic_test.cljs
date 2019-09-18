@@ -40,30 +40,30 @@
   (is (= (cf-logic/typecast "" :integer) nil))
   (is (= (cf-logic/typecast "" :float) nil))
   (is (= (cf-logic/typecast "123" :integer) 123))
-  (is (= (cf-logic/typecast "1.23" :float) 1.23))
+  (is (= (cf-logic/typecast "1,23" :float) 1.23))
   (is (= (cf-logic/typecast "" :date) nil))
   (is (= (cf-logic/typecast "2019-01-20" :date) "2019-01-20"))
   (is (= (cf-logic/typecast "10:23" :time) "10:23"))
   (is (= (cf-logic/typecast "2019-01-20T10:23" :time) "2019-01-20T10:23")))
 
 (deftest field-typecast-test
-  (is (= (cf-logic/field-typecast {:a "123" :b "abc" :c "1.23"}
+  (is (= (cf-logic/field-typecast {:a "123" :b "abc" :c "1,23"}
                          {:name "a" :data-type "integer"})
          {"a" 123}))
 
-  (is (= (cf-logic/field-typecast {:a "123" :b "abc" :c "1.23"}
+  (is (= (cf-logic/field-typecast {:a "123" :b "abc" :c "1,23"}
                                   {:name "b" :data-type "char"})
          {"b" "abc"})))
 
 (deftest data-record->typed-data-test
-  (let [data-record {:a "123" :b "abc" :c "1.23"}
+  (let [data-record {:a "123" :b "abc" :c "1,23"}
         fields-defs [{:name "a" :data-type "integer" :persistent? true}
                      {:name "b" :data-type "char" :persistent? true}
                      {:name "c" :data-type "float" :persistent? true}]]
     (is (= (cf-logic/data-record->typed-data data-record fields-defs)
            {"a" 123 "b" "abc" "c" 1.23})))
 
-  (let [data-record {:id "" :a "123" :b "abc" :c "1.23"}
+  (let [data-record {:id "" :a "123" :b "abc" :c "1,23"}
         fields-defs [{:name "id" :data-type "integer" :persistent? true}
                      {:name "a" :data-type "integer" :persistent? true}
                      {:name "b" :data-type "char" :persistent? false}
