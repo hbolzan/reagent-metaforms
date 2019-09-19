@@ -136,7 +136,6 @@
                                 {:records (cf.logic/form-by-id-records<-new-data db form-id data)}))
 
 (defn set-bundle-data [db bundle-id form-id data]
-  (js/console.log form-id)
   (let [ns-form-id (keyword bundle-id form-id)]
     (cond
       (= form-id :bundle-data) (cb.logic/set-bundle-data db bundle-id data)
@@ -153,10 +152,11 @@
 (rf/reg-event-fx
  ::call-bundle-action-success
  (fn [{db :db} [_ bundle-id action response]]
-   (let [new-db (handle-bundle-action-response db bundle-id response)]
+   (let [new-db   (handle-bundle-action-response db bundle-id response)
+         dyn-view (-> new-db :complex-bundles bundle-id :bundle-data :dynamic-view)]
      {:db       new-db
       :dispatch [:show-modal-window
-                 "Resultado"
+                 (l :common/results)
                  (cb.logic/parse-view-data
                   (-> new-db :complex-bundles bundle-id :bundle-data :view))
                  nil]})))

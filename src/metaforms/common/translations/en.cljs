@@ -8,6 +8,7 @@
    :common/error   "ERROR"
    :common/success "SUCCESS"
    :common/search  "Search"
+   :common/results "Results"
 
    :modal/close   "Close"
    :modal/dismiss "Dismiss"
