@@ -1,9 +1,10 @@
 (ns metaforms.modules.complex-bundles.logic
   (:require [cljs-time.format :as tf]
             [clojure.string :as str]
+            [metaforms.common.dictionary :refer [l]]
             [metaforms.common.logic :as cl]
-            [metaforms.modules.complex-forms.logic :as cf.logic]
-            [metaforms.modules.complex-forms.constants :as cf.consts]))
+            [metaforms.modules.complex-forms.constants :as cf.consts]
+            [metaforms.modules.complex-forms.logic :as cf.logic]))
 
 (defn get-bundle [db bundle-id]
   (get-in db [:complex-bundles bundle-id]))
@@ -94,3 +95,21 @@
 
 (defn parse-view-data [view-data]
   (parse-branch view-data))
+
+
+(defn dynamic-view-modal-action [content]
+  {:dispatch [:show-modal-window
+              (l :common/results)
+              (parse-view-data content)
+              nil]})
+
+;; what to expect from dynamic view
+;; type: "modal" (for now)
+;; content: the view content
+;; actions: array of maps with buttons and corresponding actions
+(defn dynamic-view-actions [db bundle-id response]
+  (let [{:keys [type content]}
+        (-> db :complex-bundles bundle-id :bundle-data :dynamic-view)]
+    (case type
+      "modal" (dynamic-view-modal-action content)
+      nil)))
