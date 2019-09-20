@@ -1,5 +1,6 @@
 (ns metaforms.modules.complex-bundles.logic
   (:require [cljs-time.format :as tf]
+            [cljs.reader :as reader]
             [clojure.string :as str]
             [metaforms.common.dictionary :refer [l]]
             [metaforms.common.logic :as cl]
@@ -78,7 +79,7 @@
               master-fields)))
 
 (defn parse-element [el]
-  (if (string? el) (cljs.reader/read-string el) el))
+  (if (string? el) (reader/read-string el) el))
 
 (def not-vector? #(not (vector? %)))
 (def restv (comp (partial into []) rest))
