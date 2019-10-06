@@ -147,11 +147,11 @@
 (defn replace-url-tag [url tag value]
   (str/replace url (str ":" tag) value))
 
-(defn replace-complex-id [url dataset-name]
-  (replace-url-tag url "complex-id" dataset-name))
+(defn replace-query-id [url dataset-name]
+  (replace-url-tag url "query-id" dataset-name))
 
-(defn current-form-data-url [db url] (replace-complex-id url (current-form-dataset-name db)))
-(defn form-by-id-data-url [db form-id url] (replace-complex-id url (form-by-id-dataset-name db form-id)))
+(defn current-form-data-url [db url] (replace-query-id url (current-form-dataset-name db)))
+(defn form-by-id-data-url [db form-id url] (replace-query-id url (cl/log (form-by-id-dataset-name db form-id))))
 
 (defn fields-defs
   ([db]
