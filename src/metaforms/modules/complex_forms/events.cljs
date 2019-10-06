@@ -353,9 +353,6 @@
                             (into {} (map (fn [x] [(first x) (-> x last first)]) validation-fx)))
             :validation-fx validation-fx})})))
 
-
-
-
 (rf/reg-event-fx
  ::validate-field-error
  (fn [{db :db} [_ validation field-name result]]

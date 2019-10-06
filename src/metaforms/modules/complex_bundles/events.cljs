@@ -152,11 +152,10 @@
 (rf/reg-event-fx
  ::call-bundle-action-success
  (fn [{db :db} [_ bundle-id action response]]
-   (let [new-db   (handle-bundle-action-response db bundle-id response)
-         dyn-view (-> new-db :complex-bundles bundle-id :bundle-data :dynamic-view)]
+   (let [new-db   (handle-bundle-action-response db bundle-id response)]
      (merge
       {:db new-db}
-      (cb.logic/dynamic-view-actions db bundle-id response)))))
+      (cb.logic/dynamic-view-actions new-db bundle-id)))))
 
 (rf/reg-event-fx
  ::call-bundle-action-failure

@@ -108,7 +108,7 @@
 ;; type: "modal" (for now)
 ;; content: the view content
 ;; actions: array of maps with buttons and corresponding actions
-(defn dynamic-view-actions [db bundle-id response]
+(defn dynamic-view-actions [db bundle-id]
   (let [{:keys [type content]}
         (-> db :complex-bundles bundle-id :bundle-data :dynamic-view)]
     (case type

@@ -91,7 +91,7 @@
  :grid-post-data
  (fn [{db :db} [_ form-id data]]
    {:dispatch [:http-post
-               (cl/log (str (cf.logic/form-by-id-data-url db form-id cf.consts/persistent-post-base-uri) "batch/"))
+               (str (cf.logic/form-by-id-data-url db form-id cf.consts/persistent-post-base-uri) "batch/")
                {:data data}
                [::grid-post-data-success form-id]
                [::grid-post-data-failure form-id]]}))

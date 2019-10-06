@@ -151,7 +151,7 @@
   (replace-url-tag url "query-id" dataset-name))
 
 (defn current-form-data-url [db url] (replace-query-id url (current-form-dataset-name db)))
-(defn form-by-id-data-url [db form-id url] (replace-query-id url (cl/log (form-by-id-dataset-name db form-id))))
+(defn form-by-id-data-url [db form-id url] (replace-query-id url (form-by-id-dataset-name db form-id)))
 
 (defn fields-defs
   ([db]
