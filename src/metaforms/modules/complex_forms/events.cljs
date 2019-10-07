@@ -143,6 +143,30 @@
  (fn [{db :db} [_ result]]
    {:dispatch [:show-modal-alert (l :common/error) (l :form/search-failure)]}))
 
+;; REFRESH
+(rf/reg-event-fx
+ :do-form-refresh
+ (fn [{db :db} [_ form-id]]
+   {:dispatch [:http-get
+               (cf.logic/replace-url-tag
+                (cf.logic/current-form-data-url db cf.consts/persistent-get-one)
+                "pk"
+                (-> db cf.logic/current-record-pk-values first))
+               [::form-refresh-success]
+               [::form-refresh-failure]]}))
+
+(rf/reg-event-fx
+ ::form-refresh-success
+ (fn [{db :db} [_ response]]
+   (js/console.log response)))
+
+(rf/reg-event-fx
+ ::form-refresh-failure
+ (fn [{db :db} [_ result]]
+   {:dispatch [:show-modal-alert
+               (l :common/error)
+               (error-result->error-message result (l :error/unknown))]}))
+
 ;; NAVIGATION ACTIONS
 (rf/reg-event-fx
  :do-form-nav-first

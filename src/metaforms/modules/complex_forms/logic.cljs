@@ -113,6 +113,7 @@
     [:confirm :edit]   :view
     [:discard :edit]   :view
     [:delete :view]    :deleting
+    [:refresh :view]   :refreshing
     [:nav-prior :view] :prior
     [:nav-next :view]  :next
     [:nav-first :view] :first
