@@ -152,8 +152,8 @@
                 (cf.logic/current-form-data-url db cf.consts/persistent-get-one)
                 "pk"
                 (-> db cf.logic/current-record-pk-values first))
-               [::form-refresh-success]
-               [::form-refresh-failure]]}))
+               [::form-confirm-success form-id]
+               [::form-confirm-failure form-id]]}))
 
 (rf/reg-event-fx
  ::form-refresh-success
@@ -278,9 +278,10 @@
 
 (rf/reg-event-fx
  ::form-confirm-failure
- (fn [{db :db} [_ result]]
+ (fn [{db :db} [_ form-id result]]
    {:dispatch [:show-modal-alert
-               (str (l :form/load-data-failure) ". "
+               (l :common/error)
+               (str (l :form/load-data-failure {:form-id form-id}) ". "
                     (error-result->error-message result (l :error/unknown)))]}))
 
 (rf/reg-event-fx
