@@ -152,16 +152,15 @@
                 (cf.logic/current-form-data-url db cf.consts/persistent-get-one)
                 "pk"
                 (-> db cf.logic/current-record-pk-values first))
-               ;; [::form-confirm-success form-id]
-               [::form-refresh-success]
+               [::form-refresh-success form-id]
                [::form-confirm-failure form-id]]}))
 
 (rf/reg-event-fx
  ::form-refresh-success
- (fn [{db :db} [_ response]]
-   (let [chilren  (-> (get (:complex-forms db) (:current-form db)) :definition :children)]
-     )
-   ))
+ (fn [{db :db} [_ form-id response]]
+   (let [children  (-> (get (:complex-forms db) form-id) :definition :children)]
+     {:dispatch-n (concat [[::form-confirm-success form-id response]]
+                          (map (fn [child] [:complex-table-parent-data-changed child true]) children))})))
 
 (rf/reg-event-fx
  ::form-refresh-failure
