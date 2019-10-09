@@ -158,7 +158,7 @@
 (rf/reg-event-fx
  ::form-refresh-success
  (fn [{db :db} [_ form-id response]]
-   (let [children  (-> (get (:complex-forms db) form-id) :definition :children)]
+   (let [children  (-> db :complex-forms form-id :definition :children)]
      {:dispatch-n (concat [[::form-confirm-success form-id response]]
                           (map (fn [child] [:complex-table-parent-data-changed child true]) children))})))
 
