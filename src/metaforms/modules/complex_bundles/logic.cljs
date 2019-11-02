@@ -97,7 +97,6 @@
 (defn parse-view-data [view-data]
   (parse-branch view-data))
 
-
 (defn dynamic-view-modal-action [content]
   {:dispatch [:show-modal-window
               (l :common/results)
@@ -109,7 +108,7 @@
 ;; content: the view content
 ;; actions: array of maps with buttons and corresponding actions
 (defn dynamic-view-actions [db bundle-id]
-  (let [{:keys [type content]}
+  (let [{:keys [type content refresh?]}
         (-> db :complex-bundles bundle-id :bundle-data :dynamic-view)]
     (case type
       "modal" (dynamic-view-modal-action content)
