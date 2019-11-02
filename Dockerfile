@@ -16,5 +16,6 @@ FROM busybox
 RUN mkdir -p /var/www/html
 COPY --from=0 /reagent-metaforms/public/. /var/www/html/.
 # COPY public/. /var/www/html/.
+ADD VERSION .
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
 ENTRYPOINT  ["/docker-entrypoint.sh"]

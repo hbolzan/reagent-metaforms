@@ -1,6 +1,7 @@
 #!/bin/bash
 
-VERSION=$1
+./inc_version.py
+VERSION=`cat VERSION`
 
 docker build --build-arg VERSION=$VERSION --build-arg USER=$DOCKER_USER_ID \
        -t "${DOCKER_USER_ID}/metaforms-static:latest" \
