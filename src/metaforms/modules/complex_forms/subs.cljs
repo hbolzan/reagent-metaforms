@@ -112,3 +112,8 @@
  :last-modified-fields
  (fn [db _]
    (:last-modified-fields db)))
+
+(rf/reg-sub
+ :search-selected-row-index
+ (fn [db [_ form-id]]
+   (-> (cf.logic/form-by-id-data db form-id) :search :selected-row)))
