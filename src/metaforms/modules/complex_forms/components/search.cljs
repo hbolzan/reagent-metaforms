@@ -12,7 +12,9 @@
             [reagent-keybindings.keyboard :as kb]
             [reagent.core :as r]))
 
-(def search-value (dom.helpers/input-by-id-value-fn "search-field"))
+(def search-field-id  "search-field")
+
+(def search-value (dom.helpers/input-by-id-value-fn search-field-id))
 
 (defn on-search-button-click* [on-search-button-click e]
   (on-search-button-click (search-value)))
@@ -32,10 +34,10 @@
 
 (defn search-header [on-search-button-click]
   [:div.form-group
-   [:label {:for "search-field"} (l :common/search)]
+   [:label {:for search-field-id} (l :common/search)]
    [:div.input-group.mb-3
     [:input.form-control {:type      "text"
-                          :id        "search-field"
+                          :id        search-field-id
                           :onKeyDown (partial on-key-down* on-search-button-click)}]
     [:div.input-group-append
      [:button.btn.btn-primary {:type "button" :on-click (partial on-search-button-click* on-search-button-click)}
@@ -90,6 +92,14 @@
     (when selected
       (on-search-focus-record row-index))))
 
+(defn cell-focused-handler [state* e]
+  (let [api           (.-api e)
+        new-index     (.-rowIndex e)
+        selected?     (= (:row-index @state*) new-index)]
+    (when (not selected?)
+      (swap! state* #(assoc % :row-index new-index))
+      (select-row-by-index api new-index))))
+
 (defn ag-grid-render [form-id defs height width rows events]
   (let [state* (atom {})]
     (r/create-class
@@ -109,11 +119,7 @@
                             :onCellKeyPress      #(on-cell-key-press on-search-select-record %)
                             :onRowDataChanged    data-changed-handler
                             :onRowSelected       #(row-selected-handler on-search-focus-record %)
-                            :onCellFocused       (fn [e] (js/console.log (.-api e) (.-rowIndex e) row-index)
-                                                   ;; (select-row-by-index (.-api e) (.-rowIndex e))
-                                                   )
-
-                            }]]))})))
+                            :onCellFocused       #(cell-focused-handler state* %)}]]))})))
 
 (defn ag-search-grid
   [form-id fields-defs {:keys [on-search-button-click] :as events}]
