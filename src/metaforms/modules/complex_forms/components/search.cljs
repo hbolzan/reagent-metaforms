@@ -43,10 +43,6 @@
      [:button.btn.btn-primary {:type "button" :on-click (partial on-search-button-click* on-search-button-click)}
       [:i.fa.fa-search]]]]])
 
-;; ***************************************************** ;;
-;; *** AG-GRID
-;; ***************************************************** ;;
-
 (defn field-def->ag-grid-def
   [{:keys [label name width data-type] :as field-def}]
   {:headerName label
