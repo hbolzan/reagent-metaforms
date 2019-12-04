@@ -4,6 +4,7 @@
             [metaforms.common.helpers :as helpers]
             [metaforms.common.logic :as cl]
             [metaforms.modules.complex-forms.logic :as cf.logic]
+            [metaforms.modules.grid.cell-renderers :as renderers]
             [metaforms.modules.main.dom-helpers :as dom.helpers]
             [re-frame.core :as rf]
             [re-frame.db :as rdb]
@@ -44,15 +45,16 @@
       [:i.fa.fa-search]]]]])
 
 (defn field-def->ag-grid-def
-  [{:keys [label name data-type search-visible additional-params] :as field-def}]
+  [{:keys [label name data-type search-visible renderer additional-params] :as field-def}]
   (let [width (or (:alt-width additional-params) (:width field-def))]
-    {:headerName label
-     :field      name
-     :width      (* 8 width)
-     :resizable  true
-     :sortable   true
-     :filter     true
-     :hide       (not search-visible)}))
+    {:headerName   label
+     :field        name
+     :width        (* 8 width)
+     :resizable    true
+     :sortable     true
+     :filter       true
+     :hide         (not search-visible)
+     :cellRenderer renderer}))
 
 (defn fields-defs->ag-grid-defs [fields-defs]
   (map field-def->ag-grid-def fields-defs))
@@ -140,7 +142,7 @@
     (l :common/search)
     [ag-search-grid
      form-id
-     (cf.logic/fields-defs db)
+     (-> db cf.logic/fields-defs renderers/with-search-renderers)
      {:on-search-button-click  #(rf/dispatch [:search-button-click form-id %])
       :on-search-focus-record  #(rf/dispatch [:search-grid-select-row form-id %])
       :on-search-select-record #(rf/dispatch [:form-search-select-record form-id %])}]
