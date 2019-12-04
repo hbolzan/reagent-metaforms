@@ -8,7 +8,7 @@
   (mapv #(assoc % :id (str (name form-id) "-" (:name %))) fields-defs))
 
 (defn index [{:keys [id fields-defs] :as form-definition}]
-  (let [fields-defs (fields-defs-with-id id fields-defs)]
+  (let [fields-defs (filterv :visible (fields-defs-with-id id fields-defs))]
     (complex.form/form
      (merge form-definition
             {:fields-defs fields-defs

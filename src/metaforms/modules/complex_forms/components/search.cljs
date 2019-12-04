@@ -44,13 +44,14 @@
       [:i.fa.fa-search]]]]])
 
 (defn field-def->ag-grid-def
-  [{:keys [label name width data-type] :as field-def}]
+  [{:keys [label name width data-type search-visible] :as field-def}]
   {:headerName label
    :field      name
    :width      (* 8 width)
    :resizable  true
    :sortable   true
-   :filter     true})
+   :filter     true
+   :hide       (not search-visible)})
 
 (defn fields-defs->ag-grid-defs [fields-defs]
   (map field-def->ag-grid-def fields-defs))
