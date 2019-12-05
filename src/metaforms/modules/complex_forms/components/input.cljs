@@ -1,6 +1,7 @@
 (ns metaforms.modules.complex-forms.components.input
   (:require ["date-fns/locale/pt-BR" :as pt-BR]
             [clojure.string :as str]
+            [metaforms.common.consts :as common.consts]
             [metaforms.common.helpers :as helpers]
             [metaforms.common.logic :as cl]
             [metaforms.modules.complex-forms.components.checkbox :as checkbox]
@@ -92,11 +93,12 @@
    (field-def->common-props field-def local-state* form-state true))
   ([{:keys [name read-only validation] :as field-def} local-state* form-state common-onchange?]
    (-> {:onFocus  (fn [e] (local-state-set! local-state*
-                                           :initial-value
-                                           (-> e .-target .-value)))
+                                            :initial-value
+                                            (-> e .-target .-value)))
         :onBlur   (fn [e] (common-on-blur local-state* field-def validation e))
         :readOnly (or read-only (not= form-state :edit))
-        :style (when read-only {:background-color "#f7ebe7"})}
+        :style    (when read-only {:background-color common.consts/input-read-only-bg
+                                   :color            common.consts/input-read-only-fg})}
        (merge-common-change name local-state* common-onchange?))))
 
 (defmulti field-def->input

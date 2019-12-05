@@ -81,11 +81,11 @@
                                            :on-click    on-click}))
         (keys buttons))])
 
-(defn bundle-action-btn [form-id form-state {:keys [type action caption enabled-states]}]
+(defn bundle-action-btn [key form-id form-state {:keys [type action caption enabled-states]}]
   [:button
-   (merge {:type      "button"
-           :className (str "btn btn-lg btn-" type)
-           :key       action
+   (merge {:key       key
+           :type      "button"
+           :className (str "mr-2 btn btn-lg btn-" type)
            :onClick   #(rf/dispatch [:call-bundle-action form-id action])}
           (cond (disabled? form-state (map keyword enabled-states)) {:disabled :disabled}))
    caption])
@@ -96,7 +96,8 @@
    (doall (map-indexed (fn [idx group]
                          (btn-group (str "btn-grp-" idx) form-id form-state group on-click))
                        buttons-groups))
-   (doall (map #(bundle-action-btn form-id form-state %) bundle-actions))])
+   (doall (map-indexed (fn [idx action] (bundle-action-btn (str "action-btn-" idx) form-id form-state action))
+                       bundle-actions))])
 
 (defn form-data+current-state->form-state
   [form-data current-state]
