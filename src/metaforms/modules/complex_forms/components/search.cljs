@@ -2,15 +2,11 @@
   (:require [ag-grid-react :refer [AgGridReact]]
             [metaforms.common.dictionary :refer [l]]
             [metaforms.common.helpers :as helpers]
-            [metaforms.common.logic :as cl]
             [metaforms.modules.complex-forms.logic :as cf.logic]
             [metaforms.modules.grid.cell-renderers :as renderers]
             [metaforms.modules.main.dom-helpers :as dom.helpers]
             [re-frame.core :as rf]
             [re-frame.db :as rdb]
-            [react-data-grid :as ReactDataGrid]
-            [react-dom :as react-dom]
-            [reagent-keybindings.keyboard :as kb]
             [reagent.core :as r]))
 
 (def search-field-id  "search-field")

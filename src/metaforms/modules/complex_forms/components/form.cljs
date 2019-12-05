@@ -3,6 +3,7 @@
             [metaforms.common.logic :as cl]
             [metaforms.components.cards :as cards]
             [metaforms.modules.complex-forms.components.grid :as grid]
+            [metaforms.modules.complex-forms.components.ag-grid :as ag-grid]
             [metaforms.modules.complex-forms.components.input :as input]
             [metaforms.modules.complex-forms.components.toolset :as toolset]
             [metaforms.modules.complex-forms.logic :as cf.logic]
@@ -105,6 +106,8 @@
                                     :field-def   (assoc d :read-only (read-only? child-form d))
                                     :col-hidden  (-> d :visible not)})
                            fields-defs)]
+    (js/console.log fields-defs)
+    (js/console.log data)
     (helpers/dispatch-n [[:complex-table-parent-data-changed child-id]
                          [:grid-soft-refresh-off child-id]])
     [cards/card
@@ -129,13 +132,15 @@
      [:div {:style {:min-height "100%"}}
       [:div.row
        [:div.col-md-12
-        [grid/child-grid {:form-id         child-id
-                          :form-def        child-form
-                          :column-model    column-model
-                          :data            (if parent-new? [] (if soft-refresh? @data-atom  data))
-                          :soft-refresh?   soft-refresh?
-                          :request-id      (if parent-new? (random-uuid) request-id)
-                          :on-request-data (fn [data data-diff] (js/console.log data) (js/console.log data-diff))}]]]]]
+        [ag-grid/data-grid {:form-id         child-id
+                            :form-def        child-form
+                            :fields-defs     fields-defs
+                            :column-model    column-model
+                            :data            (if parent-new? [] (if soft-refresh? @data-atom  data))
+                            :soft-refresh?   soft-refresh?
+                            :request-id      (if parent-new? (random-uuid) request-id)
+                            :on-request-data (fn [data data-diff] (js/console.log data) (js/console.log data-diff))}]
+        ]]]]
 
 
     ))
