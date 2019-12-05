@@ -12,3 +12,6 @@
                :down    "ArrowDown"
                :left    "ArrowLeft"
                })
+
+(def input-read-only-fg "#000000")
+(def input-read-only-bg "#feffb2")
