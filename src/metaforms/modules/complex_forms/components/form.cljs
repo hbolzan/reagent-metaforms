@@ -106,8 +106,6 @@
                                     :field-def   (assoc d :read-only (read-only? child-form d))
                                     :col-hidden  (-> d :visible not)})
                            fields-defs)]
-    (js/console.log fields-defs)
-    (js/console.log data)
     (helpers/dispatch-n [[:complex-table-parent-data-changed child-id]
                          [:grid-soft-refresh-off child-id]])
     [cards/card

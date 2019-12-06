@@ -2,6 +2,7 @@
   (:require [ag-grid-react :refer [AgGridReact]]
             [metaforms.common.dictionary :refer [l]]
             [metaforms.common.helpers :as helpers]
+            [metaforms.modules.complex-forms.ag-grid-logic :as grid.logic]
             [metaforms.modules.complex-forms.logic :as cf.logic]
             [metaforms.modules.grid.cell-renderers :as renderers]
             [metaforms.modules.main.dom-helpers :as dom.helpers]
@@ -60,41 +61,11 @@
         key-code (.-keyCode event)]
     (when (= key-code 13) (on-search-select-record (.-rowIndex e)))))
 
-(defn all-nodes [api]
-  (.-allLeafChildren (.-rootNode (.-rowModel api))))
-
-(defn node-by-index [nodes index]
-  (first (filter #(= index (.-rowIndex %)) nodes)))
-
-(defn select-node [api node]
-  (when (and api node)
-    (.setSelected node true true)
-    (.setFocusedCell api
-                     (.-rowIndex node)
-                     (first (.-allDisplayedColumns (.-columnController node))))))
-
-(defn select-row-by-index [api row-index]
-  (when (and api row-index)
-    (select-node api (node-by-index (all-nodes api) row-index))))
-
-(defn data-changed-handler [e]
-  (let [api        (.-api e)
-        first-node (first (all-nodes api))]
-    (select-node api first-node)))
-
 (defn row-selected-handler [on-search-focus-record e]
   (let [row-index (.-rowIndex e)
         selected (.-selected (.-node e))]
     (when selected
       (on-search-focus-record row-index))))
-
-(defn cell-focused-handler [state* e]
-  (let [api           (.-api e)
-        new-index     (.-rowIndex e)
-        selected?     (= (:row-index @state*) new-index)]
-    (when (not selected?)
-      (swap! state* #(assoc % :row-index new-index))
-      (select-row-by-index api new-index))))
 
 (defn ag-grid-render [form-id defs height width rows events]
   (let [state* (atom {})]
@@ -105,7 +76,7 @@
       (fn [form-id defs height width rows {:keys [on-search-focus-record
                                                   on-search-select-record]}]
         (let [row-index @(rf/subscribe [:form-by-id-record-index form-id])]
-          (select-row-by-index (:api @state*) row-index)
+          (grid.logic/select-row-by-index (:api @state*) row-index)
           [:div.ag-theme-balham {:style {:height height :width width}}
            [:> AgGridReact {:columnDefs          defs
                             :rowData             rows
@@ -113,9 +84,9 @@
                             :onGridReady         (fn [e] (reset! state* {:api (.-api e)}))
                             :onCellDoubleClicked #(on-search-select-record (.-rowIndex %))
                             :onCellKeyPress      #(on-cell-key-press on-search-select-record %)
-                            :onRowDataChanged    data-changed-handler
+                            :onRowDataChanged    grid.logic/data-changed-handler
                             :onRowSelected       #(row-selected-handler on-search-focus-record %)
-                            :onCellFocused       #(cell-focused-handler state* %)}]]))})))
+                            :onCellFocused       #(grid.logic/cell-focused-handler state* %)}]]))})))
 
 (defn ag-search-grid
   [form-id fields-defs {:keys [on-search-button-click] :as events}]

@@ -1,5 +1,6 @@
 (ns metaforms.modules.complex-forms.components.ag-grid
   (:require [ag-grid-react :refer [AgGridReact]]
+            [metaforms.modules.complex-forms.ag-grid-logic :as grid.logic]
             [re-frame.core :as rf]
             [reagent.core :as r :refer [atom]]))
 
@@ -24,13 +25,13 @@
       :reagent-render
       (fn [{:keys [data fields-defs]}]
         [:div.ag-theme-balham {:style {:height "400px" :width "100%"}}
-         [:> AgGridReact {:columnDefs   (map field-def->ag-grid-def fields-defs)
-                          :rowData      data
-                          :rowSelection "single"
-                          :onGridReady  (fn [e] (reset! state* {:api (.-api e)}))
-                          ;; :onRowDataChanged    data-changed-handler
+         [:> AgGridReact {:columnDefs       (map field-def->ag-grid-def fields-defs)
+                          :rowData          data
+                          :rowSelection     "single"
+                          :onGridReady      (fn [e] (reset! state* {:api (.-api e)}))
+                          :onRowDataChanged grid.logic/data-changed-handler
                           ;; :onCellDoubleClicked #(on-search-select-record (.-rowIndex %))
                           ;; :onCellKeyPress      #(on-cell-key-press on-search-select-record %)
                           ;; :onRowSelected       #(row-selected-handler on-search-focus-record %)
-                          ;; :onCellFocused       #(cell-focused-handler state* %)
+                          :onCellFocused    #(grid.logic/cell-focused-handler state* %)
                           }]])})))
