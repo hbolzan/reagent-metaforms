@@ -2,7 +2,7 @@
   (:require [ag-grid-react :refer [AgGridReact]]
             [metaforms.common.dictionary :refer [l]]
             [metaforms.common.helpers :as helpers]
-            [metaforms.modules.complex-forms.ag-grid-logic :as grid.logic]
+            [metaforms.modules.complex-forms.ag-grid-controller :as grid.controller]
             [metaforms.modules.complex-forms.logic :as cf.logic]
             [metaforms.modules.grid.cell-renderers :as renderers]
             [metaforms.modules.main.dom-helpers :as dom.helpers]
@@ -76,7 +76,7 @@
       (fn [form-id defs height width rows {:keys [on-search-focus-record
                                                   on-search-select-record]}]
         (let [row-index @(rf/subscribe [:form-by-id-record-index form-id])]
-          (grid.logic/select-row-by-index (:api @state*) row-index)
+          (grid.controller/select-row-by-index (:api @state*) row-index nil)
           [:div.ag-theme-balham {:style {:height height :width width}}
            [:> AgGridReact {:columnDefs          defs
                             :rowData             rows
@@ -84,9 +84,9 @@
                             :onGridReady         (fn [e] (reset! state* {:api (.-api e)}))
                             :onCellDoubleClicked #(on-search-select-record (.-rowIndex %))
                             :onCellKeyPress      #(on-cell-key-press on-search-select-record %)
-                            :onRowDataChanged    grid.logic/data-changed-handler
+                            :onRowDataChanged    grid.controller/data-changed-handler
                             :onRowSelected       #(row-selected-handler on-search-focus-record %)
-                            :onCellFocused       #(grid.logic/cell-focused-handler state* %)}]]))})))
+                            :onCellFocused       #(grid.controller/cell-focused-handler state* %)}]]))})))
 
 (defn ag-search-grid
   [form-id fields-defs {:keys [on-search-button-click] :as events}]

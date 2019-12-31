@@ -1,6 +1,7 @@
 {:source-paths ["src"]
 
- :dependencies [[cider/cider-nrepl "0.19.0-SNAPSHOT"]
+ :dependencies [[refactor-nrepl "2.4.0"]
+                [cider/cider-nrepl "0.19.0-SNAPSHOT"]
                 [clj-commons/secretary "1.2.4"]
                 [com.andrewmcveigh/cljs-time "0.5.2"]
                 [day8.re-frame/http-fx "0.1.6"]
