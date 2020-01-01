@@ -1,6 +1,7 @@
 (ns metaforms.modules.complex-forms.components.child-grid
   (:require [metaforms.common.helpers :as helpers]
             [metaforms.components.cards :as cards]
+            [metaforms.modules.complex-forms.ag-grid-controller :as grid.controller]
             [metaforms.modules.complex-forms.components.ag-grid :as ag-grid]
             [metaforms.modules.complex-forms.components.grid :as grid]
             [metaforms.modules.complex-forms.components.toolset :as toolset]
@@ -104,17 +105,23 @@
       "child-ag-grid"
       :reagent-render
       (fn [key parent-id child-id]
-        (let [child-form   @(rf/subscribe [:form-by-id child-id])
-              parent-data  @(rf/subscribe [:form-by-id-data parent-id])
-              request-id   @(rf/subscribe [:form-by-id-request-id child-id])
-              parent-new?  @(rf/subscribe [:current-form-new-record?])
-              data-diff    @(rf/subscribe [:grid-data-diff child-id])
-              data         (:records @(rf/subscribe [:form-by-id-data child-id]))
-              selected-row (or @(rf/subscribe [:grid-selected-row child-id]) 0)
-              pending?     @(rf/subscribe [:grid-pending? child-id])
-              fields-defs  (-> child-form :definition :fields-defs)
-              pk-fields    (->> child-form :definition :pk-fields (mapv keyword))
-              column-model #(field-def->column-model % child-form)]
+        (let [child-form            @(rf/subscribe [:form-by-id child-id])
+              parent-data           @(rf/subscribe [:form-by-id-data parent-id])
+              request-id            @(rf/subscribe [:form-by-id-request-id child-id])
+              parent-new?           @(rf/subscribe [:current-form-new-record?])
+              data-diff             @(rf/subscribe [:grid-data-diff child-id])
+              data                  (:records @(rf/subscribe [:form-by-id-data child-id]))
+              selected-row          (or @(rf/subscribe [:grid-selected-row child-id]) 0)
+              pending?              @(rf/subscribe [:grid-pending? child-id])
+              fields-defs           (-> child-form :definition :fields-defs)
+              pk-fields             (->> child-form :definition :pk-fields (mapv keyword))
+              column-model          #(field-def->column-model % child-form)
+              modified-linked-field @(rf/subscribe [:linked-field-changed child-id])]
+          (when modified-linked-field
+            (grid.controller/set-modified-linked-field (:api @grid-state*)
+                                                       child-id
+                                                       selected-row
+                                                       modified-linked-field))
           (helpers/dispatch-n [[:complex-table-parent-data-changed child-id]
                                [:grid-soft-refresh-off child-id]])
           [cards/card

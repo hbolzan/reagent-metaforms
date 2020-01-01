@@ -69,24 +69,17 @@
 (defn value-changed? [local-state* new-value]
   (not= (local-state-get! local-state* :initial-value) new-value))
 
-(defn set-outer-element!
-  [{{blur :onBlur id :id :as outer-element} :outer-element child-id :source} value]
-  (let [el (js/document.getElementById id)]
-    (set! (.-value el) value)
-    (blur {:outer? true :value value})))
-
 (defn validate-input [local-state* field-name validation new-value]
   ;; TODO: abort event bubbling if not valid
   (when (and validation (= (:state @local-state*) :edit) (not-empty new-value))
     (rf/dispatch [:validate-field validation field-name new-value])))
 
 (defn common-on-blur
-  [local-state* {field-name :name outer-element :outer-element :as field-def} validation event]
+  [local-state* {field-name :name outer-source :outer-source :as field-def} validation event]
   (let [value (-> event .-target .-value)]
     (when (value-changed? local-state* value)
-      (rf/dispatch [:input-blur field-name value])
-      (validate-input local-state* field-name validation value)
-      (when outer-element (set-outer-element! field-def value)))))
+      (rf/dispatch [:input-blur field-name value outer-source])
+      (validate-input local-state* field-name validation value))))
 
 (defn field-def->common-props
   ([field-def local-state* form-state]
@@ -226,14 +219,12 @@
               outer-value         (if outer-source
                                     @(rf/subscribe [:grid-rendered-field form-id field-def'])
                                     @(rf/subscribe [:field-value (:name field-def)]))
-              outer-element       (when outer-source
-                                    @(rf/subscribe [:grid-rendered-element form-id field-def']))
               validation-fx-value @(rf/subscribe [:form-by-id-validation-fx form-id field-def'])
               source-field        (filter-source-field field-def')
               outer-source-value  (when source-field @(rf/subscribe [:field-value source-field]))
               field-def           (assoc field-def'
                                          :filter-source-value outer-source-value
-                                         :outer-element outer-element)
+                                         :outer-source outer-source)
               last-modified-field (calc-last-modified-field @(rf/subscribe [:last-modified-field])
                                                             source-field
                                                             outer-source-value

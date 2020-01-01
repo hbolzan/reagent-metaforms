@@ -1,5 +1,7 @@
 (ns metaforms.modules.complex-forms.ag-grid-controller
-  (:require [metaforms.common.logic :as cl]))
+  (:require [clojure.string :as str]
+            [metaforms.common.logic :as cl]
+            [re-frame.core :as rf]))
 
 (defn all-nodes [api]
   (.-allLeafChildren (.-rootNode (.-rowModel api))))
@@ -30,3 +32,16 @@
   (let [api        (.-api e)
         first-node (first (all-nodes api))]
     (select-node api first-node nil)))
+
+(defn get-row-node[api row]
+  (when api
+    (.getRowNode api row)))
+
+(defn set-row-node-value[row-node field-name value]
+  (.setDataValue row-node field-name value))
+
+(defn set-modified-linked-field [api form-id row modified-data]
+  (rf/dispatch-sync [:reset-last-modified-linked-field form-id])
+  (set-row-node-value (get-row-node api row)
+                      (last (str/split (:name modified-data) "."))
+                      (:value modified-data)))
