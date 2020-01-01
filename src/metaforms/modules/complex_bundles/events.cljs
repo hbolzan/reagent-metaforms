@@ -79,7 +79,7 @@
 
 (defn set-grid-data [db form-id data]
   (-> db
-      (cf.logic/form-by-id-set-data form-id {:records data})
+      (cf.logic/form-by-id-set-data form-id {:records (map #(assoc % :__uuid__ (random-uuid)) data)})
       (cf.logic/form-by-id-set-record-index form-id (when (count data) 0))
       (cf.logic/form-by-id-set-some-prop form-id :request-id (random-uuid))))
 

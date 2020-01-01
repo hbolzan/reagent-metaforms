@@ -24,8 +24,8 @@
     (helpers/dispatch-n [[:grid-set-pending-flag form-id true]
                          [:grid-set-data-diff
                           form-id
-                          (:__uuid__ (.-rowIndex e))
-                          field-name
+                          (-> e .-data .-__uuid__)
+                          (keyword field-name)
                           (.-newValue e)
                           {:validation (get validations (keyword field-name))
                            :field-name field-name
