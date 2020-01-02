@@ -83,6 +83,16 @@
       (cf.logic/form-by-id-set-record-index form-id (when (count data) 0))
       (cf.logic/form-by-id-set-some-prop form-id :request-id (random-uuid))))
 
+(defn append-grid-data-row [db form-id row]
+  (let [rows (into [] (:records (cf.logic/form-by-id-data db form-id)))]
+    (cf.logic/form-by-id-set-data db form-id {:records (cl/log (conj rows (assoc row :__uuid__ (random-uuid))))})))
+
+(rf/reg-event-fx
+ :append-grid-data-row
+ (fn [{db :db} [_ form-id row]]
+   {:db       (append-grid-data-row db form-id row)
+    :dispatch [:grid-soft-refresh-on form-id]}))
+
 (rf/reg-event-fx
  ::child-load-data-success
  (fn [{db :db} [_ complex-table-id response]]

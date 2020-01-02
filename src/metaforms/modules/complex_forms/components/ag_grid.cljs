@@ -42,26 +42,29 @@
 
 (defn data-grid [{form-id :form-id :as params} & [parent-state*]]
   (let [state*                (or parent-state* (atom {}))
-        on-row-data-changed   (fn [e]
-                                (grid.controller/data-changed-handler e)
-                                (rf/dispatch [:grid-set-pending-flag form-id false]))
+        on-row-data-changed   (fn [soft-refresh? e]
+                                (when-not soft-refresh?
+                                  (grid.controller/data-changed-handler e)
+                                  (rf/dispatch [:grid-set-pending-flag form-id false])))
         on-cell-value-changed #(cell-value-changed form-id {} %)]
     (r/create-class
      {:display-name
       "ag-data-grid"
       :should-component-update
       (fn [this old-argv new-argv]
-        (let [old-request-id (-> (js->clj old-argv) second :request-id)
+        (let [old (-> (js->clj old-argv) second)
+              new (-> (js->clj new-argv) second)
+              old-request-id (-> (js->clj old-argv) second :request-id)
               new-request-id (-> (js->clj new-argv) second :request-id)]
-          (or (nil? new-request-id) (not= old-request-id new-request-id))))
+          (or (nil? new-request-id) (:soft-refresh? new) (not= (:request-id old) (:request-id new)))))
       :reagent-render
-      (fn [{:keys [form-id data fields-defs]}]
+      (fn [{:keys [form-id data fields-defs soft-refresh?]}]
         [:div.ag-theme-balham {:style {:height "400px" :width "100%"}}
          [:> AgGridReact {:columnDefs         (map field-def->ag-grid-def fields-defs)
                           :rowData            data
                           :rowSelection       "single"
                           :onGridReady        (fn [e] (reset! state* {:api (.-api e)}))
-                          :onRowDataChanged   on-row-data-changed
+                          :onRowDataChanged   #(on-row-data-changed soft-refresh? %)
                           :onCellValueChanged on-cell-value-changed
                           ;; :onCellDoubleClicked #(on-search-select-record (.-rowIndex %))
                           ;; :onCellKeyPress      #(on-cell-key-press on-search-select-record %)

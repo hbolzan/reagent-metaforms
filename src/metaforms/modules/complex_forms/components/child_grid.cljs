@@ -10,9 +10,6 @@
             [re-frame.core :as rf]
             [reagent.core :as r :refer [atom]]))
 
-(defn data-append! [fields-defs data-atom]
-  (swap! data-atom conj (assoc (cf.logic/new-record fields-defs) :__uuid__ (random-uuid) :append? true)))
-
 (defn merge-update-diff [update-diff row]
   (if-let [diff (get update-diff (:__uuid__ row))]
     (merge row diff {:update? true})
@@ -62,6 +59,9 @@
 ;;                              child-id
 ;;                              (grid.logic/prepare-to-save child-form @data-atom deleted-rows)])))
 
+(defn data-append [{:keys [fields-defs child-id]}]
+  (rf/dispatch [:append-grid-data-row child-id (cf.logic/new-record fields-defs)]))
+
 (defn on-save-button-click [{:keys [child-id child-form data update-diff]}]
   [[:grid-post-data
     child-id
@@ -72,7 +72,9 @@
 
 (defn handle-toolbar-button [params button-id]
   (case button-id
-    :save (on-save-button-click params)))
+    :save   (on-save-button-click params)
+    :append (data-append params)
+    ))
 
 (defn toolbar-on-click [button-id params]
   (when-let [effects (handle-toolbar-button params button-id)]
@@ -85,18 +87,6 @@
               read-only
               (and auto-pk? (some in-list? pk-fields))
               (some in-list? related-fields)))))
-
-(defn field-def->column-model
-  [d child-form]
-  {:key         (:name d)
-   :path        [:name]
-   :name        (-> d :name keyword)
-   :header      (:label d)
-   :lookup-info {:lookup-key    (:lookup-key d)
-                 :lookup-result (:lookup-result d)
-                 :options       (:options d)}
-   :field-def   (assoc d :read-only (read-only? child-form d))
-   :col-hidden  (-> d :visible not)})
 
 (defn child-grid [key parent-id child-id]
   (let [grid-state* (atom {})]
@@ -113,9 +103,9 @@
               data                  (:records @(rf/subscribe [:form-by-id-data child-id]))
               selected-row          (or @(rf/subscribe [:grid-selected-row child-id]) 0)
               pending?              @(rf/subscribe [:grid-pending? child-id])
+              soft-refresh?         @(rf/subscribe [:grid-soft-refresh? child-id])
               fields-defs           (-> child-form :definition :fields-defs)
               pk-fields             (->> child-form :definition :pk-fields (mapv keyword))
-              column-model          #(field-def->column-model % child-form)
               modified-linked-field @(rf/subscribe [:linked-field-changed child-id])]
           (when modified-linked-field
             (grid.controller/set-modified-linked-field (:api @grid-state*)
@@ -135,16 +125,16 @@
                              :on-click       (fn [_ e] (toolbar-on-click e {:child-id    child-id
                                                                             :child-form  child-form
                                                                             :data        data
-                                                                            :update-diff data-diff}))})
+                                                                            :update-diff data-diff
+                                                                            :fields-defs fields-defs}))})
            [:div {:style {:min-height "100%"}}
             [:div.row
              [:div.col-md-12
-              [ag-grid/data-grid {:form-id      child-id
-                                  :form-def     child-form
-                                  :fields-defs  fields-defs
-                                  :column-model column-model
-                                  :data         data
-                                  :request-id   (if parent-new? (random-uuid) request-id)}
+              [ag-grid/data-grid {:form-id       child-id
+                                  :fields-defs   fields-defs
+                                  :data          data
+                                  :soft-refresh? soft-refresh?
+                                  :request-id    (if parent-new? (random-uuid) request-id)}
                grid-state*]]]]]))})))
 
 ;; (defn form-child [key parent-id child-id]
