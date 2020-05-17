@@ -49,12 +49,6 @@
 (defn app-routes []
   (secretary/set-config! :prefix "#")
 
-  (defroute "/cadastros" []
-    (handle-route "/cadastros" :cadastros))
-
-  (defroute "/forms/complex" []
-    (handle-remote-complex-form-route "CAD_CLIENTES"))
-
   (defroute "/forms/complex/:complex-id" {:as params}
     (handle-remote-complex-form-route (:complex-id params)))
 
