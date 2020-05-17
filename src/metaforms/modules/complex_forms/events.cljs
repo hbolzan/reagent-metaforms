@@ -334,14 +334,31 @@
 
 (rf/reg-event-fx
  :input-blur
- (fn [{db :db} [_ field-name field-value]]
+ (fn [{db :db} [_ field-name field-value outer-source]]
    {:db       (db-on-blur db field-name field-value)
-    :dispatch [:field-value-changed field-name field-value]}))
+    :dispatch-n [[:field-value-changed field-name field-value outer-source]
+                 [:linked-field-changed field-name field-value outer-source]]}))
 
 (rf/reg-event-db
  :field-value-changed
- (fn [db [_ field-name field-value]]
+ (fn [db [_ field-name field-value outer-source]]
    (assoc db :last-modified-field {:name field-name :value field-value})))
+
+(rf/reg-event-db
+ :reset-last-modified-linked-field
+ (fn [db [_ form-id]]
+   (assoc-in db [:complex-forms form-id :linked-fields] nil)))
+
+(rf/reg-event-db
+ :linked-field-changed
+ (fn [db [_ field-name field-value outer-source]]
+   (cl/log (if outer-source
+             (cf.logic/form-by-id-set-some-prop db
+                                                outer-source
+                                                :linked-fields
+                                                {(keyword field-name) field-value
+                                                 :last-modified-field {:name field-name :value field-value}})
+             db))))
 
 (rf/reg-event-db
  :set-current-form-state

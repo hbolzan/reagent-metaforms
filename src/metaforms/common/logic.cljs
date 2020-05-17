@@ -72,3 +72,6 @@
 (defn log [x]
   (js/console.log x)
   x)
+
+(defn str-keys->keywords [m]
+  (into {} (map (fn [e] [(keyword (first e)) (last e)]) m)))

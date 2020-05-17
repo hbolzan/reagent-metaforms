@@ -63,13 +63,13 @@
 
 (rf/reg-event-fx
  :grid-rendered-selected-row
- (fn [{db :db} [_ form-id row row-elements]]
+ (fn [{db :db} [_ form-id selected-row]]
    {:db (assoc-in db
                   [:rendered-rows
                    (-> form-id namespace keyword)
                    (-> form-id name keyword)]
-                  {:row      row
-                   :elements (map #(-> % last last last) row-elements)})}))
+                  {:row      selected-row
+                   :elements (keys selected-row)})}))
 
 (rf/reg-event-fx
  :grid-set-pending-flag

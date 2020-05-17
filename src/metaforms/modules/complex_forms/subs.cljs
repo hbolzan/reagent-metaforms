@@ -84,6 +84,11 @@
    (cf.logic/form-by-id-some-prop db form-id :request-id)))
 
 (rf/reg-sub
+ :linked-field-changed
+ (fn [db [_ form-id]]
+   (:last-modified-field (cf.logic/form-by-id-some-prop db form-id :linked-fields))))
+
+(rf/reg-sub
  :current-form-records
  (fn [db _]
    (cf.logic/current-records db)))
