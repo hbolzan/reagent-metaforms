@@ -11,3 +11,6 @@
 
 (defn dispatch-n [effects]
   (doseq [fx effects] (if fx (rf/dispatch fx))))
+
+(defn dispatch-sync-n [effects]
+  (doseq [fx effects] (if fx (rf/dispatch-sync fx))))

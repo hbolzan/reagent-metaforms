@@ -352,13 +352,13 @@
 (rf/reg-event-db
  :linked-field-changed
  (fn [db [_ field-name field-value outer-source]]
-   (cl/log (if outer-source
-             (cf.logic/form-by-id-set-some-prop db
-                                                outer-source
-                                                :linked-fields
-                                                {(keyword field-name) field-value
-                                                 :last-modified-field {:name field-name :value field-value}})
-             db))))
+   (if outer-source
+     (cf.logic/form-by-id-set-some-prop db
+                                        outer-source
+                                        :linked-fields
+                                        {(keyword field-name) field-value
+                                         :last-modified-field {:name field-name :value field-value}})
+     db)))
 
 (rf/reg-event-db
  :set-current-form-state

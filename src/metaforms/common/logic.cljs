@@ -75,3 +75,9 @@
 
 (defn str-keys->keywords [m]
   (into {} (map (fn [e] [(keyword (first e)) (last e)]) m)))
+
+(defn zero-if-negative [x]
+  (if (neg? x) 0 x))
+
+(defn current-if-greater [x current]
+  (if (> x current) current x))

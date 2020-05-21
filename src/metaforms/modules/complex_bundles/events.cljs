@@ -84,8 +84,13 @@
       (cf.logic/form-by-id-set-some-prop form-id :request-id (random-uuid))))
 
 (defn append-grid-data-row [db form-id row]
-  (let [rows (into [] (:records (cf.logic/form-by-id-data db form-id)))]
-    (cf.logic/form-by-id-set-data db form-id {:records (cl/log (conj rows (assoc row :__uuid__ (random-uuid))))})))
+  (let [rows      (into [] (:records (cf.logic/form-by-id-data db form-id)))
+        row-index (count rows)]
+    (-> db
+        (cf.logic/form-by-id-set-data
+         form-id
+         {:records (conj rows (merge row {:__uuid__ (random-uuid) :append?  true}))})
+        (cf.logic/form-by-id-set-some-prop form-id :selected-row row-index))))
 
 (rf/reg-event-fx
  :append-grid-data-row
