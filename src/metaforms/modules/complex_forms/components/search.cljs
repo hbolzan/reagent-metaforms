@@ -76,7 +76,7 @@
       (fn [form-id defs height width rows {:keys [on-search-focus-record
                                                   on-search-select-record]}]
         (let [row-index @(rf/subscribe [:form-by-id-record-index form-id])]
-          (grid.controller/select-row-by-index (:api @state*) row-index nil)
+          (grid.controller/select-row-by-index! state* (:api @state*) row-index nil)
           [:div.ag-theme-balham {:style {:height height :width width}}
            [:> AgGridReact {:columnDefs          defs
                             :rowData             rows

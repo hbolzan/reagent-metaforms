@@ -57,6 +57,11 @@
    {:db (cf.logic/form-by-id-set-some-prop db form-id :state-atom state-atom)}))
 
 (rf/reg-event-fx
+ :grid-nav
+ (fn [{db :db} [_ form-id nav-op]]
+   {:dispatch [:grid-set-selected-row form-id (grid.logic/nav-index db form-id nav-op)]}))
+
+(rf/reg-event-fx
  :grid-set-selected-row
  (fn [{db :db} [_ form-id row-index]]
    {:db (cf.logic/form-by-id-set-some-prop db form-id :selected-row row-index)}))

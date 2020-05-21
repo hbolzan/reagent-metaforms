@@ -16,8 +16,9 @@
                      (.-rowIndex node)
                      (or column-key (first (.-allDisplayedColumns (.-columnController node)))))))
 
-(defn select-row-by-index [api row-index column-key]
+(defn select-row-by-index! [state* api row-index column-key]
   (when (and api row-index)
+    (swap! state* #(assoc % :row-index row-index))
     (select-node api (node-by-index (all-nodes api) row-index) column-key)))
 
 (defn cell-focused-handler [state* e]
@@ -25,8 +26,7 @@
         new-index     (.-rowIndex e)
         selected?     (= (:row-index @state*) new-index)]
     (when (not selected?)
-      (swap! state* #(assoc % :row-index new-index))
-      (select-row-by-index api new-index (-> e .-column .-colId)))))
+      (select-row-by-index! state* api new-index (-> e .-column .-colId)))))
 
 (defn data-changed-handler [e]
   (let [api        (.-api e)

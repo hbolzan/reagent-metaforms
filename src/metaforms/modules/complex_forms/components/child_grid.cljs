@@ -1,5 +1,6 @@
 (ns metaforms.modules.complex-forms.components.child-grid
   (:require [metaforms.common.helpers :as helpers]
+            [metaforms.common.logic :as cl]
             [metaforms.components.cards :as cards]
             [metaforms.modules.complex-forms.ag-grid-controller :as grid.controller]
             [metaforms.modules.complex-forms.components.ag-grid :as ag-grid]
@@ -24,14 +25,6 @@
             (into [] (keep-indexed (fn [idx row] (if (not= idx row-index) row)) data)))
     (helpers/dispatch-n [[:grid-add-deleted-row child-id (nth data row-index)]
                          [:grid-set-pending-flag child-id true]])))
-
-(defn grid-nav! [child-id data-atom state-atom nav-fn]
-  (let [selected-row (:selected-row @state-atom)
-        max-row      (-> @data-atom count dec)
-        new-row      (nav-fn (:selected-row @state-atom))]
-    (when (and (<= new-row max-row) (>= new-row 0))
-      (swap! state-atom assoc :selected-row new-row)
-      (rf/dispatch [:grid-set-selected-row child-id new-row]))))
 
 ;; (defn handle-toolset-button! [child-id
 ;;                               child-form
@@ -59,8 +52,8 @@
 ;;                              child-id
 ;;                              (grid.logic/prepare-to-save child-form @data-atom deleted-rows)])))
 
-(defn data-append [{:keys [fields-defs child-id]}]
-  (rf/dispatch [:append-grid-data-row child-id (cf.logic/new-record fields-defs)]))
+(defn append-row [{:keys [fields-defs child-id]}]
+  [[:append-grid-data-row child-id (cf.logic/new-record fields-defs)]])
 
 (defn on-save-button-click [{:keys [child-id child-form data update-diff]}]
   [[:grid-post-data
@@ -70,14 +63,25 @@
                                 [])]
    [:grid-clear-data-diff child-id]])
 
-(defn handle-toolbar-button [params button-id]
-  (case button-id
-    :save   (on-save-button-click params)
-    :append (data-append params)
-    ))
+(defn grid-nav! [grid-state* button-id]
+  (let [api        (:api @grid-state*)
+        max-index  (- (.getDisplayedRowCount api) 1)
+        nav-op     (-> button-id name (clojure.string/replace  #"nav-" "") keyword)
+        next-index (->> @grid-state* :row-index (grid.logic/nav-index* nav-op max-index))
+        column-key (-> (.getFocusedCell api) .-column .-colId)]
+    (grid.controller/select-row-by-index! grid-state* api next-index column-key)))
 
-(defn toolbar-on-click [button-id params]
-  (when-let [effects (handle-toolbar-button params button-id)]
+(defn handle-toolbar-button [grid-state* {child-id :child-id :as params} button-id]
+  (case button-id
+    :append     (append-row params)
+    :save       (on-save-button-click params)
+    (:nav-first
+     :nav-last
+     :nav-prior
+     :nav-next) (grid-nav! grid-state* button-id)))
+
+(defn toolbar-on-click [grid-state* button-id params]
+  (when-let [effects (handle-toolbar-button grid-state* params button-id)]
     (helpers/dispatch-n effects)))
 
 (defn read-only? [{{auto-pk? :auto-pk :keys [pk-fields related-fields] :as form-def} :definition}
@@ -107,6 +111,7 @@
               fields-defs           (-> child-form :definition :fields-defs)
               pk-fields             (->> child-form :definition :pk-fields (mapv keyword))
               modified-linked-field @(rf/subscribe [:linked-field-changed child-id])]
+
           (when modified-linked-field
             (grid.controller/set-modified-linked-field (:api @grid-state*)
                                                        child-id
@@ -122,11 +127,12 @@
                              :buttons-groups [(dissoc toolset/action-buttons :search :edit)
                                               toolset/nav-buttons
                                               toolset/extra-buttons]
-                             :on-click       (fn [_ e] (toolbar-on-click e {:child-id    child-id
-                                                                            :child-form  child-form
-                                                                            :data        data
-                                                                            :update-diff data-diff
-                                                                            :fields-defs fields-defs}))})
+                             :on-click       (fn [_ button-id]
+                                               (toolbar-on-click grid-state* button-id {:child-id    child-id
+                                                                                       :child-form  child-form
+                                                                                       :data        data
+                                                                                       :update-diff data-diff
+                                                                                       :fields-defs fields-defs}))})
            [:div {:style {:min-height "100%"}}
             [:div.row
              [:div.col-md-12
@@ -136,55 +142,3 @@
                                   :soft-refresh? soft-refresh?
                                   :request-id    (if parent-new? (random-uuid) request-id)}
                grid-state*]]]]]))})))
-
-;; (defn form-child [key parent-id child-id]
-;;   (let [child-form  @(rf/subscribe [:form-by-id child-id])
-;;         parent-data @(rf/subscribe [:form-by-id-data parent-id])
-;;         request-id  @(rf/subscribe [:form-by-id-request-id child-id])
-;;         parent-new? @(rf/subscribe [:current-form-new-record?])
-;;         data        (:records @(rf/subscribe [:form-by-id-data child-id]))
-
-;;         ;; TODO: put all grid information in one only subscription
-;;         soft-refresh? @(rf/subscribe [:grid-soft-refresh? child-id])
-;;         pending?      @(rf/subscribe [:grid-pending? child-id])
-;;         selected-row  (or @(rf/subscribe [:grid-selected-row child-id]) 0)
-;;         data-diff     @(rf/subscribe [:grid-data-diff child-id])
-;;         data-atom     @(rf/subscribe [:grid-data-atom child-id])
-;;         state-atom    @(rf/subscribe [:grid-state-atom child-id])
-;;         deleted-rows  @(rf/subscribe [:deleted-rows child-id])
-
-;;         fields-defs  (-> child-form :definition :fields-defs)
-;;         pk-fields    (->> child-form :definition :pk-fields (mapv keyword))
-;;         column-model #(field-def->column-model % child-form)]
-;;     (helpers/dispatch-n [[:complex-table-parent-data-changed child-id]
-;;                          [:grid-soft-refresh-off child-id]])
-;;     [cards/card
-;;      ^{:key key}
-;;      (-> child-form :definition :title)
-;;      (toolset/toolbar {:form-id        child-id
-;;                        :form-state     (when-not parent-new? (grid.logic/grid-state data data-diff pending?))
-;;                        :buttons-groups [(dissoc toolset/action-buttons :search :edit)
-;;                                         toolset/nav-buttons
-;;                                         toolset/extra-buttons]
-;;                        :on-click       (fn [form-id e] (handle-toolset-button! child-id
-;;                                                                                child-form
-;;                                                                                fields-defs
-;;                                                                                pk-fields
-;;                                                                                data
-;;                                                                                data-diff
-;;                                                                                data-atom
-;;                                                                                state-atom
-;;                                                                                selected-row
-;;                                                                                deleted-rows
-;;                                                                                e))})
-;;      [:div {:style {:min-height "100%"}}
-;;       [:div.row
-;;        [:div.col-md-12
-;;         [ag-grid/data-grid {:form-id         child-id
-;;                             :form-def        child-form
-;;                             :fields-defs     fields-defs
-;;                             :column-model    column-model
-;;                             :data            (if parent-new? [] (if soft-refresh? @data-atom  data))
-;;                             :soft-refresh?   soft-refresh?
-;;                             :request-id      (if parent-new? (random-uuid) request-id)
-;;                             :on-request-data (fn [data data-diff] (js/console.log data) (js/console.log data-diff))}]]]]]))

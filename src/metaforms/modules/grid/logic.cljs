@@ -53,3 +53,21 @@
      :update (data->typed (filterv #(and (:update? %) (-> % :append? not)) data))}))
 
 (defn build-validation-url [base-url editing-row])
+
+(defn record-count [db form-id]
+  (-> db (cf.logic/form-by-id-data form-id) :records count))
+
+(defn selected-row-index [db form-id]
+  (cf.logic/form-by-id-some-prop db form-id :selected-row))
+
+(defn nav-index* [nav-op max-index current-index]
+  (case nav-op
+    :first 0
+    :prior (-> current-index dec cl/zero-if-negative)
+    :next  (-> current-index inc (cl/current-if-greater max-index))
+    :last  max-index))
+
+(defn nav-index [db form-id nav-op]
+  (let [current-index (selected-row-index db form-id)
+        max-index     (- (record-count db form-id) 1)]
+    (nav-index* nav-op max-index current-index)))
