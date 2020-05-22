@@ -4,6 +4,7 @@
             [metaforms.common.helpers :as helpers]
             [metaforms.modules.complex-forms.ag-grid-controller :as grid.controller]
             [metaforms.modules.complex-forms.logic :as cf.logic]
+            [metaforms.modules.grid.api-helpers :as grid.api-helpers]
             [metaforms.modules.grid.cell-renderers :as renderers]
             [metaforms.modules.main.dom-helpers :as dom.helpers]
             [re-frame.core :as rf]
@@ -76,7 +77,7 @@
       (fn [form-id defs height width rows {:keys [on-search-focus-record
                                                   on-search-select-record]}]
         (let [row-index @(rf/subscribe [:form-by-id-record-index form-id])]
-          (grid.controller/select-row-by-index! state* (:api @state*) row-index nil)
+          (grid.api-helpers/select-row-by-index! state* (:api @state*) row-index nil)
           [:div.ag-theme-balham {:style {:height height :width width}}
            [:> AgGridReact {:columnDefs          defs
                             :rowData             rows

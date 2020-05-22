@@ -7,6 +7,7 @@
             [metaforms.modules.complex-forms.components.grid :as grid]
             [metaforms.modules.complex-forms.components.toolset :as toolset]
             [metaforms.modules.complex-forms.logic :as cf.logic]
+            [metaforms.modules.grid.api-helpers :as grid.api-helpers]
             [metaforms.modules.grid.logic :as grid.logic]
             [re-frame.core :as rf]
             [reagent.core :as r :refer [atom]]))
@@ -65,11 +66,10 @@
 
 (defn grid-nav! [grid-state* button-id]
   (let [api        (:api @grid-state*)
-        max-index  (- (.getDisplayedRowCount api) 1)
+        max-index  (dec (grid.api-helpers/row-count api))
         nav-op     (-> button-id name (clojure.string/replace  #"nav-" "") keyword)
-        next-index (->> @grid-state* :row-index (grid.logic/nav-index* nav-op max-index))
-        column-key (-> (.getFocusedCell api) .-column .-colId)]
-    (grid.controller/select-row-by-index! grid-state* api next-index column-key)))
+        next-index (->> @grid-state* :row-index (grid.logic/nav-index* nav-op max-index))]
+    (grid.api-helpers/select-row-by-index! grid-state* api next-index (grid.api-helpers/column-key api))))
 
 (defn handle-toolbar-button [grid-state* {child-id :child-id :as params} button-id]
   (case button-id
@@ -128,11 +128,14 @@
                                               toolset/nav-buttons
                                               toolset/extra-buttons]
                              :on-click       (fn [_ button-id]
-                                               (toolbar-on-click grid-state* button-id {:child-id    child-id
-                                                                                       :child-form  child-form
-                                                                                       :data        data
-                                                                                       :update-diff data-diff
-                                                                                       :fields-defs fields-defs}))})
+                                               (toolbar-on-click
+                                                grid-state*
+                                                button-id
+                                                {:child-id    child-id
+                                                 :child-form  child-form
+                                                 :data        data
+                                                 :update-diff data-diff
+                                                 :fields-defs fields-defs}))})
            [:div {:style {:min-height "100%"}}
             [:div.row
              [:div.col-md-12

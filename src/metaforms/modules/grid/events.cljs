@@ -14,6 +14,16 @@
    {:db (cf.logic/form-by-id-set-some-prop db form-id :data-diff {})}))
 
 (rf/reg-event-fx
+ :grid-clear-last-event
+ (fn [{db :db} [_ form-id]]
+   {:db (cf.logic/form-by-id-set-some-prop db form-id :last-grid-event nil)}))
+
+(rf/reg-event-fx
+ :grid-set-last-event
+ (fn [{db :db} [_ form-id event]]
+   {:db (cf.logic/form-by-id-set-some-prop db form-id :last-grid-event event)}))
+
+(rf/reg-event-fx
  :grid-soft-refresh-on
  (fn [{db :db} [_ form-id]]
    {:db (-> db
