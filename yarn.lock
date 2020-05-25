@@ -9,15 +9,15 @@
   dependencies:
     regenerator-runtime "^0.13.2"
 
-ag-grid-community@^21.2.2:
-  version "21.2.2"
-  resolved "https://registry.yarnpkg.com/ag-grid-community/-/ag-grid-community-21.2.2.tgz#a5696a303fa04d03d26e4c9e09e114d308ff4ad4"
-  integrity sha512-x8kQmynYM/7zoigs7wIe7DkK1TIlUP5N1TYrGPsK8vO2gN+rqOok9csGPy4YamggWTcSxpy7wji/Kcz/gUp8/w==
+ag-grid-community@^23.1.1:
+  version "23.1.1"
+  resolved "https://registry.yarnpkg.com/ag-grid-community/-/ag-grid-community-23.1.1.tgz#049ebbd2b521df4b1ad54ae68d98144cf9963e07"
+  integrity sha512-bWpilWkD7b19BNoycVfifAmXVZGI+s1m/G6ixx7tOcXTQEU+tA6dWiHn2kxt1iiLsixvEwi/6JQu1j9Iykrb7Q==
 
-ag-grid-react@^21.2.2:
-  version "21.2.2"
-  resolved "https://registry.yarnpkg.com/ag-grid-react/-/ag-grid-react-21.2.2.tgz#55f19eb3bb14a3beddd642adb0bb03da1249ae59"
-  integrity sha512-QlTtLMsBgLMPzqP95KoOUxXfCwVoYpLOF0uiZeVouHXUR/WxZXlsgtcyOPueKwDGWKBQ+qxB0+3JV5q+mSrPXw==
+ag-grid-react@^23.1.1:
+  version "23.1.1"
+  resolved "https://registry.yarnpkg.com/ag-grid-react/-/ag-grid-react-23.1.1.tgz#0aa78c8d088a7535f7ae1612be88e70ed5f908be"
+  integrity sha512-zjQHgn7YjJsPO+vnEUPzM8d6IEX/8CvG8eL6F2w3+AE599hDEBwK1E8dggdkNOqQLlmNubI1q+yfvRT2gCsaBg==
   dependencies:
     prop-types "^15.6.2"
 
@@ -583,15 +583,6 @@ randomfill@^1.0.3:
     randombytes "^2.0.5"
     safe-buffer "^5.1.0"
 
-react-data-grid@^6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/react-data-grid/-/react-data-grid-6.1.0.tgz#04f5a3032fd097c54cd494b000a366d5bad6b39d"
-  integrity sha512-N1UtiHvsowEPzhx0VPqQKvGgSza/YNljczbisFDGMjawiGApS2taMv7h+EDXDx49CdaA6ur4eYS0z10x63IUpw==
-  dependencies:
-    object-assign "^4.1.1"
-    react-is-deprecated "^0.1.2"
-    shallowequal "^1.1.0"
-
 react-datepicker@^2.8.0:
   version "2.8.0"
   resolved "https://registry.yarnpkg.com/react-datepicker/-/react-datepicker-2.8.0.tgz#d93423a2abe9eeef8d3eaa7ff437f31be8a3a2f5"
@@ -620,11 +611,6 @@ react-input-mask@^2.0.4:
   dependencies:
     invariant "^2.2.4"
     warning "^4.0.2"
-
-react-is-deprecated@^0.1.2:
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/react-is-deprecated/-/react-is-deprecated-0.1.2.tgz#301148f86ea428fe8e673eca7a372160b7579dbd"
-  integrity sha1-MBFI+G6kKP6OZz7KejchYLdXnb0=
 
 react-is@^16.8.1:
   version "16.8.6"
@@ -738,11 +724,6 @@ shadow-cljs@^2.7.8:
     source-map-support "^0.4.15"
     which "^1.3.1"
     ws "^3.0.0"
-
-shallowequal@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/shallowequal/-/shallowequal-1.1.0.tgz#188d521de95b9087404fd4dcb68b13df0ae4e7f8"
-  integrity sha512-y0m1JoUZSlPAjXVtPPW70aZWfIL/dSP7AFkRnniLCrK/8MDKog3TySTBmckD+RObVxH0v4Tox67+F14PdED2oQ==
 
 source-map-support@^0.4.15:
   version "0.4.18"

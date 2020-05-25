@@ -95,8 +95,10 @@
 (rf/reg-event-fx
  :append-grid-data-row
  (fn [{db :db} [_ form-id row]]
-   {:db       (append-grid-data-row db form-id row)
-    :dispatch [:grid-soft-refresh-on form-id]}))
+   (let [new-db (append-grid-data-row db form-id row)]
+     {:db         new-db
+      :dispatch-n [[:grid-soft-refresh-on form-id]
+                   [:grid-set-selected-row form-id (cf.logic/form-by-id-some-prop new-db form-id :selected-row)]]})))
 
 (rf/reg-event-fx
  ::child-load-data-success
