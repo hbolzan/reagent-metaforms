@@ -64,7 +64,6 @@
 (rf/reg-event-fx
  :grid-set-selected-row
  (fn [{db :db} [_ form-id row-index]]
-   (js/console.log (str ":grid-set-selected-row " row-index))
    {:db (cf.logic/form-by-id-set-some-prop db form-id :selected-row row-index)}))
 
 (rf/reg-event-fx

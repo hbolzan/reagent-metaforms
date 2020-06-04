@@ -11,10 +11,18 @@
     (when (not selected?)
       (grid.api-helpers/select-row-by-index! state* api new-index (-> e .-column .-colId)))))
 
-(defn data-changed-handler [e]
-  (let [api        (.-api e)
-        first-node (first (grid.api-helpers/all-nodes api))]
-    (grid.api-helpers/select-node api first-node nil)))
+(defn selected-node [api selected-row]
+  (let [nodes      (grid.api-helpers/all-nodes api)
+        first-node (first nodes)]
+    (if (nil? selected-row)
+      first-node
+      (nth nodes selected-row first-node))))
+
+(defn data-changed-handler
+  ([e] (data-changed-handler nil e))
+  ([selected-row e]
+   (let [api (.-api e)]
+     (grid.api-helpers/select-node api (selected-node api selected-row) nil))))
 
 (defn get-row-node[api row]
   (when api

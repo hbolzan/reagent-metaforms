@@ -112,9 +112,6 @@
               pk-fields             (->> child-form :definition :pk-fields (mapv keyword))
               modified-linked-field @(rf/subscribe [:linked-field-changed child-id])]
 
-          ;; (grid.api-helpers/select-row-by-index! grid-state* api selected-row (grid.api-helpers/column-key api))
-
-          (js/console.log selected-row)
           (when modified-linked-field
             (grid.controller/set-modified-linked-field api child-id selected-row modified-linked-field))
 
@@ -144,5 +141,6 @@
                                   :fields-defs   fields-defs
                                   :data          data
                                   :soft-refresh? soft-refresh?
+                                  :selected-row  selected-row
                                   :request-id    (if parent-new? (random-uuid) request-id)}
                grid-state*]]]]]))})))
