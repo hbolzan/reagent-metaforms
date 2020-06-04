@@ -4,9 +4,9 @@
             [metaforms.components.cards :as cards]
             [metaforms.modules.complex-forms.ag-grid-controller :as grid.controller]
             [metaforms.modules.complex-forms.components.ag-grid :as ag-grid]
-            [metaforms.modules.complex-forms.components.grid :as grid]
             [metaforms.modules.complex-forms.components.toolset :as toolset]
             [metaforms.modules.complex-forms.logic :as cf.logic]
+            [metaforms.modules.grid.api-helpers :as grid.api-helpers]
             [metaforms.modules.grid.logic :as grid.logic]
             [re-frame.core :as rf]
             [reagent.core :as r :refer [atom]]))
@@ -65,11 +65,10 @@
 
 (defn grid-nav! [grid-state* button-id]
   (let [api        (:api @grid-state*)
-        max-index  (- (.getDisplayedRowCount api) 1)
+        max-index  (dec (grid.api-helpers/row-count api))
         nav-op     (-> button-id name (clojure.string/replace  #"nav-" "") keyword)
-        next-index (->> @grid-state* :row-index (grid.logic/nav-index* nav-op max-index))
-        column-key (-> (.getFocusedCell api) .-column .-colId)]
-    (grid.controller/select-row-by-index! grid-state* api next-index column-key)))
+        next-index (->> @grid-state* :row-index (grid.logic/nav-index* nav-op max-index))]
+    (grid.api-helpers/select-row-by-index! grid-state* api next-index (grid.api-helpers/column-key api))))
 
 (defn handle-toolbar-button [grid-state* {child-id :child-id :as params} button-id]
   (case button-id
@@ -99,24 +98,23 @@
       "child-ag-grid"
       :reagent-render
       (fn [key parent-id child-id]
-        (let [child-form            @(rf/subscribe [:form-by-id child-id])
+        (let [api                   (:api @grid-state*)
+              child-form            @(rf/subscribe [:form-by-id child-id])
               parent-data           @(rf/subscribe [:form-by-id-data parent-id])
               request-id            @(rf/subscribe [:form-by-id-request-id child-id])
               parent-new?           @(rf/subscribe [:current-form-new-record?])
               data-diff             @(rf/subscribe [:grid-data-diff child-id])
               data                  (:records @(rf/subscribe [:form-by-id-data child-id]))
-              selected-row          (or @(rf/subscribe [:grid-selected-row child-id]) 0)
               pending?              @(rf/subscribe [:grid-pending? child-id])
               soft-refresh?         @(rf/subscribe [:grid-soft-refresh? child-id])
+              selected-row          @(rf/subscribe [:grid-selected-row child-id])
               fields-defs           (-> child-form :definition :fields-defs)
               pk-fields             (->> child-form :definition :pk-fields (mapv keyword))
               modified-linked-field @(rf/subscribe [:linked-field-changed child-id])]
 
           (when modified-linked-field
-            (grid.controller/set-modified-linked-field (:api @grid-state*)
-                                                       child-id
-                                                       selected-row
-                                                       modified-linked-field))
+            (grid.controller/set-modified-linked-field api child-id selected-row modified-linked-field))
+
           (helpers/dispatch-n [[:complex-table-parent-data-changed child-id]
                                [:grid-soft-refresh-off child-id]])
           [cards/card
@@ -128,11 +126,14 @@
                                               toolset/nav-buttons
                                               toolset/extra-buttons]
                              :on-click       (fn [_ button-id]
-                                               (toolbar-on-click grid-state* button-id {:child-id    child-id
-                                                                                       :child-form  child-form
-                                                                                       :data        data
-                                                                                       :update-diff data-diff
-                                                                                       :fields-defs fields-defs}))})
+                                               (toolbar-on-click
+                                                grid-state*
+                                                button-id
+                                                {:child-id    child-id
+                                                 :child-form  child-form
+                                                 :data        data
+                                                 :update-diff data-diff
+                                                 :fields-defs fields-defs}))})
            [:div {:style {:min-height "100%"}}
             [:div.row
              [:div.col-md-12
@@ -140,5 +141,6 @@
                                   :fields-defs   fields-defs
                                   :data          data
                                   :soft-refresh? soft-refresh?
+                                  :selected-row  selected-row
                                   :request-id    (if parent-new? (random-uuid) request-id)}
                grid-state*]]]]]))})))
